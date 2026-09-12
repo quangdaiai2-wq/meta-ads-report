@@ -4,6 +4,18 @@ Hướng dẫn dành cho Đại (người không cần biết code).
 
 ---
 
+## 🚀 Mới sang máy khác? Đọc file này trước
+
+👉 **`HANDOFF.md`** — sổ bàn giao, chứa toàn bộ bối cảnh dự án.
+
+Khi làm việc trên máy mới, chỉ cần nói với trợ lý:
+
+> **"Đọc file HANDOFF.md trong thư mục dự án và giúp tôi làm tiếp."**
+
+File đó có đủ: dự án là gì, đã làm được gì, còn việc gì, và những điều bắt buộc phải nhớ.
+
+---
+
 ## Hệ thống này làm gì
 
 Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo cáo vào Telegram của bạn — **4 lần mỗi ngày**:
@@ -170,8 +182,9 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 list_actions.py           ← Công cụ dò tên chỉ số
 ├── 📄 find_payment.py           ← Công cụ dò chỉ số thanh toán
 │
-└── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
-└── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
+├── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
+├── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
+└── 📄 HANDOFF.md                ← Sổ bàn giao cho máy khác (đọc file này trước khi sang máy mới)
 ```
 
 ---
