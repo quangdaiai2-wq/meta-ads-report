@@ -143,6 +143,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 find_payment.py           ← Công cụ dò chỉ số thanh toán
 │
 └── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
+└── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
 ```
 
 ---
