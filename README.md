@@ -55,10 +55,38 @@ Bấm đúp vào file **`go-lich.bat`** → 4 lịch bị xóa, hệ thống ng�
 
 ## Cách chạy thử ngay (không cần chờ đến giờ)
 
-Mở Command Prompt / PowerShell tại thư mục này, gõ:
+**Bước 1 — Mở cửa sổ lệnh tại đúng thư mục dự án.**
 
-```bash
-"C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" report.py
+PowerShell mặc định mở ở `C:\WINDOWS\System32` — **không phải** thư mục dự án. Cách nhanh nhất:
+
+1. Mở **File Explorer**, vào thư mục dự án
+2. Bấm vào **thanh địa chỉ** phía trên (chỗ ghi đường dẫn)
+3. Xóa nội dung, gõ `powershell` rồi bấm **Enter**
+
+→ Cửa sổ PowerShell mở ra đã ở đúng thư mục.
+
+**Cách khác — dùng lệnh `cd`:**
+
+```powershell
+cd "D:\Workbuddy\2026-09-11-21-17-48"
+```
+
+Kiểm tra đầu dòng lệnh đã hiện đường dẫn dự án chưa:
+
+```
+PS D:\Workbuddy\2026-09-11-21-17-48>   ← đúng
+```
+
+**Bước 2 — Chạy báo cáo:**
+
+```powershell
+python report.py
+```
+
+Nếu báo lỗi `python is not recognized`, dùng đường dẫn đầy đủ:
+
+```powershell
+& "C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" report.py
 ```
 
 Kết quả sẽ được gửi vào Telegram ngay lập tức.

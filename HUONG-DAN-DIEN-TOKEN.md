@@ -124,10 +124,29 @@ Lưu file (**Ctrl + S**).
 
 #### Bước D: Chạy công cụ đổi token
 
-Mở Command Prompt / PowerShell tại thư mục dự án, gõ:
+**Mở cửa sổ lệnh tại đúng thư mục dự án trước** — PowerShell mặc định mở ở `C:\WINDOWS\System32`, chạy lệnh ở đó sẽ báo lỗi "không tìm thấy file".
 
-```bash
-"C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" doi-token-60-ngay.py
+Cách nhanh nhất:
+1. Mở **File Explorer**, vào thư mục dự án
+2. Bấm vào **thanh địa chỉ** phía trên
+3. Gõ `powershell` rồi bấm **Enter**
+
+Hoặc dùng lệnh `cd` trong cửa sổ PowerShell:
+
+```powershell
+cd "D:\Workbuddy\2026-09-11-21-17-48"
+```
+
+Sau đó chạy:
+
+```powershell
+python doi-token-60-ngay.py
+```
+
+Nếu báo lỗi `python is not recognized`, dùng đường dẫn đầy đủ:
+
+```powershell
+& "C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" doi-token-60-ngay.py
 ```
 
 Kết quả mong đợi:

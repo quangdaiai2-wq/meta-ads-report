@@ -6,6 +6,75 @@ Dành cho Đại — người không cần biết code. Làm theo đúng thứ t
 
 ---
 
+# 🔑 MẸO ĐẦU TIÊN: Mở cửa sổ lệnh tại đúng thư mục dự án
+
+Khi mở PowerShell bình thường, nó **luôn bắt đầu ở `C:\WINDOWS\System32`** — không phải thư mục dự án. Nếu chạy lệnh ngay tại đó sẽ báo lỗi "không tìm thấy file".
+
+Có **3 cách** đưa về đúng thư mục. Chọn cách nào cũng được.
+
+## Cách 1 — Dễ nhất: mở thẳng từ File Explorer
+
+1. Mở **File Explorer** (biểu tượng thư mục vàng), đi tới thư mục dự án
+2. Bấm vào **thanh địa chỉ** phía trên (chỗ đang ghi đường dẫn)
+3. Xóa nội dung cũ, gõ chữ:
+
+```
+powershell
+```
+
+4. Bấm **Enter**
+
+→ Cửa sổ PowerShell mở ra **đã ở đúng thư mục dự án**. Không cần gõ đường dẫn gì cả.
+
+## Cách 2 — Dùng lệnh `cd`
+
+Trong cửa sổ PowerShell đang mở, gõ (copy nguyên dòng):
+
+```powershell
+cd "D:\Workbuddy\2026-09-11-21-17-48"
+```
+
+Bấm **Enter**. Dấu nhắc sẽ đổi từ:
+
+```
+PS C:\WINDOWS\System32>          ← chỗ mặc định, SAI
+```
+
+thành:
+
+```
+PS D:\Workbuddy\2026-09-11-21-17-48>   ← đúng rồi
+```
+
+✅ **Cách nhận biết đã đúng chỗ:** nhìn đầu dòng lệnh, thấy đường dẫn dự án hiện ra là được.
+
+## Cách 3 — Kéo thả thư mục
+
+1. Gõ `cd ` — nhớ có **dấu cách** ở cuối
+2. Kéo thả thư mục dự án từ File Explorer **vào cửa sổ PowerShell**
+3. Đường dẫn tự động điền vào → bấm **Enter**
+
+## ⚠️ Hai lưu ý về lệnh `cd`
+
+**1. Đường dẫn có dấu cách thì phải để trong ngoặc kép**
+
+| | |
+|---|---|
+| ❌ Sai | `cd D:\My Project\report` |
+| ✅ Đúng | `cd "D:\My Project\report"` |
+
+**2. Khác biệt giữa PowerShell và Command Prompt**
+
+Nếu Đại dùng **Command Prompt** (cửa sổ đen có chữ `C:\>`) thay vì PowerShell, muốn đổi sang ổ D phải thêm `/d`:
+
+```cmd
+cd /d "D:\Workbuddy\2026-09-11-21-17-48"
+```
+
+PowerShell thì **không cần** `/d`.
+
+---
+
 # PHẦN 1 — LÀM TẠI MÁY NHÀ (hôm nay)
 
 ## Bước 1: Tạo kho chứa trên GitHub
@@ -33,7 +102,7 @@ Dành cho Đại — người không cần biết code. Làm theo đúng thứ t
 
 ## Bước 2: Đẩy code lên GitHub
 
-Mở **Command Prompt** hoặc **PowerShell** tại thư mục dự án, chạy 2 lệnh sau (copy nguyên dòng):
+Mở cửa sổ lệnh **tại thư mục dự án** (xem mục **MẸO ĐẦU TIÊN** ở trên), rồi chạy 2 lệnh sau (copy nguyên dòng):
 
 ```bash
 git remote add origin https://github.com/quangdaiai2-wq/meta-ads-report.git
@@ -82,27 +151,38 @@ python --version
 
 ## Bước 4: Tải code về máy công ty
 
-1. Mở **Command Prompt**
-2. Di chuyển tới thư mục muốn để dự án, ví dụ ổ D:
+1. Mở **PowerShell** (bấm phím Windows, gõ `powershell`, Enter)
+2. Chuyển sang ổ D — nơi sẽ chứa dự án:
 
-```bash
-d:
-cd \
+```powershell
+cd D:\
 ```
+
+> Nếu máy công ty không có ổ D, dùng ổ C cũng được:
+> `cd C:\Users\%USERNAME%`
 
 3. Tải code về:
 
-```bash
+```powershell
 git clone https://github.com/quangdaiai2-wq/meta-ads-report.git
 ```
 
 4. Vào thư mục vừa tải:
 
-```bash
+```powershell
 cd meta-ads-report
 ```
 
+5. **Kiểm tra đã đúng chỗ chưa** — gõ lệnh này để xem danh sách file:
+
+```powershell
+dir
+```
+
+Phải thấy các file: `report.py`, `dashboard.py`, `cai-dat-lich.bat`, `README.md`...
+
 > 💡 **Thư mục không cần giống máy nhà.** Git tự hiểu đường dẫn, đặt ở đâu cũng được.
+> Nhưng từ giờ **mọi lệnh phải chạy khi đang ở trong thư mục này** — nếu mở PowerShell mới, nhớ `cd` lại về đây.
 
 ---
 
@@ -118,7 +198,9 @@ copy .env.example .env
 
 ### 5b. Mở file `.env` bằng Notepad
 
-```bash
+⚠️ Phải đang ở **trong thư mục dự án** mới mở được. Kiểm tra đầu dòng lệnh có dạng `PS D:\meta-ads-report>` — nếu chưa, `cd` về trước.
+
+```powershell
 notepad .env
 ```
 
@@ -203,11 +285,14 @@ Việc này giúp: nếu máy tắt đúng lúc 12h, khi bật lại Windows s�
 
 ## Chạy thử ngay (không cần chờ đến giờ)
 
-Mở Command Prompt tại thư mục dự án:
+Mở cửa sổ lệnh **tại thư mục dự án** (xem **MẸO ĐẦU TIÊN**), rồi gõ:
 
-```bash
+```powershell
 python report.py
 ```
+
+> Nếu báo lỗi `python is not recognized` → Python chưa có trong PATH. Dùng đường dẫn đầy đủ:
+> `& "C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python313\python.exe" report.py`
 
 **Kết quả mong đợi:** `DA GUI BAO CAO VAO TELEGRAM`
 
