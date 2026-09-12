@@ -7,12 +7,30 @@ REM Sau khi chay xong, script se tu dong gui bao cao vao 8h, 12h, 17h, 22h hang 
 REM
 REM CACH CHAY: bam dup chuot vao file nay
 REM Neu bao loi quyen: chuot phai -> Run as administrator
+REM
+REM File nay TU DONG TIM PYTHON tren may, nen dung duoc cho ca may khac.
 REM ============================================
 
 setlocal
 
-REM --- Duong dan ---
-set PYTHON_EXE=C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe
+REM --- Tu dong tim Python ---
+set PYTHON_EXE=
+
+REM Uu tien 1: Python cua WorkBuddy (cung ten nguoi dung Windows)
+if exist "C:\Users\%USERNAME%\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" set PYTHON_EXE=C:\Users\%USERNAME%\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe
+
+REM Uu tien 2: Tim Python trong PATH cua may
+if not defined PYTHON_EXE (
+    for /f "delims=" %%P in ('where python 2^>nul') do (
+        if not defined PYTHON_EXE set PYTHON_EXE=%%P
+    )
+)
+
+REM Uu tien 3: Duong dan cai dat Python mac dinh
+if not defined PYTHON_EXE if exist "C:\Python313\python.exe" set PYTHON_EXE=C:\Python313\python.exe
+if not defined PYTHON_EXE if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python313\python.exe
+if not defined PYTHON_EXE if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe
+
 set SCRIPT_DIR=%~dp0
 set SCRIPT_PATH=%SCRIPT_DIR%report.py
 
@@ -21,20 +39,40 @@ echo ============================================
 echo  CAI DAT LICH BAO CAO META ADS
 echo ============================================
 echo.
-echo Python : %PYTHON_EXE%
-echo Script : %SCRIPT_PATH%
-echo.
 
-REM --- Kiem tra file ton tai ---
-if not exist "%PYTHON_EXE%" (
-    echo LOI: Khong tim thay Python tai %PYTHON_EXE%
-    echo Hay sua lai duong dan trong file nay.
+REM --- Kiem tra tim thay Python chua ---
+if not defined PYTHON_EXE (
+    echo LOI: Khong tim thay Python tren may nay!
+    echo.
+    echo Cach xu ly:
+    echo   1. Cai Python tu python.org ^(ban 3.12 hoac 3.13^)
+    echo   2. Hoac mo file nay bang Notepad, sua dong bat dau bang
+    echo      "set PYTHON_EXE=" thanh duong dan Python tren may nay
+    echo.
     pause
     exit /b 1
 )
 
+echo Python : %PYTHON_EXE%
+echo Script : %SCRIPT_PATH%
+echo.
+
+REM --- Kiem tra file script ton tai ---
 if not exist "%SCRIPT_PATH%" (
     echo LOI: Khong tim thay file report.py trong %SCRIPT_DIR%
+    pause
+    exit /b 1
+)
+
+REM --- Kiem tra file .env ton tai ---
+if not exist "%SCRIPT_DIR%.env" (
+    echo CANH BAO: Chua co file .env trong thu muc nay!
+    echo.
+    echo Cach xu ly:
+    echo   1. Copy file .env.example thanh .env
+    echo   2. Mo .env bang Notepad va dien token vao
+    echo   3. Xem huong dan trong HUONG-DAN-DIEN-TOKEN.md
+    echo.
     pause
     exit /b 1
 )
