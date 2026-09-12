@@ -136,13 +136,17 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** bên
 
 ## ⚠️ Ba điều cần biết
 
-### 1. Máy phải đang bật
+### 1. Máy phải đang bật (hoặc đang ngủ)
 
-Hệ thống chạy trên máy này. Nếu máy tắt đúng lúc 8h, báo cáo 8h sẽ không gửi.
+Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đúng lúc 8h, báo cáo 8h có thể bị trễ.
 
 **Cách khắc phục:**
-- Bật máy trước các mốc giờ, hoặc để máy chạy thường xuyên.
-- **Hoặc** bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator) — sau đó Windows sẽ **tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại.
+- Bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator), chạy **1 lần**. Sau đó Windows sẽ:
+  - **Tự đánh thức máy** để chạy báo cáo đúng giờ (nếu máy đang ngủ).
+  - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại (nếu máy đã tắt).
+- Để máy chạy thường xuyên, hoặc cắm sạc (đừng để máy tự ngủ sâu) trong khung 8h–22h.
+
+> 📌 **Thực tế đã gặp (12/09/2026):** Máy ngủ lúc 12h nên báo cáo 12h bị trễ; đến khi máy "thức" lúc 14:27 thì tính năng chạy bù **tự gửi bù** báo cáo 12h. Vậy hệ thống vẫn an toàn, chỉ là báo cáo đến muộn.
 
 ### 2. Token Meta Ads có thể hết hạn
 
