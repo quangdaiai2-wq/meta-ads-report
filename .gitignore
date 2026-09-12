@@ -1,0 +1,34 @@
+# ============================================
+# FILE CHẶN - QUAN TRỌNG NHẤT
+# ============================================
+# File này bảo Git KHÔNG được đưa những file bên dưới lên GitHub.
+# Không xóa file này, không sửa nếu không hiểu rõ.
+
+# --- BẢO MẬT: TUYỆT ĐỐI KHÔNG ĐƯA LÊN GITHUB ---
+.env
+.env.*
+!.env.example
+
+# --- FILE TẠM VÀ CACHE ---
+__pycache__/
+*.py[cod]
+*.log
+logs/
+cache/
+*.tmp
+.DS_Store
+
+# --- THƯ MỤC CÔNG CỤ (không cần đồng bộ) ---
+.workbuddy-ai/
+.vscode/
+.idea/
+venv/
+env/
+
+# --- FILE KẾT QUẢ TẠM ---
+*.csv
+*.json
+!config.json
+
+# --- DASHBOARD: tự tạo lại mỗi lần chạy, không cần lưu vào Git ---
+dashboard.html
