@@ -412,6 +412,51 @@ def send_telegram(env, text):
     return True, None
 
 
+def send_telegram_document(env, filepath, filename, caption=""):
+    """Gui 1 file (vi du dashboard HTML) len Telegram bang sendDocument."""
+    token = env["TELEGRAM_BOT_TOKEN"]
+    chat_id = env["TELEGRAM_CHAT_ID"]
+    boundary = "----workbuddyboundary" + str(int(datetime.now().timestamp()))
+    try:
+        with open(filepath, "rb") as f:
+            data = f.read()
+    except Exception as e:
+        return False, f"Khong doc duoc file: {e}"
+
+    body = b""
+    body += ("--%s\r\n" % boundary).encode()
+    body += b'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+    body += chat_id.encode() + b"\r\n"
+    if caption:
+        body += ("--%s\r\n" % boundary).encode()
+        body += b'Content-Disposition: form-data; name="caption"\r\n\r\n'
+        body += caption.encode("utf-8") + b"\r\n"
+    body += ("--%s\r\n" % boundary).encode()
+    body += (
+        'Content-Disposition: form-data; name="document"; filename="%s"\r\n' % filename
+    ).encode()
+    body += b"Content-Type: text/html; charset=utf-8\r\n\r\n"
+    body += data + b"\r\n"
+    body += ("--%s--\r\n" % boundary).encode()
+
+    req = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendDocument",
+        data=body,
+        headers={"Content-Type": "multipart/form-data; boundary=%s" % boundary},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            j = json.loads(resp.read().decode("utf-8"))
+        if j.get("ok"):
+            return True, None
+        return False, j.get("description")
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="ignore")
+        return False, f"HTTP {e.code}: {err_body[:200]}"
+    except Exception as e:
+        return False, str(e)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bao cao Meta Ads -> Telegram")
     parser.add_argument("--mock", type=int, choices=REPORT_SLOTS,
@@ -449,14 +494,15 @@ def main():
     print("=" * 60)
 
     # --- Tao dashboard HTML (dung chung so lieu, khong goi API lan 2) ---
+    dashboard_path = None
     stats, err = compute_stats(env, since, until)
     if err:
         print(f"LOI (dashboard): {err}")
     else:
         try:
-            out = save_dashboard(stats, since, until, period_text)
+            dashboard_path = save_dashboard(stats, since, until, period_text)
             print()
-            print(f"DA TAO DASHBOARD: {out}")
+            print(f"DA TAO DASHBOARD: {dashboard_path}")
         except Exception as e:
             print(f"LOI TAO DASHBOARD: {e}")
 
@@ -474,6 +520,21 @@ def main():
         print(f"LOI GUI TELEGRAM: {err}")
         log(f"THAT BAI GUI TELEGRAM - moc {slot}h: {err}")
         sys.exit(1)
+
+    # --- Gui kem file dashboard HTML vao cung Telegram ---
+    if dashboard_path:
+        fname = f"baocao_{slot}h_{now.strftime('%d-%m-%Y')}.html"
+        caption = (
+            f"📊 BÁO CÁO META ADS — {period_text}\n"
+            "Bản đầy đủ dạng HTML. Tải về và mở bằng trình duyệt để xem."
+        )
+        dok, derr = send_telegram_document(env, dashboard_path, fname, caption)
+        if dok:
+            print("DA GUI FILE HTML VAO TELEGRAM")
+            log(f"THANH CONG - moc {slot}h, da gui file HTML")
+        else:
+            print(f"LOI GUI FILE HTML: {derr}")
+            log(f"THAT BAI GUI FILE HTML - moc {slot}h: {derr}")
 
 
 if __name__ == "__main__":

@@ -115,12 +115,18 @@ Kết quả sẽ được gửi vào Telegram ngay lập tức.
 
 ## 📊 Dashboard xem báo cáo (file HTML)
 
-Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** bên cạnh báo cáo Telegram.
+Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và **gửi kèm vào Telegram** dưới dạng file đính kèm (tên dạng `baocao_12h_13-09-2026.html`).
 
-**Cách xem:**
+**Cách xem — 2 cách:**
 
+**Cách A — Trên Telegram (mới):**
+1. Mở Telegram, vào chat với bot báo cáo.
+2. Thấy tin nhắn chữ (số liệu) → ngay dưới là **file HTML đính kèm**.
+3. Bấm vào file → tải về → mở bằng trình duyệt (Chrome, Edge...).
+
+**Cách B — Trên máy (cũ):**
 1. Mở thư mục dự án.
-2. Bấm đúp vào file **`dashboard.html`** → nó mở bằng trình duyệt (Chrome, Edge...).
+2. Bấm đúp vào file **`dashboard.html`** → nó mở bằng trình duyệt.
 3. Xem bảng số liệu đẹp, có màu — không cần cài gì thêm.
 
 **Có gì trong đó:**
