@@ -140,13 +140,23 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** bên
 
 Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đúng lúc 8h, báo cáo 8h có thể bị trễ.
 
-**Cách khắc phục:**
-- Bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator), chạy **1 lần**. Sau đó Windows sẽ:
-  - **Tự đánh thức máy** để chạy báo cáo đúng giờ (nếu máy đang ngủ).
-  - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại (nếu máy đã tắt).
-- Để máy chạy thường xuyên, hoặc cắm sạc (đừng để máy tự ngủ sâu) trong khung 8h–22h.
+**Cách khắc phục (làm 2 file, mỗi file 1 lần):**
 
-> 📌 **Thực tế đã gặp (12/09/2026):** Máy ngủ lúc 12h nên báo cáo 12h bị trễ; đến khi máy "thức" lúc 14:27 thì tính năng chạy bù **tự gửi bù** báo cáo 12h. Vậy hệ thống vẫn an toàn, chỉ là báo cáo đến muộn.
+1. Bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator). Sau đó Windows sẽ:
+   - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại.
+   - Đặt cờ "đánh thức máy để chạy" cho cả 4 lịch.
+2. Bấm file **`bat-danh-thuc-may.bat`** (chuột phải → Run as administrator). File này **cho phép Windows tự thức máy** để chạy báo cáo đúng giờ — kể cả khi máy đang ngủ hoặc chạy pin.
+
+**Ngoài ra, để báo cáo đến đúng giờ:**
+- **Cắm sạc** máy thường xuyên (đừng để pin cạn).
+- **Đừng tắt máy** — chỉ để máy ngủ là đủ.
+- Trong khung **8h–22h**, hạn chế để máy ngủ quá sâu.
+
+> 📌 **Thực tế đã gặp:**
+> - **12/09:** Máy ngủ lúc 12h → báo cáo 12h trễ; khi máy "thức" lúc 14:27, tính năng chạy bù **tự gửi bù**. Mốc 17h, 22h chạy **đúng giờ**.
+> - **13/09:** Máy ngủ/ngủ đông suốt sáng → lỡ mốc 8h và 12h; máy thức lúc 14:05. Nguyên nhân: **"Allow wake timers" bị tắt** → cần chạy `bat-danh-thuc-may.bat`.
+
+> ⚠️ **Giới hạn:** Nếu lỡ NHIỀU mốc, khi máy bật lại hệ thống chỉ gửi bù **mốc gần nhất** (ví dụ bật lúc 14h chỉ gửi mốc 12h). Mốc 8h có thể không được gửi bù.
 
 ### 2. Token Meta Ads có thể hết hạn
 
@@ -178,6 +188,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 cai-dat-lich.bat          ← Bấm để BẬT tự động
 ├── 📄 go-lich.bat               ← Bấm để TẮT tự động
 ├── 📄 bat-chay-bu.bat           ← Bấm để bật "chạy bù khi lỡ giờ" (cần Admin)
+├── 📄 bat-danh-thuc-may.bat     ← Bấm để cho phép Windows tự thức máy chạy báo cáo (cần Admin)
 ├── 📄 logs/baocao.log           ← Nhật ký chạy (xem khi cần chẩn đoán)
 │
 ├── 📄 test_telegram.py          ← Test token Telegram
