@@ -15,7 +15,7 @@ import json
 import sys
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dashboard import save_dashboard
@@ -25,6 +25,11 @@ GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 
 # Cac moc gio bao cao (gio Viet Nam)
 REPORT_SLOTS = [8, 12, 17, 22]
+
+# Canh bao SOM khi token Meta con song it hon nguong nay (ngay).
+# Muc dich: bao TRUOC khi token chet, de con kip lay token moi.
+# Truoc day he thong chi bao SAU khi token da chet (luc do moi bao cao that bai).
+NGUONG_CANH_BAO_NGAY = 7
 
 # Ten cac loai action trong Meta API (da kiem chung bang list_actions.py)
 # LUU Y: Meta tra ve NHIEU ten cho CUNG mot hanh dong (omni_*, onsite_*, offsite_*).
@@ -132,6 +137,82 @@ def api_get(path, params):
                 continue
             return None, {"message": str(e)}
     return None, {"message": "Khong the ket noi sau 3 lan thu"}
+
+
+def doc_han_token(env):
+    """Hoi Meta xem token con song bao lau (bang debug_token).
+
+    Tra ve:
+        (so_ngay, None)  -> doc duoc. so_ngay = None nghia la token khong bao gio het han.
+        (None, ly_do)    -> khong doc duoc (thieu App ID/Secret, hoac Meta bao loi).
+    """
+    token = env.get("META_ADS_ACCESS_TOKEN", "").strip()
+    app_id = env.get("META_APP_ID", "").strip()
+    app_secret = env.get("META_APP_SECRET", "").strip()
+
+    if not token or not app_id or not app_secret:
+        return None, "thieu META_APP_ID hoac META_APP_SECRET trong .env"
+
+    data, err = api_get("debug_token", {
+        "input_token": token,
+        "access_token": f"{app_id}|{app_secret}",
+    })
+    if err:
+        return None, err.get("message", "loi khong ro")
+
+    d = data.get("data", {})
+    if not d.get("is_valid"):
+        return 0.0, None
+
+    expires_at = d.get("expires_at", 0)
+    if not expires_at:
+        return None, None  # token khong bao gio het han
+
+    het_han = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+    con_lai = het_han - datetime.now(timezone.utc)
+    return con_lai.total_seconds() / 86400, None
+
+
+def canh_bao_han_token(env):
+    """Tra ve doan text canh bao neu token Meta sap het han, hoac '' neu khong can.
+
+    Muc dich: bao TRUOC khi token chet, de con kip lay token moi.
+    Truoc day he thong chi bao SAU khi token da chet.
+
+    Ham nay KHONG BAO GIO lam hong bao cao: moi loi deu bi nuot va chi ghi nhat ky.
+    """
+    try:
+        so_ngay, loi = doc_han_token(env)
+    except Exception as e:
+        log(f"Khong kiem duoc han token Meta: {e}")
+        return ""
+
+    if loi:
+        log(f"Khong kiem duoc han token Meta: {loi}")
+        return ""
+
+    if so_ngay is None or so_ngay >= NGUONG_CANH_BAO_NGAY:
+        return ""
+
+    if so_ngay <= 0:
+        return (
+            "🔴 CẢNH BÁO TOKEN META\n"
+            "Token đã HẾT HẠN. Số liệu trong báo cáo này có thể không đầy đủ.\n"
+            "→ Lấy token mới theo file HUONG-DAN-DIEN-TOKEN.md\n"
+        )
+
+    # Duoi 1 ngay thi hien thi theo GIO, vi "con 0 ngay" doc rat kho hieu
+    if so_ngay < 1:
+        con_lai_txt = f"{so_ngay * 24:.0f} giờ"
+    else:
+        con_lai_txt = f"{so_ngay:.0f} ngày"
+
+    return (
+        f"🟡 CẢNH BÁO TOKEN META — chỉ còn sống {con_lai_txt}\n"
+        "→ Nên lấy token mới sớm, đừng chờ tới lúc nó chết.\n"
+        "→ Làm theo HUONG-DAN-DIEN-TOKEN.md (Bước A → E)\n"
+        "→ Chỉ lấy token mới ở MỘT máy, rồi copy file .env sang máy kia bằng USB.\n"
+    )
 
 
 def fmt_money(value):
@@ -493,6 +574,12 @@ def main():
         sys.exit(1)
 
     report = build_report(env, stats, period_text)
+
+    # --- Canh bao SOM neu token Meta sap het han ---
+    # Dat LEN DAU bao cao de de thay, khong bi lan vao cuoi tin nhan.
+    canh_bao = canh_bao_han_token(env)
+    if canh_bao:
+        report = canh_bao + "\n" + report
 
     print("=" * 60)
     print(report)

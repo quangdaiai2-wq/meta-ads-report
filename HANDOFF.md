@@ -48,8 +48,8 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 
 ### Chưa làm
 
-- ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận bản sửa `report.py`
-  (chi tiết ở mục **"BẢN SỬA NGÀY 14/09"** trong phần *GHI CHÚ KỸ THUẬT CHO TRỢ LÝ AI*)
+- ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận 3 bản cập nhật ngày 14/09.
+  👉 **Hướng dẫn từng bước: xem file `HUONG-DAN-MAY-NHA.md`**
 
 ---
 
@@ -107,7 +107,23 @@ Máy nhà sẽ hết hạn trước 3 ngày. Thực ra điều này tốt hơn: 
 
 Cần lấy token mới thì làm theo `HUONG-DAN-DIEN-TOKEN.md`, rồi copy sang máy kia.
 
-Hệ thống sẽ **tự nhắn Telegram cảnh báo** khi token hết hạn — không cần tự nhớ.
+### Cảnh báo token đi đâu?
+
+Mỗi máy gửi qua **bot Telegram riêng của máy đó** — `report.py` đọc `TELEGRAM_BOT_TOKEN`
+trong `.env` của chính nó. Nên máy nhà → khung chat **bot Home**, máy công ty → **bot Company**.
+Hai máy không lẫn vào nhau.
+
+Có **2 loại** cảnh báo:
+
+| Loại | Khi nào | Nội dung |
+|---|---|---|
+| 🟡 Cảnh báo sớm | Token còn dưới **7 ngày** | Nằm ở **đầu** mỗi báo cáo (thêm ngày 14/09/2026) |
+| 🔴 Báo lỗi | Token **đã chết**, lần chạy thất bại | Tin nhắn riêng, nội dung tuỳ lỗi Meta trả về |
+
+⚠️ **Giới hạn:** cả hai loại đều chỉ gửi được khi **có một lần chạy báo cáo**. Máy tắt hoặc
+đăng xuất Windows đúng lúc đó ⇒ **không có cảnh báo nào**. Đừng phụ thuộc hoàn toàn vào cảnh báo.
+
+Ngưỡng cảnh báo sớm đổi được ở dòng `NGUONG_CANH_BAO_NGAY = 7` trong `report.py`.
 
 > ⚠️ **BẮT BUỘC: sau khi lấy token mới, phải kiểm HẠN của nó.**
 > Token lấy trực tiếp từ Graph API Explorer chỉ sống **1–2 giờ**. Đã gặp thật ngày
@@ -147,6 +163,7 @@ File `cai-dat-lich.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ 
 | `.env.example` | File mẫu (an toàn để đẩy lên) |
 | `logs/baocao.log` | **Nhật ký chạy** — xem đầu tiên khi có sự cố |
 | `HUONG-DAN-MAY-CONG-TY.md` | Hướng dẫn cài máy thứ hai |
+| `HUONG-DAN-MAY-NHA.md` | Hướng dẫn **cập nhật máy nhà** — đọc khi về nhà (git pull + kiểm token) |
 | `HUONG-DAN-DIEN-TOKEN.md` | Hướng dẫn lấy token từng bước |
 | `README.md` | Hướng dẫn sử dụng chung |
 

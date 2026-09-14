@@ -205,6 +205,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 find_payment.py           ← Công cụ dò chỉ số thanh toán
 │
 ├── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
+├── 📄 HUONG-DAN-MAY-NHA.md      ← Hướng dẫn cập nhật MÁY NHÀ (đọc khi ở nhà)
 ├── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
 └── 📄 HANDOFF.md                ← Sổ bàn giao cho máy khác (đọc file này trước khi sang máy mới)
 ```
