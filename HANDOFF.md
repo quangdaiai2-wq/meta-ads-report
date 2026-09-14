@@ -1,6 +1,6 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 12/09/2026, 10:00 (giờ Việt Nam)
+**Cập nhật lần cuối:** 14/09/2026, 08:30 (giờ Việt Nam)
 
 ---
 
@@ -35,9 +35,21 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 5 | Đẩy code lên GitHub | 4 bản ghi, nhánh `main`, kho riêng tư |
 | 6 | Cảnh báo lỗi qua Telegram | Tự gửi tin khi có sự cố |
 
+### Đã hoàn thành (trên máy công ty — ngày 14/09/2026)
+
+| # | Hạng mục | Chi tiết |
+|---|---|---|
+| 1 | Kéo code từ GitHub | Về `D:\Buddy Work AI\2026-09-14-07-50-57` |
+| 2 | Token Meta 60 ngày | Hết hạn **** (xem mục 2 bên dưới — KHÁC máy nhà) |
+| 3 | Bot Telegram riêng | `@boongbonbap_QuangDai_bot` ("Bot Báo Cáo Company👍") |
+| 4 | 4 lịch tự động | Đã xác minh độc lập bằng cách đọc lịch trong Windows |
+| 5 | Chạy bù + đánh thức máy | Đã bật, và "Allow wake timers" đã chuyển sang Enable |
+| 6 | Chạy thử thật | Đã gửi báo cáo ngày 13/09 vào Telegram thành công |
+
 ### Chưa làm
 
-- ⏳ **Cài đặt lên máy công ty** ← việc đang làm
+- ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận bản sửa `report.py`
+  (chi tiết ở mục **"BẢN SỬA NGÀY 14/09"** trong phần *GHI CHÚ KỸ THUẬT CHO TRỢ LÝ AI*)
 
 ---
 
@@ -79,11 +91,32 @@ Tóm tắt nhanh:
 Mở Telegram → tìm bot mới → bấm **Start**.
 Nếu không, bot không gửi được tin → lỗi **403**.
 
-### 2. Token Meta hết hạn ngày 10/11/2026
+### 2. Token Meta — HAI MÁY HẾT HẠN KHÁC NGÀY NHAU
 
-Khi đó **cả hai máy cùng ngừng hoạt động**. Cần lấy token mới, làm theo `HUONG-DAN-DIEN-TOKEN.md`, rồi copy sang máy kia.
+Từ 14/09/2026, hai máy dùng **hai token khác nhau** (vì máy công ty phải đổi token
+ngắn hạn sang token 60 ngày):
+
+| Máy | Token hết hạn |
+|---|---|
+| Máy nhà | **10/11/2026** |
+| Máy công ty | **** |
+
+⇒ **Không còn chuyện "cả hai máy cùng ngừng hoạt động"** như tài liệu cũ ghi.
+Máy nhà sẽ hết hạn trước 3 ngày. Thực ra điều này tốt hơn: khi máy nhà báo lỗi, bạn còn
+3 ngày để xử lý trước khi máy công ty cũng tới hạn.
+
+Cần lấy token mới thì làm theo `HUONG-DAN-DIEN-TOKEN.md`, rồi copy sang máy kia.
 
 Hệ thống sẽ **tự nhắn Telegram cảnh báo** khi token hết hạn — không cần tự nhớ.
+
+> ⚠️ **BẮT BUỘC: sau khi lấy token mới, phải kiểm HẠN của nó.**
+> Token lấy trực tiếp từ Graph API Explorer chỉ sống **1–2 giờ**. Đã gặp thật ngày
+> 14/09/2026: token chỉ còn sống **1 giờ 44 phút** mà `test_meta.py` vẫn báo ĐẠT và lấy
+> được dữ liệu bình thường — vì bài test đó chỉ kiểm "token còn sống không", chứ không
+> kiểm "còn sống bao lâu".
+>
+> Phải: chạy `python doi-token-60-ngay.py` để đổi sang 60 ngày, rồi hỏi thẳng Meta bằng
+> `debug_token` (trường `expires_at`) để xác nhận.
 
 ### 3. Chuyển file `.env` giữa các máy bằng USB
 
@@ -132,6 +165,26 @@ python report.py --mock 12  # giả lập mốc 12h, không gửi
 - **Meta Graph API v21.0**
 - Lịch Windows: `BaoCaoMetaAds_08`, `_12`, `_17`, `_22`
 
+### BẢN SỬA NGÀY 14/09/2026 — `report.py` gọi Meta API 1 lần thay vì 2
+
+**Vấn đề cũ:** `report.py` gọi `compute_stats()` **hai lần** cho mỗi lần chạy — một lần để
+dựng báo cáo chữ, một lần nữa để dựng dashboard HTML. Trong khi `README.md` và chú thích
+trong code đều ghi "chỉ gọi một lần". Hệ quả thật:
+
+- Tốn **gấp đôi hạn mức gọi Meta API** mỗi lần chạy (vượt hạn mức là bị Meta chặn tạm).
+- Hai lần gọi cách nhau vài giây, mà số liệu quảng cáo thay đổi liên tục ⇒ **tin nhắn
+  Telegram và file HTML đính kèm có thể ghi hai con số khác nhau** cho cùng một chỉ số.
+
+**Đã sửa:** hàm dựng báo cáo giờ nhận `stats` từ ngoài vào —
+`build_report(env, stats, period_text)` — thay vì tự gọi lại Meta. `main()` tính **một lần
+duy nhất** rồi dùng chung cho cả hai đầu ra. Dọn luôn 3 tham số thừa và 1 biến chết (`top_n`).
+
+**Đã kiểm chứng:** cú pháp sạch · chỉ còn 1 chỗ gọi API · chạy thử với số liệu giả cho ra
+đúng định dạng tiền Việt và số liệu khớp giữa tin nhắn với HTML · chạy thật thành công,
+thời gian giảm từ 12 giây xuống 5 giây.
+
+> ⚠️ **Máy nhà vẫn đang chạy bản CŨ** (2 lần gọi API) cho tới khi `git pull`.
+
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
 Meta trả về **NHIỀU TÊN cho CÙNG một hành động**: `omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase` đều phản ánh **cùng một số**.
@@ -177,10 +230,12 @@ Tên đã kiểm chứng (nằm trong `report.py`):
 
 | Thời điểm | Việc |
 |---|---|
-| **12/09/2026 12:00** | Lần đầu hệ thống tự chạy — kiểm tra `logs/baocao.log` |
-| **Thứ 2 (15/09)** | Cài đặt lên máy công ty |
+| ~~12/09/2026 12:00~~ | Đã qua — lần đầu hệ thống tự chạy trên máy nhà |
+| ~~Thứ 2 (15/09)~~ | **Đã xong sớm** — cài đặt lên máy công ty ngày **14/09/2026** |
+| **14/09/2026 12:00** | Ba mốc tự chạy đầu tiên của máy công ty (12h, 17h, 22h) |
 | **18/09/2026** | Token GitHub cũ `buddy-web-sync` hết hạn (không ảnh hưởng dự án này) |
-| **10/11/2026** | ⚠️ **Token Meta hết hạn** — cần gia hạn cho cả 2 máy |
+| **10/11/2026** | ⚠️ Token Meta **máy nhà** hết hạn |
+| **** | ⚠️ Token Meta **máy công ty** hết hạn |
 
 ---
 

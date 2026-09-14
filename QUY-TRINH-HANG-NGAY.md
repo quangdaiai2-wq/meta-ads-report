@@ -83,7 +83,7 @@ git push
 
 ---
 
-## 🔄 GIA HẠN TOKEN META (sau ngày 10/11/2026)
+## 🔄 GIA HẠN TOKEN META (máy nhà: sau 10/11/2026 — máy công ty: sau )
 
 1. Trên máy đang dùng, chạy: `python doi-token-60-ngay.py`
 2. **Copy file `.env` sang máy kia bằng USB** (vì `.env` không lên GitHub).

@@ -301,15 +301,14 @@ def compute_stats(env, since, until):
     }, None
 
 
-def build_report(env, slot_hour, since, until, period_text):
-    """Tao noi dung bao cao dang text."""
-    include_kw = env.get("FILTER_INCLUDE", "")
-    top_n = int(env.get("TOP_CAMPAIGN_COUNT", "5"))
-    account_name = env.get("REPORT_ACCOUNT_NAME", "")
+def build_report(env, stats, period_text):
+    """Tao noi dung bao cao dang text tu so lieu DA TINH SAN.
 
-    stats, err = compute_stats(env, since, until)
-    if err:
-        return None, err
+    KHONG goi lai Meta API o day. So lieu duoc tinh dung 1 lan trong main()
+    roi dung chung cho ca bao cao text lan dashboard HTML.
+    """
+    include_kw = env.get("FILTER_INCLUDE", "")
+    account_name = env.get("REPORT_ACCOUNT_NAME", "")
 
     totals = stats["totals"]
     good = stats["good"]
@@ -370,7 +369,7 @@ def build_report(env, slot_hour, since, until, period_text):
         lines.append("- Không có camp nào kém hiệu quả.")
     lines.append("")
 
-    return "\n".join(lines), None
+    return "\n".join(lines)
 
 
 def send_telegram(env, text):
@@ -481,7 +480,11 @@ def main():
     print()
     log(f"BAT DAU - moc {slot}h, khoang {since} -> {until}")
 
-    report, err = build_report(env, slot, since, until, period_text)
+    # --- TINH SO LIEU META API: DUNG 1 LAN DUY NHAT ---
+    # Dung chung cho ca bao cao text lan dashboard HTML.
+    # (Truoc day cho nay goi compute_stats() 2 lan -> ton gap doi han muc API,
+    #  va so lieu tren Telegram co the lech voi file HTML vi goi 2 thoi diem khac nhau.)
+    stats, err = compute_stats(env, since, until)
     if err:
         print(f"LOI: {err}")
         log(f"THAT BAI - moc {slot}h: {err}")
@@ -489,22 +492,20 @@ def main():
             send_error_alert(env, err)
         sys.exit(1)
 
+    report = build_report(env, stats, period_text)
+
     print("=" * 60)
     print(report)
     print("=" * 60)
 
-    # --- Tao dashboard HTML (dung chung so lieu, khong goi API lan 2) ---
+    # --- Tao dashboard HTML (dung lai chinh so lieu vua tinh, khong goi API lan 2) ---
     dashboard_path = None
-    stats, err = compute_stats(env, since, until)
-    if err:
-        print(f"LOI (dashboard): {err}")
-    else:
-        try:
-            dashboard_path = save_dashboard(stats, since, until, period_text)
-            print()
-            print(f"DA TAO DASHBOARD: {dashboard_path}")
-        except Exception as e:
-            print(f"LOI TAO DASHBOARD: {e}")
+    try:
+        dashboard_path = save_dashboard(stats, since, until, period_text)
+        print()
+        print(f"DA TAO DASHBOARD: {dashboard_path}")
+    except Exception as e:
+        print(f"LOI TAO DASHBOARD: {e}")
 
     if args.mock is not None or args.dry:
         print()

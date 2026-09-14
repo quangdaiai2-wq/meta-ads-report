@@ -347,9 +347,16 @@ git pull
 
 ## 4. Token Meta dùng chung — hết hạn cùng lúc
 
-Token Meta hết hạn ngày **10/11/2026**. Khi đó **cả hai máy cùng ngừng hoạt động**.
+Token Meta hết hạn **khác ngày nhau**: máy nhà **10/11/2026**, máy công ty ****.
+(Trước đây tài liệu ghi cả hai cùng hết hạn 10/11 — điều đó không còn đúng, vì máy công ty
+phải đổi token ngắn hạn sang token 60 ngày vào ngày 14/09/2026.)
 
 Cần lấy token mới ở **một máy**, rồi copy sang máy kia.
+
+> ⚠️ **Sau khi lấy token mới, PHẢI kiểm hạn của nó.** Token lấy trực tiếp từ Graph API
+> Explorer chỉ sống **1–2 giờ**. Đã gặp thật ngày 14/09/2026: token chỉ còn sống 1 giờ 44
+> phút mà bài kiểm tra vẫn báo ĐẠT bình thường. Phải chạy `python doi-token-60-ngay.py`
+> để đổi sang 60 ngày.
 
 ---
 
