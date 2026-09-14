@@ -153,17 +153,39 @@ Kết quả mong đợi:
 
 ```
 THANH CONG - DA DOI TOKEN DAI HAN
-Token moi: EAAZ... (284 ky tu)
+Token moi: EAAZ... (198 ky tu)
 Song duoc : 60 ngay
-Het han   : 10/11/2026 08:30
+Het han   :  08:15
 ```
+
+> Ngày hết hạn thật = ngày bạn chạy + 60 ngày. Ví dụ trên chỉ là minh hoạ.
 
 ✅ Công cụ **tự động ghi token mới vào `.env`** — không cần copy tay.
 ✅ Nó cũng tự sao lưu file cũ thành `.env.bak` để phòng hờ.
 
+#### Bước E: KIỂM TRA LẠI — bắt buộc, đừng bỏ qua
+
+```powershell
+python kiem-tra-token.py
+```
+
+Lệnh này kiểm **cả 2 nhóm token**, và quan trọng nhất: **cho biết token Meta còn sống bao lâu**.
+
+> ⚠️ **Vì sao bắt buộc?** Nếu bạn quên chạy Bước D, token vẫn hoạt động bình thường trong
+> 1–2 giờ rồi chết — và mọi bài kiểm tra đều báo ĐẠT trong lúc đó. Đã gặp thật ngày
+> 14/09/2026: token chỉ còn sống **1 giờ 44 phút** mà `test_meta.py` vẫn báo ĐẠT.
+>
+> Nhìn dòng `Con lai`. Phải thấy khoảng **60 ngày**. Nếu thấy vài giờ ⇒ Bước D chưa xong.
+
+Script này cũng kiểm luôn:
+- Token Telegram có hợp lệ không, **và tên bot có đúng bot của máy này không**
+- Chat ID có gửi được không
+- Token Meta có quyền `ads_read` không
+- Tài khoản quảng cáo có truy cập được không
+
 ---
 
-⚠️ **Sau 60 ngày** token hết hạn → lặp lại Bước A → D.
+⚠️ **Sau 60 ngày** token hết hạn → lặp lại Bước A → E.
 Hệ thống sẽ **nhắn tin cảnh báo vào Telegram** khi token hết hạn, nên bạn sẽ không bị bỏ lỡ.
 
 ### 🔐 META_AD_ACCOUNT_ID
@@ -189,8 +211,17 @@ Hệ thống sẽ **nhắn tin cảnh báo vào Telegram** khi token hết hạn
 
 ## Kiểm tra đã đúng chưa
 
-Sau khi điền xong, gửi tin nhắn này cho tôi:
+**Cách 1 — tự kiểm, nhanh nhất.** Mở cửa sổ lệnh tại thư mục dự án rồi chạy:
+
+```powershell
+python kiem-tra-token.py
+```
+
+Script tự báo còn thiếu gì, sai ở đâu, và cách sửa. Nó **không gửi tin nhắn nào** vào Telegram
+và **không in token đầy đủ** ra màn hình.
+
+**Cách 2 — nhờ trợ lý.** Gửi tin nhắn:
 
 > Tôi đã điền xong token. Kiểm tra giúp tôi đã điền đúng chưa.
 
-Tôi sẽ kiểm tra **cấu trúc** file (không đọc nội dung token) và báo cho bạn biết còn thiếu gì.
+Trợ lý sẽ kiểm tra **cấu trúc** file (không đọc nội dung token) và báo cho bạn biết còn thiếu gì.

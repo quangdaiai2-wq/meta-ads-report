@@ -139,6 +139,7 @@ File `cai-dat-lich.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ 
 | `report.py` | **Script chính** — lấy số liệu Meta, gửi Telegram |
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
+| `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
 | `cai-dat-lich.bat` | Bật 4 lịch tự động |
 | `go-lich.bat` | Tắt 4 lịch |
 | `bat-chay-bu.bat` | Bật chạy bù khi lỡ giờ (cần quyền Admin) |

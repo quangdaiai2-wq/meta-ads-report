@@ -191,6 +191,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 dashboard.py              ← Bộ tạo file dashboard.html
 ├── 📄 dashboard.html            ← Dashboard xem báo cáo (tự tạo lại mỗi lần chạy)
 ├── 📄 doi-token-60-ngay.py      ← Công cụ gia hạn token Meta lên 60 ngày
+├── 📄 kiem-tra-token.py         ← Kiểm tra CẢ 2 nhóm token + token Meta còn sống bao lâu
 ├── 📄 cai-dat-lich.bat          ← Bấm để BẬT tự động
 ├── 📄 go-lich.bat               ← Bấm để TẮT tự động
 ├── 📄 bat-chay-bu.bat           ← Bấm để bật "chạy bù khi lỡ giờ" (cần Admin)
