@@ -164,6 +164,8 @@ Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đún
 
 > ⚠️ **Giới hạn:** Nếu lỡ NHIỀU mốc, khi máy bật lại hệ thống chỉ gửi bù **mốc gần nhất** (ví dụ bật lúc 14h chỉ gửi mốc 12h). Mốc 8h có thể không được gửi bù.
 
+> 🛡️ **Chống trùng (từ 14/09/2026):** Mỗi mốc giờ chỉ gửi **1 lần trong ngày**. Nếu nhiều lịch cùng chạy bù một lúc, hệ thống tự bỏ qua các lần trùng — bạn **không còn nhận nhiều báo cáo giống nhau**. Muốn gửi lại chủ động: `python report.py --force`.
+
 ### 2. Token Meta Ads có thể hết hạn
 
 Token Meta thường hết hạn sau một thời gian. Khi đó báo cáo sẽ báo lỗi.

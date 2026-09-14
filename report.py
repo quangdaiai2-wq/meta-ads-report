@@ -77,6 +77,50 @@ def log(message):
         pass
 
 
+# --- CHONG TRUNG BAO CAO ---
+# Ly do: khi may ngu/tat qua nhieu moc gio, Windows co the cho NHIEU lich
+# chay bu CUNG LUC. Moi lich chay `python report.py` (khong truyen moc gio)
+# nen ca bon deu tu chon moc GAN NHAT -> gui ra nhieu bao cao TRUNG NHAU.
+# Giai phap: moi moc chi gui 1 lan trong ngay. Ghi lai SAU khi gui thanh cong.
+DEDUP_FILE = LOG_DIR / "da_gui.json"
+
+
+def _doc_da_gui():
+    """Doc danh sach moc da gui thanh cong, theo tung ngay."""
+    try:
+        if DEDUP_FILE.exists():
+            data = json.loads(DEDUP_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return {}
+
+
+def da_gui_hom_nay(slot):
+    """True neu moc nay da duoc gui thanh cong trong ngay hom nay."""
+    data = _doc_da_gui()
+    return slot in data.get(datetime.now().strftime("%Y-%m-%d"), [])
+
+
+def ghi_da_gui(slot):
+    """Ghi lai moc vua gui THANH CONG (chi goi sau khi Telegram bao OK)."""
+    try:
+        LOG_DIR.mkdir(exist_ok=True)
+        data = _doc_da_gui()
+        today = datetime.now().strftime("%Y-%m-%d")
+        # Don dep: chi giu 7 ngay gan nhat cho gon
+        moc_cu = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        for k in [k for k in list(data.keys()) if k < moc_cu]:
+            del data[k]
+        data.setdefault(today, [])
+        if slot not in data[today]:
+            data[today].append(slot)
+        DEDUP_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        log(f"Khong ghi duoc trang thai chong trung: {e}")
+
+
 def send_error_alert(env, err):
     """Gui canh bao loi vao Telegram — de loi khong bao gio xay ra im lang."""
     msg = (
@@ -543,6 +587,8 @@ def main():
                         help="Chay thu voi moc gio nay (khong gui Telegram)")
     parser.add_argument("--dry", action="store_true",
                         help="Chay that nhung khong gui Telegram")
+    parser.add_argument("--force", action="store_true",
+                        help="Gui lai du moc nay da gui hom nay (bo qua chong trung)")
     args = parser.parse_args()
 
     env = load_env(Path(__file__).parent / ".env")
@@ -555,6 +601,14 @@ def main():
         # Tim moc gio gan nhat
         slot = min(REPORT_SLOTS, key=lambda s: abs(s - now.hour))
         print(f"Moc gio hien tai: {slot}h (gio may: {now.hour}h)")
+
+    # --- CHONG TRUNG: moi moc chi gui 1 lan trong ngay ---
+    # (Xem giai thich o phan khai bao DEDUP_FILE phia tren.)
+    # Chi ap dung khi gui that: bo qua che do thu (--mock/--dry) va khi dung --force.
+    if args.mock is None and not args.dry and not args.force and da_gui_hom_nay(slot):
+        print(f"[BO QUA] Moc {slot}h da duoc gui trong ngay hom nay - khong gui lai.")
+        log(f"BO QUA - moc {slot}h (da gui hom nay, tranh trung)")
+        sys.exit(0)
 
     since, until, period_text = determine_period(now, slot)
     print(f"Khoang thoi gian: {since} -> {until}")
@@ -604,6 +658,7 @@ def main():
     if ok:
         print("DA GUI BAO CAO VAO TELEGRAM")
         log(f"THANH CONG - moc {slot}h, da gui Telegram")
+        ghi_da_gui(slot)  # danh dau da gui -> chan gui trung trong ngay
     else:
         print(f"LOI GUI TELEGRAM: {err}")
         log(f"THAT BAI GUI TELEGRAM - moc {slot}h: {err}")

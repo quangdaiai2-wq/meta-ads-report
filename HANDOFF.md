@@ -1,6 +1,6 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 14/09/2026, 08:30 (giờ Việt Nam)
+**Cập nhật lần cuối:** 14/09/2026, 19:45 (giờ Việt Nam)
 
 ---
 
@@ -201,7 +201,24 @@ duy nhất** rồi dùng chung cho cả hai đầu ra. Dọn luôn 3 tham số t
 đúng định dạng tiền Việt và số liệu khớp giữa tin nhắn với HTML · chạy thật thành công,
 thời gian giảm từ 12 giây xuống 5 giây.
 
-> ⚠️ **Máy nhà vẫn đang chạy bản CŨ** (2 lần gọi API) cho tới khi `git pull`.
+> ✅ **Máy nhà đã `git pull` ngày 14/09/2026 (19:28)** — nay chạy bản mới (1 lần gọi API).
+
+### BẢN SỬA NGÀY 14/09/2026 (tối) — CHỐNG GỬI TRÙNG BÁO CÁO
+
+**Vấn đề:** khi máy ngủ/tắt qua nhiều mốc giờ, Windows cho **cả 4 lịch chạy bù CÙNG LÚC**.
+Mỗi lịch chạy `python report.py` (không truyền mốc giờ) nên đều tự chọn **mốc gần nhất**
+⇒ gửi ra nhiều báo cáo **giống hệt nhau**. Đã gặp thật ngày 14/09: máy nhà ngủ cả ngày,
+tới 19:30 gửi **3 báo cáo 17h trùng nhau** (kèm 3 file HTML).
+
+**Đã sửa:** thêm cơ chế chống trùng — mỗi mốc chỉ gửi **1 lần trong ngày**. Trạng thái ghi
+vào `logs/da_gui.json` (nằm trong `logs/` nên KHÔNG lên GitHub), và **chỉ ghi sau khi
+Telegram báo gửi thành công** (gửi lỗi thì lần sau vẫn thử lại được). Thêm cờ `--force`
+để chủ động gửi lại: `python report.py --force`.
+
+**Đã kiểm chứng:** chạy lại cùng mốc trong ngày → in `[BO QUA] Moc 17h da duoc gui trong ngay hom nay`.
+
+> 🔎 **Ghi chú còn tồn:** ngày hết hạn token trong tài liệu (mục 2) có thể đã cũ. Xác nhận
+> bằng `python kiem-tra-token.py` — đó mới là con số đúng.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
