@@ -37,7 +37,12 @@
 | `cai-dat-lich.bat` | **Sửa** | Truyền `--slot` vào từng lịch; bỏ mốc 22h |
 | `README.md` | **Sửa** | Ghi lại `--slot`, file lịch sử, mốc giờ mới |
 
-Không tạo `tests/__init__.py` — `unittest discover` với `-t .` không cần file đó.
+**Phải tạo `tests/__init__.py` (file rỗng).** Ban đầu kế hoạch này ghi "không cần file đó" —
+**đó là sai, đã kiểm chứng ngày 28/09/2026**: tạm xoá file rồi chạy
+`python -m unittest discover -s tests -t .` sẽ chết với
+`ImportError: Start directory is not importable: '...\tests'`.
+Lý do: khi `-t .` khác `-s tests`, unittest phải import `tests` như một gói, mà gói thì cần
+`__init__.py`. File này rỗng, không chứa gì.
 
 ---
 
@@ -45,6 +50,7 @@ Không tạo `tests/__init__.py` — `unittest discover` với `-t .` không c�
 
 **Files:**
 - Create: `lich_su.py`
+- Create: `tests/__init__.py` (rỗng — bắt buộc để lệnh kiểm thử chạy được)
 - Test: `tests/test_lich_su.py`
 
 **Interfaces:**
