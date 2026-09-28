@@ -33,6 +33,27 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 > ngày 12/09 ở phần "Ba điều cần biết"), nhưng từ 28/09 Đại chốt dùng chung ba mốc 8h, 12h, 17h
 > cho cả hai máy. Muốn lấy lại thì xem mục "Người trực là gì" bên dưới.
 
+### 🆕 Mục `🔵 NHẬN ĐỊNH` nay do AI viết (từ 28/09/2026)
+
+Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm ngay dưới dòng `🔵 NHẬN ĐỊNH`.
+
+**Ba điều cần biết về phần này:**
+
+1. **AI chỉ viết chữ, không tính số.** Toàn bộ con số — kể cả cột chênh lệch so với kỳ trước —
+   đều do code tính sẵn rồi đưa cho AI. AI chỉ được chép lại, không được tự tính.
+2. **AI lỗi thì báo cáo VẪN GỬI đầy đủ.** Mất mạng, sai chìa khoá, hết hạn mức… thì mục
+   NHẬN ĐỊNH hiện một dòng ghi chú, còn số liệu và hai bảng xếp hạng vẫn nguyên vẹn.
+   **Không bao giờ mất báo cáo vì AI.**
+3. **Khoảng 7 ngày đầu chưa so sánh được.** Sổ lịch sử chỉ mới bắt đầu ghi từ 12h ngày
+   28/09/2026. Khi chưa đủ số kỳ trước, AI chỉ **mô tả** số hôm nay chứ không so sánh —
+   đó là làm đúng, không phải lỗi. Đủ 7 ngày là mốc 8h tự có so sánh.
+
+> 📌 **Chỉ mốc 8h mới so sánh với kỳ trước.** Mốc 8h là báo cáo **trọn ngày hôm qua** nên so
+> được. Mốc 12h và 17h là báo cáo **một phần** của ngày hôm nay — đem nửa ngày so với ngày
+> đầy đủ là sai, nên hệ thống chủ động **không** cho AI so ở hai mốc này.
+
+Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
+
 ---
 
 ## Cách cài đặt (chỉ làm 1 lần)
@@ -230,6 +251,7 @@ do `nguoi_truc.py` đảm nhiệm. Nó:
 | Bỏ qua tin cũ | Lúc vừa khởi động, **bỏ qua toàn bộ tin nhắn đến trước đó** (chủ ý — để không trả lời một loạt tin cũ). Nhắn trước khi nó chạy thì tin đó mất, phải nhắn lại |
 | Nhịp tim | Ghi một dòng nhật ký mỗi 30 phút để biết còn sống |
 | Tự bật lại nếu chết | Lịch có trigger **lặp mỗi 5 phút**; tiến trình đang chạy thì lần lặp bị bỏ qua, tiến trình đã chết thì được bật lại |
+| Viết nhận định | Mỗi báo cáo gọi AI **một lần** để viết 3–5 câu nhận xét. AI lỗi thì bỏ qua phần đó, **báo cáo vẫn gửi đầy đủ** |
 
 **Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
 
@@ -262,6 +284,11 @@ File này là nền cho các tính năng so sánh sẽ làm sau.
 Bản ghi của báo cáo 8h — và của báo cáo 22h, **nếu máy đó có bật mốc này** — là bản **đầy đủ cả ngày**;
 bản của 12h và 17h là bản **một phần**.
 Khi cả hai loại cùng có, bản đầy đủ luôn thắng.
+
+**Chỉ ghi khi chạy THẬT** (từ 28/09/2026). Chạy thử `--dry` hoặc `--mock` **không** ghi nữa.
+Lý do: hai chế độ đó không gửi báo cáo nào, mà `--dry` lại không truyền mốc giờ nên script
+tự đoán mốc — dẫn tới sổ ghi **sai mốc**. Đã xảy ra thật: một lần chạy lúc 14h07 bị ghi thành
+mốc 12h. Phần nhận định của AI lấy sổ này làm số kỳ trước, nên ghi bẩn là AI nhận định sai.
 
 **File này không lên GitHub** — nó nằm trong `logs/`, đã bị `.gitignore` chặn.
 
@@ -315,6 +342,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 .gitignore                ← Danh sách file cấm đưa lên GitHub
 │
 ├── 📄 report.py                 ← Script chính (chạy báo cáo)
+├── 📄 ai.py                     ← Lớp AI: viết 3-5 câu nhận định (không tính số, không gửi tin)
 ├── 📄 dashboard.py              ← Bộ tạo file dashboard.html
 ├── 📄 dashboard.html            ← Dashboard xem báo cáo (tự tạo lại mỗi lần chạy)
 ├── 📄 doi-token-60-ngay.py      ← Công cụ gia hạn token Meta lên 60 ngày
@@ -331,11 +359,13 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 │
 ├── 📄 test_telegram.py          ← Test token Telegram
 ├── 📄 test_meta.py              ← Test kết nối Meta
-├── 📄 test_gemini.py            ← Test key AI (chưa dùng)
+├── 📄 test_gemini.py            ← Test chìa khoá AI (chạy sau mỗi lần đổi chìa khoá)
 ├── 📄 list_actions.py           ← Công cụ dò tên chỉ số
 ├── 📄 find_payment.py           ← Công cụ dò chỉ số thanh toán
+├── 📄 tests/                    ← Kiểm thử tự động (không gọi mạng, không tốn hạn mức)
 │
 ├── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
+├── 📄 HUONG-DAN-LAY-CHIA-KHOA-AI.md ← Hướng dẫn lấy chìa khoá AI (Gemini)
 ├── 📄 HUONG-DAN-MAY-NHA.md      ← Hướng dẫn cập nhật MÁY NHÀ (đọc khi ở nhà)
 ├── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
 └── 📄 HANDOFF.md                ← Sổ bàn giao cho máy khác (đọc file này trước khi sang máy mới)
@@ -371,6 +401,8 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Báo cáo ghi "LOI GUI TELEGRAM" | Kiểm tra token Telegram và Chat ID |
 | Số liệu ra 0 hết | Kiểm tra bộ lọc `dainq` có khớp campaign nào không |
 | `dashboard.html` mở ra trắng/trống | Chạy lại `python report.py --dry` để tạo lại file |
+| Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | Chìa khoá AI sai / hết hạn mức / mất mạng. **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
+| Phần nhận định chỉ mô tả, không so sánh | Bình thường trong ~7 ngày đầu: sổ lịch sử chưa đủ số kỳ trước. Xem mục "NHẬN ĐỊNH nay do AI viết" ở đầu file |
 
 ---
 

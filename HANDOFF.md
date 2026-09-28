@@ -1,7 +1,7 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 28/09/2026 — Giai đoạn 2 (Người trực) đã thi công xong, **chờ Đại bấm
-`cai-dat-nguoi-truc.bat`** để chữa hai lỗi đang chạy trên máy thật.
+**Cập nhật lần cuối:** 28/09/2026 — **Giai đoạn 3 (phần nhận định do AI viết) đã thi công xong
+và đã kiểm chứng thật.** Giai đoạn 2 (Người trực) đã chạy trên máy công ty.
 
 ---
 
@@ -159,6 +159,9 @@ File `cai-dat-nguoi-truc.bat` **tự dò Python**. Nếu không tìm thấy, nó
 | File | Vai trò |
 |---|---|
 | `report.py` | **Script chính** — lấy số liệu Meta, gửi Telegram |
+| `ai.py` | **Lớp AI** — viết 3–5 câu nhận định bằng Gemini. Không tính số, không gọi Meta, không gửi tin |
+| `tests/` | Kiểm thử tự động (151 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
+| `HUONG-DAN-LAY-CHIA-KHOA-AI.md` | Hướng dẫn lấy chìa khoá Gemini cho phần nhận định |
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
 | `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
@@ -347,6 +350,63 @@ bị bỏ qua, đã chết thì được bật lại trong 5 phút. Đây là c�
 > Ghi chú kèm: Người trực **bỏ qua mọi tin nhắn đến trước lúc nó khởi động** (xả tồn đọng bằng
 > `offset=-1`). Nên nhắn thử bot phải làm **sau** khi nó chạy; nhắn trước là mất tin, không phải lỗi.
 > Hệ quả: **mỗi lần khởi động lại đều nuốt tin đang chờ** — nhắn lại là được.
+
+### BẢN SỬA NGÀY 28/09/2026 (tiếp) — GIAI ĐOẠN 3: PHẦN NHẬN ĐỊNH DO AI VIẾT
+
+**Thêm gì:** file mới `ai.py`. Mục `🔵 NHẬN ĐỊNH` trong báo cáo Telegram nay có **3–5 câu tiếng
+Việt do AI viết**, thay vì chỉ hai bảng xếp hạng camp như trước.
+
+**Sáu điều bắt buộc nhớ:**
+
+1. **Số liệu và phép so sánh vẫn do CODE làm, không giao cho AI.** Đây là điểm khác lớn nhất so
+   với bản thiết kế mục 6.1. Lý do: khi để AI tự đối chiếu hai dòng số, nó dễ đọc sai mà câu văn
+   vẫn trôi chảy. `ai.bang_so_sanh()` tính sẵn **cột `chenh lech`**, AI chỉ chép lại.
+   Quyết định này ra từ việc **gọi Gemini thật** ngày 28/09/2026, không phải suy đoán.
+2. **`soan_prompt()` KHÔNG nhận tham số `env`** ⇒ về mặt cấu trúc nó **không thể** làm lộ token
+   cho AI. Chỉ `goi_gemini(env, ...)` mới chạm `env`, và chỉ để lấy chìa khoá + tên model.
+3. **Suy giảm êm — đã kiểm chứng thật.** AI lỗi (mất mạng / sai chìa khoá / hết hạn mức) thì
+   báo cáo **vẫn gửi đầy đủ**: mục NHẬN ĐỊNH hiện một dòng ghi chú, hai bảng xếp hạng vẫn nguyên.
+   Cách kiểm: chạy `report.py --slot 8 --dry` trong một thư mục tạm với `.env` **đã xoá dòng**
+   `GEMINI_API_KEY` → in ra `⚠️ Phần nhận định do AI viết tạm không có (lý do: thieu
+   GEMINI_API_KEY trong .env)` và `grep -c "Camp hiệu quả|Camp kém hiệu quả"` = 2.
+4. **Chỉ mốc 8h mới so sánh với kỳ trước.** Mốc 8h là báo cáo **trọn ngày hôm qua**. Mốc 12h/17h
+   là báo cáo **một phần** của ngày hôm nay; lịch sử không lưu số theo từng giờ nên **không thể**
+   so "0h–17h hôm nay" với "0h–17h hôm qua". Hàm quyết định: `report.la_bao_cao_tron_ngay(slot,
+   danh_sach_moc)` — so với `moc_sang()`, không viết cứng số 8.
+5. **Giới hạn ~7 ngày đầu:** `logs/lich-su.json` chỉ mới có **1 bản ghi** (từ 12h ngày 28/09)
+   ⇒ mốc 8h chưa có kỳ trước để so. Lúc đó AI **chỉ mô tả**, bảng ghi `(khong so sanh)`.
+   **Không phải lỗi.** Đừng "sửa" bằng cách bắt AI so bừa.
+6. **Tên model không viết cứng trong code.** `ai.py` đọc khoá `GEMINI_MODEL` trong `.env`, thiếu
+   thì dùng `MODEL_MAC_DINH = "gemini-3.6-flash"`. Lỗi **HTTP 404** nghĩa là **tên model sai**,
+   không phải chìa khoá sai. Cách dò danh sách model: xem `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
+
+**Ba thay đổi so với kế hoạch đã duyệt — đọc kỹ:**
+
+| # | Kế hoạch ghi | Thực tế thi công | Vì sao |
+|---|---|---|---|
+| 1 | `SO_LAN_THU_LAI = 1`, `CHO_GIUA_HAI_LAN = 3` | **`SO_LAN_THU_LAI = 2`**, `CHO_GIUA_HAI_LAN = 5` | Lần gọi Gemini **đầu tiên** khi kiểm chứng trả **503 hai lần liên tiếp** — thử lại 1 lần vẫn hỏng, phải chạy lại cả tiến trình. Chi phí: chậm nhất ~190 giây thay vì ~125. Đổi lại tỉ lệ có được phần nhận định cao hơn hẳn |
+| 2 | Task 4 "cần Đại duyệt riêng" | **Đã làm** | Đại giao toàn quyền quyết định. Và bằng chứng đã có sẵn trong chính buổi thi công: **3 lần `--dry`** đã ghi hẳn một bản ghi `2026-09-27 / moc=8 / day_du=True` vào lịch sử. GĐ3 lấy lịch sử làm số kỳ trước nên ghi bẩn là AI nhận định sai. **Muốn bỏ thì nói — chỉ cần xoá hàm `co_nen_ghi_lich_su` và trả lại điều kiện `args.mock is None`** |
+| 3 | `test_gap_503_hai_lan_thi_bo_cuoc_chu_khong_lap_vo_han` | đổi tên thành `test_gap_503_lien_tuc_thi_bo_cuoc_chu_khong_lap_vo_han`, **thêm** phép kiểm số lần thử | Tên cũ nói "hai lần" nhưng với `SO_LAN_THU_LAI = 2` thì là ba lần. Thêm `assertEqual(dem["n"], ai.SO_LAN_THU_LAI + 1)` để không bị hụt lần thử về sau mà không ai biết |
+
+**Bằng chứng kiểm chứng mạnh nhất của giai đoạn** (chạy thật, có chìa khoá, trong thư mục tạm):
+tiêm một bản ghi kỳ trước vào lịch sử rồi chạy `report.py --slot 8 --dry`. AI viết 4 câu, dùng
+**20 con số**, và phép đối chiếu tự động báo:
+
+```
+So AI viet ma KHONG co trong du lieu: KHONG CO (dat)
+```
+
+Nghĩa là **không một con số nào bị bịa** — kể cả cột chênh lệch và phần trăm.
+
+**Kiểm thử:** `151/151` đạt (trước GĐ3 là 105). Thêm `tests/test_ai.py` (28 bài) và 18 bài mới
+trong `tests/test_report.py`. Kiểm thử **không gọi mạng** — mọi lời gọi Gemini đều đi qua hàm
+giả tiêm vào bằng `goi_mang_fn=`.
+
+**Còn tồn đọng, CHƯA xử lý (cần Đại quyết trước Giai đoạn 4):** `compute_stats()` **không loại
+`good` khỏi `bad`**, nên tài khoản ít campaign có thể thấy **cùng một camp** ở cả hai bảng.
+Đến GĐ3 việc này còn đáng sửa hơn, vì AI đọc cả hai bảng để viết nhận định — thấy cùng một camp
+ở cả "hiệu quả" lẫn "kém hiệu quả" thì nhận định sẽ **mâu thuẫn**. Xem mục cuối của
+`docs/superpowers/plans/2026-09-28-giai-doan-3-nhan-dinh-ai.md`.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
