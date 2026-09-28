@@ -231,5 +231,63 @@ class TestDeterminePeriodTheoMocSang(unittest.TestCase):
         self.assertEqual(since, date(2026, 9, 28))
 
 
+class TestBuildReportCoNhanDinhAI(unittest.TestCase):
+    """Kiem thu phan nhan dinh do AI viet, chen vao bao cao."""
+
+    def setUp(self):
+        self.env = {
+            "FILTER_INCLUDE": "dainq",
+            "FILTER_EXCLUDE": "thuonghieu",
+            "REPORT_ACCOUNT_NAME": "Test",
+        }
+        self.stats = {
+            "total_campaigns": 2,
+            "totals": {"spend": 1000.0, "msg": 1, "contact": 1, "order": 1,
+                       "purchase": 2, "payment": 1, "comment": 0},
+            "good": [{"rank": 1, "id": "1", "name": "a", "spend": 500.0,
+                      "purchase": 2, "payment": 1, "msg": 1, "cpr": 250.0}],
+            "bad": [{"rank": 1, "id": "2", "name": "b", "spend": 500.0,
+                     "purchase": 0, "payment": 0, "msg": 0, "cpr": None}],
+            "all": [],
+            "include_kw": "dainq",
+            "exclude_kw": "thuonghieu",
+            "account_name": "Test",
+        }
+
+    def test_khong_co_nhan_dinh_thi_giu_nguyen_hanh_vi_cu(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026")
+        self.assertIn("🔵 NHẬN ĐỊNH", text)
+        self.assertNotIn("AI", text.split("🔵 NHẬN ĐỊNH")[1][:200])
+
+    def test_co_nhan_dinh_thi_chen_vao(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026",
+                                   nhan_dinh="Hom nay chi tieu tang 20 phan tram.")
+        self.assertIn("Hom nay chi tieu tang 20 phan tram.", text)
+
+    def test_nhan_dinh_nam_TRONG_muc_nhan_dinh(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026",
+                                   nhan_dinh="CAU_KIEM_THU")
+        phan = text.split("🔵 NHẬN ĐỊNH")[1]
+        self.assertIn("CAU_KIEM_THU", phan)
+
+    def test_co_loi_ai_thi_ghi_chu_ro_va_bao_cao_van_day_du(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026",
+                                   loi_ai="HTTP 429")
+        self.assertIn("HTTP 429", text)
+        self.assertIn("Camp hiệu quả", text)
+        self.assertIn("Camp kém hiệu quả", text)
+
+    def test_co_loi_ai_thi_noi_ro_bao_cao_van_day_du(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026",
+                                   loi_ai="het han muc")
+        self.assertIn("vẫn đầy đủ", text)
+
+    def test_co_ca_nhan_dinh_lan_loi_thi_uutien_nhan_dinh(self):
+        text = report.build_report(self.env, self.stats, "27/09/2026",
+                                   nhan_dinh="CAU_KIEM_THU", loi_ai="HTTP 429")
+        self.assertIn("CAU_KIEM_THU", text)
+        self.assertNotIn("HTTP 429", text)
+
+
 if __name__ == "__main__":
     unittest.main()

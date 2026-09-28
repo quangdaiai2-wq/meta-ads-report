@@ -517,11 +517,16 @@ def compute_stats(env, since, until):
     }, None
 
 
-def build_report(env, stats, period_text):
+def build_report(env, stats, period_text, nhan_dinh=None, loi_ai=None):
     """Tao noi dung bao cao dang text tu so lieu DA TINH SAN.
 
     KHONG goi lai Meta API o day. So lieu duoc tinh dung 1 lan trong main()
     roi dung chung cho ca bao cao text lan dashboard HTML.
+
+    nhan_dinh: chu do AI viet (main() goi AI roi truyen vao). None thi giu
+    nguyen hanh vi cu - tuong thich nguoc tuyet doi.
+    loi_ai: ly do AI khong viet duoc. In mot dong ghi chu thay cho phan nhan
+    dinh, de nguoi doc biet vi sao thieu chu khong tuong bao cao bi loi.
     """
     include_kw = env.get("FILTER_INCLUDE", "")
     account_name = env.get("REPORT_ACCOUNT_NAME", "")
@@ -554,6 +559,18 @@ def build_report(env, stats, period_text):
     lines.append("")
 
     lines.append("🔵 NHẬN ĐỊNH")
+    if nhan_dinh:
+        lines.append(nhan_dinh.strip())
+        lines.append("")
+    elif loi_ai:
+        lines.append(
+            "⚠️ Phần nhận định do AI viết tạm không có "
+            f"(lý do: {loi_ai})."
+        )
+        lines.append(
+            "Số liệu ở trên vẫn đầy đủ — báo cáo không bị ảnh hưởng."
+        )
+        lines.append("")
     lines.append(f"Camp hiệu quả (top {len(good)}):")
     if good:
         for r in good:
