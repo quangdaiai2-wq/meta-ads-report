@@ -380,13 +380,21 @@ Việt do AI viết**, thay vì chỉ hai bảng xếp hạng camp như trước
    thì dùng `MODEL_MAC_DINH = "gemini-3.6-flash"`. Lỗi **HTTP 404** nghĩa là **tên model sai**,
    không phải chìa khoá sai. Cách dò danh sách model: xem `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
 
-**Ba thay đổi so với kế hoạch đã duyệt — đọc kỹ:**
+**NĂM thay đổi so với kế hoạch đã duyệt — đọc kỹ:**
 
 | # | Kế hoạch ghi | Thực tế thi công | Vì sao |
 |---|---|---|---|
 | 1 | `SO_LAN_THU_LAI = 1`, `CHO_GIUA_HAI_LAN = 3` | **`SO_LAN_THU_LAI = 2`**, `CHO_GIUA_HAI_LAN = 5` | Lần gọi Gemini **đầu tiên** khi kiểm chứng trả **503 hai lần liên tiếp** — thử lại 1 lần vẫn hỏng, phải chạy lại cả tiến trình. Chi phí: chậm nhất ~190 giây thay vì ~125. Đổi lại tỉ lệ có được phần nhận định cao hơn hẳn |
 | 2 | Task 4 "cần Đại duyệt riêng" | **Đã làm** | Đại giao toàn quyền quyết định. Và bằng chứng đã có sẵn trong chính buổi thi công: **3 lần `--dry`** đã ghi hẳn một bản ghi `2026-09-27 / moc=8 / day_du=True` vào lịch sử. GĐ3 lấy lịch sử làm số kỳ trước nên ghi bẩn là AI nhận định sai. **Muốn bỏ thì nói — chỉ cần xoá hàm `co_nen_ghi_lich_su` và trả lại điều kiện `args.mock is None`** |
 | 3 | `test_gap_503_hai_lan_thi_bo_cuoc_chu_khong_lap_vo_han` | đổi tên thành `test_gap_503_lien_tuc_thi_bo_cuoc_chu_khong_lap_vo_han`, **thêm** phép kiểm số lần thử | Tên cũ nói "hai lần" nhưng với `SO_LAN_THU_LAI = 2` thì là ba lần. Thêm `assertEqual(dem["n"], ai.SO_LAN_THU_LAI + 1)` để không bị hụt lần thử về sau mà không ai biết |
+| 4 | `HUONG_DAN` viết **không dấu** như mọi chuỗi kỹ thuật khác | `HUONG_DAN` **viết có dấu**, thêm quy tắc "Viết tiếng Việt CÓ DẤU đầy đủ" | **Lỗi thật, bản kiểm chứng một lần của kế hoạch đã bỏ sót.** Gemini **bắt chước giọng văn của chính câu lệnh**: câu lệnh không dấu thì nó trả về không dấu (`Trong ngay 27/09/2026, tai khoan quang cao ghi nhan...`), đọc rất mệt. Gặp khoảng **50% số lần**. Đã kiểm chứng lại **3/3 lần ra có dấu đầy đủ**. Có bài kiểm `test_prompt_bat_buoc_viet_co_dau` để không ai xoá mất quy tắc này |
+| 5 | Lỗi AI chỉ trả về `HTTP <mã>` | Dịch sẵn sang tiếng Việt + kèm `error.status` | Dòng ghi chú cũ ghi `HTTP 429` — Đại đọc **không biết là hết hạn mức hay sai chìa khoá**. Nay ghi: `HTTP 429 - het han muc goi AI, thu lai sau [RESOURCE_EXHAUSTED]`. Bảng dịch ở `ai.Y_NGHIA_LOI` |
+
+**Trần miễn phí của Gemini — đo được thật:** **20 lượt/ngày** cho `gemini-3.6-flash`
+(`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Dùng thật chỉ 3 lượt/ngày nên
+thoải mái, **nhưng chạy thử `report.py` cũng tốn lượt** — thi công hôm nay đã chạm trần vì chạy
+kiểm chứng nhiều lần. Hệ quả đã kiểm chứng: báo cáo **vẫn gửi đầy đủ**, chỉ thiếu phần nhận định.
+Đã ghi cảnh báo này vào `README.md` và `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
 
 **Bằng chứng kiểm chứng mạnh nhất của giai đoạn** (chạy thật, có chìa khoá, trong thư mục tạm):
 tiêm một bản ghi kỳ trước vào lịch sử rồi chạy `report.py --slot 8 --dry`. AI viết 4 câu, dùng
@@ -398,7 +406,7 @@ So AI viet ma KHONG co trong du lieu: KHONG CO (dat)
 
 Nghĩa là **không một con số nào bị bịa** — kể cả cột chênh lệch và phần trăm.
 
-**Kiểm thử:** `151/151` đạt (trước GĐ3 là 105). Thêm `tests/test_ai.py` (28 bài) và 18 bài mới
+**Kiểm thử:** `155/155` đạt (trước GĐ3 là 105). Thêm `tests/test_ai.py` (32 bài) và 18 bài mới
 trong `tests/test_report.py`. Kiểm thử **không gọi mạng** — mọi lời gọi Gemini đều đi qua hàm
 giả tiêm vào bằng `goi_mang_fn=`.
 

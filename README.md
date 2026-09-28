@@ -54,6 +54,11 @@ Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm n
 
 Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
 
+> 💰 **Trần miễn phí: 20 lượt/ngày** (đo thật 28/09/2026). Dùng thật chỉ 3 lượt/ngày.
+> Nhưng **chạy thử `report.py` cũng tốn lượt** — muốn thử code thì chạy
+> `python -m unittest discover -s tests -t .` (không gọi mạng, không tốn lượt).
+> Hết trần thì báo cáo vẫn gửi, chỉ thiếu phần nhận định, hôm sau tự có lại.
+
 ---
 
 ## Cách cài đặt (chỉ làm 1 lần)
@@ -401,8 +406,9 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Báo cáo ghi "LOI GUI TELEGRAM" | Kiểm tra token Telegram và Chat ID |
 | Số liệu ra 0 hết | Kiểm tra bộ lọc `dainq` có khớp campaign nào không |
 | `dashboard.html` mở ra trắng/trống | Chạy lại `python report.py --dry` để tạo lại file |
-| Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | Chìa khoá AI sai / hết hạn mức / mất mạng. **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
+| Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | **Đọc lý do trong ngoặc** ngay sau đó — hệ thống ghi rõ bằng tiếng Việt (hết hạn mức / tên model sai / chìa khoá sai / mất mạng). **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
 | Phần nhận định chỉ mô tả, không so sánh | Bình thường trong ~7 ngày đầu: sổ lịch sử chưa đủ số kỳ trước. Xem mục "NHẬN ĐỊNH nay do AI viết" ở đầu file |
+| Ghi chú AI báo `het han muc goi AI` | Bản miễn phí cho **20 lượt/ngày**; chạy thử `report.py` nhiều lần cũng tốn lượt. Hôm sau tự có lại. Muốn thử code thì chạy `python -m unittest discover -s tests -t .` (không tốn lượt) |
 
 ---
 

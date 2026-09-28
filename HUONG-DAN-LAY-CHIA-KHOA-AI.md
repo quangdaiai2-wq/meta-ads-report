@@ -6,8 +6,11 @@ Dành cho Đại — người không cần biết code.
 hiện một dòng ghi chú, không có 3–5 câu nhận xét do AI viết.
 
 > ✅ **Tin tốt:** chìa khoá này **miễn phí** và lấy mất khoảng **5 phút**.
-> Hệ thống chỉ gọi AI **3 lần mỗi ngày** (mỗi báo cáo một lần), nên bản miễn phí thừa sức dùng.
-> Chi phí thực tế: **0 đồng**.
+> Hệ thống chỉ gọi AI **3 lần mỗi ngày** (mỗi báo cáo một lần). Chi phí thực tế: **0 đồng**.
+>
+> 📌 **Trần miễn phí đã đo được thật (28/09/2026): 20 lượt/ngày** cho model `gemini-3.6-flash`.
+> Dùng thật chỉ 3 lượt/ngày nên **thoải mái**. Nhưng chạy thử nhiều lần trong ngày có thể hết
+> trần — xem mục "Hết hạn mức cũng không sao" bên dưới.
 
 ---
 
@@ -109,8 +112,21 @@ Chìa khoá sai, hết hạn mức, hoặc máy mất mạng.
 
 ### 2. 💰 Hết hạn mức cũng không sao
 
-Bản miễn phí có giới hạn số lần gọi mỗi ngày. Hệ thống chỉ dùng **3 lần/ngày** nên rất khó chạm
-trần. Nếu có chạm thật thì báo cáo **vẫn gửi bình thường**, chỉ thiếu phần nhận định.
+Bản miễn phí cho **20 lượt gọi mỗi ngày** (đo thật ngày 28/09/2026). Dùng thật chỉ **3 lượt/ngày**
+nên rất khó chạm trần.
+
+⚠️ **Nhưng coi chừng: chạy thử cũng tốn lượt.** Mỗi lần chạy `python report.py` hoặc
+`python report.py --dry` là **một lượt**. Chạy thử 20 lần trong một ngày là hết trần — và lúc đó
+báo cáo vẫn gửi nhưng **thiếu phần nhận định** cho tới hôm sau.
+
+👉 **Muốn thử code thì chạy bộ kiểm thử, không cần chìa khoá và không tốn lượt nào:**
+
+```powershell
+python -m unittest discover -s tests -t .
+```
+
+**Nếu có chạm trần thật:** báo cáo **vẫn gửi bình thường**, chỉ thiếu phần nhận định. Dòng ghi
+chú sẽ ghi rõ `het han muc goi AI`. Hôm sau tự có lại, không cần làm gì.
 
 ### 3. 🖥️ Mỗi máy một chìa khoá
 
