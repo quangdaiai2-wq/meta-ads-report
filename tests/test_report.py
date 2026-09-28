@@ -289,5 +289,40 @@ class TestBuildReportCoNhanDinhAI(unittest.TestCase):
         self.assertNotIn("HTTP 429", text)
 
 
+class TestQuyetDinhKySoSanh(unittest.TestCase):
+    """Kiem thu ham quyet dinh co lay so ky truoc hay khong."""
+
+    def test_moc_sang_thi_CO_so_sanh(self):
+        self.assertTrue(report.la_bao_cao_tron_ngay(8, [8, 12, 17]))
+
+    def test_moc_12_thi_KHONG_so_sanh(self):
+        self.assertFalse(report.la_bao_cao_tron_ngay(12, [8, 12, 17]))
+
+    def test_moc_17_thi_KHONG_so_sanh(self):
+        self.assertFalse(report.la_bao_cao_tron_ngay(17, [8, 12, 17]))
+
+    def test_may_khong_co_moc_8_thi_moc_nho_nhat_la_tron_ngay(self):
+        self.assertTrue(report.la_bao_cao_tron_ngay(7, [7, 13, 20]))
+
+    def test_danh_sach_rong_thi_khong_so_sanh(self):
+        self.assertFalse(report.la_bao_cao_tron_ngay(8, []))
+
+
+class TestBoiCanh(unittest.TestCase):
+    def test_mo_ta_co_ten_tai_khoan_va_ky(self):
+        bc = report.tao_boi_canh({"REPORT_ACCOUNT_NAME": "HBR"}, "27/09/2026", True)
+        self.assertIn("HBR", bc)
+        self.assertIn("27/09/2026", bc)
+
+    def test_moc_tron_ngay_thi_noi_ro(self):
+        bc = report.tao_boi_canh({"REPORT_ACCOUNT_NAME": "HBR"}, "27/09/2026", True)
+        self.assertIn("TRON ngay", bc)
+
+    def test_moc_mot_phan_thi_noi_ro_va_khong_so_sanh(self):
+        bc = report.tao_boi_canh({"REPORT_ACCOUNT_NAME": "HBR"}, "28/09/2026", False)
+        self.assertIn("MOT PHAN", bc)
+        self.assertIn("khong so sanh", bc)
+
+
 if __name__ == "__main__":
     unittest.main()

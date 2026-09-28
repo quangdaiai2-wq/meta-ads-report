@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dashboard import save_dashboard
+import ai
 import lich_su
 
 API_VERSION = "v21.0"
@@ -96,6 +97,35 @@ def moc_sang(danh_sach_moc):
     phai sua code.
     """
     return min(danh_sach_moc) if danh_sach_moc else MOC_SANG_MAC_DINH
+
+
+def la_bao_cao_tron_ngay(slot, danh_sach_moc):
+    """True neu moc nay bao cao TRON mot ngay (thuong la moc sang).
+
+    Chi bao cao tron ngay moi so sanh duoc voi ky truoc. Bao cao moc 12h,
+    17h chi la MOT PHAN cua ngay, so voi ngay day du la sai.
+
+    Day la cho DE LAM SAI NHAT cua Giai doan 3: neu cho AI so sanh nua ngay
+    voi ngay day du thi cau van van troi chay nhung ket luan sai hoan toan.
+    """
+    if not danh_sach_moc:
+        return False
+    return slot == moc_sang(danh_sach_moc)
+
+
+def tao_boi_canh(env, period_text, tron_ngay):
+    """Cau mo ta ky bao cao, gui kem cho AI de AI khong hieu sai pham vi."""
+    ten = (env or {}).get("REPORT_ACCOUNT_NAME", "?")
+    if tron_ngay:
+        return (
+            f"Tai khoan {ten}. Day la bao cao TRON ngay {period_text}. "
+            "Co the so sanh voi so ky truoc."
+        )
+    return (
+        f"Tai khoan {ten}. Day la bao cao MOT PHAN cua ngay {period_text} "
+        "(so lieu tich luy tu 0h den gio bao cao). "
+        "khong so sanh voi ngay day du nao."
+    )
 
 
 # Canh bao SOM khi token Meta con song it hon nguong nay (ngay).
@@ -775,7 +805,31 @@ def main():
     if args.mock is None:
         luu_lich_su(stats, until, slot)
 
-    report = build_report(env, stats, period_text)
+    # --- PHAN NHAN DINH DO AI VIET ---
+    # Dat trong try: AI loi vi bat ky ly do gi cung KHONG duoc lam mat bao cao.
+    # Chi bao cao TRON ngay moi co so ky truoc de so sanh.
+    nhan_dinh = None
+    loi_ai = None
+    tron_ngay = la_bao_cao_tron_ngay(slot, danh_sach_moc)
+    try:
+        ky_truoc = None
+        if tron_ngay:
+            ky_truoc = lich_su.lay_ky_truoc(
+                LOG_DIR / "lich-su.json", until, ai.SO_NGAY_KY_TRUOC
+            )
+        nhan_dinh, loi_ai = ai.viet_nhan_dinh(
+            stats, ky_truoc, tao_boi_canh(env, period_text, tron_ngay), env=env
+        )
+        if loi_ai:
+            log(f"AI viet nhan dinh that bai: {loi_ai}")
+        else:
+            log("AI da viet xong phan nhan dinh")
+    except Exception as e:
+        nhan_dinh = None
+        loi_ai = str(e)
+        log(f"AI viet nhan dinh that bai (ngoai du kien): {e}")
+
+    report = build_report(env, stats, period_text, nhan_dinh, loi_ai)
 
     # --- Canh bao SOM neu token Meta sap het han ---
     # Dat LEN DAU bao cao de de thay, khong bi lan vao cuoi tin nhan.
