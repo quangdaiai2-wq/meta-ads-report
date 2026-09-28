@@ -8,7 +8,7 @@
 
 ✅ **Sau khi setup 1 lần, hệ thống TỰ ĐỘNG. Đại KHÔNG cần làm gì hàng ngày.**
 
-- Báo cáo tự chạy lúc **8h, 12h, 17h, 22h** mỗi ngày.
+- Báo cáo tự chạy lúc **8h, 12h, 17h** mỗi ngày.
 - `git pull` **KHÔNG bắt buộc mỗi ngày** — chỉ cần khi có cập nhật code (AI sẽ báo trước).
 
 ---

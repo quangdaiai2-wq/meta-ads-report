@@ -259,12 +259,11 @@ Bấm **Ctrl + S**, rồi đóng Notepad.
 Python : C:\Users\...\python.exe
 Script : D:\meta-ads-report\report.py
 
-Dang tao 4 lich...
+Dang tao 3 lich...
 
   [OK]  Moc 08:00 - da tao
   [OK]  Moc 12:00 - da tao
   [OK]  Moc 17:00 - da tao
-  [OK]  Moc 22:00 - da tao
 
 [OK] Da tao lich thanh cong.
 ```

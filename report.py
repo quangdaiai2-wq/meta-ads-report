@@ -40,8 +40,6 @@ def chon_moc(moc_tu_lenh, gio_hien_tai, danh_sach_moc=None):
     gan nhat, nen nhieu lich chay bu cung luc se cung doan ra mot moc va gui
     ra nhieu bao cao giong het nhau.
     """
-    if danh_sach_moc is None:
-        danh_sach_moc = REPORT_SLOTS
     if not danh_sach_moc:
         danh_sach_moc = REPORT_SLOTS
 
@@ -622,21 +620,22 @@ def luu_lich_su(stats, ngay, moc, path_lich_su=None):
     try:
         if path_lich_su is None:
             path_lich_su = LOG_DIR / "lich-su.json"
-        lich_su.ghi(path_lich_su, ngay, moc, stats)
+        if lich_su.ghi(path_lich_su, ngay, moc, stats) is False:
+            log(f"Bo qua luu lich su {ngay}: da co ban ghi day du hon")
     except Exception as e:
         log(f"Khong luu duoc lich su: {e}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Bao cao Meta Ads -> Telegram")
+    parser = argparse.ArgumentParser(description="Báo cáo Meta Ads → Telegram")
     parser.add_argument("--mock", type=int, choices=REPORT_SLOTS,
-                        help="Chay thu voi moc gio nay (khong gui Telegram)")
+                        help="Chạy thử với mốc giờ này (không gửi Telegram)")
     parser.add_argument("--slot", type=int, choices=REPORT_SLOTS,
-                        help="Moc gio do lich Windows truyen vao (dung khi gui that)")
+                        help="Mốc giờ do lịch Windows truyền vào (dùng khi gửi thật)")
     parser.add_argument("--dry", action="store_true",
-                        help="Chay that nhung khong gui Telegram")
+                        help="Chạy thật nhưng không gửi Telegram")
     parser.add_argument("--force", action="store_true",
-                        help="Gui lai du moc nay da gui hom nay (bo qua chong trung)")
+                        help="Gửi lại dù mốc này đã gửi hôm nay (bỏ qua chống trùng)")
     args = parser.parse_args()
 
     env = load_env(Path(__file__).parent / ".env")

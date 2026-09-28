@@ -36,7 +36,7 @@ if errorlevel 1 (
 echo Da co quyen Admin. Dang bat tinh nang...
 echo.
 
-powershell -NoProfile -Command "$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 15); foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17','BaoCaoMetaAds_22')) { try { Set-ScheduledTask -TaskName $n -Settings $s -ErrorAction Stop | Out-Null; Write-Host ('  [OK]  ' + $n) } catch { Write-Host ('  [LOI] ' + $n + ' - ' + $_.Exception.Message) } }"
+powershell -NoProfile -Command "$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 15); foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17')) { try { Set-ScheduledTask -TaskName $n -Settings $s -ErrorAction Stop | Out-Null; Write-Host ('  [OK]  ' + $n) } catch { Write-Host ('  [LOI] ' + $n + ' - ' + $_.Exception.Message) } }"
 
 echo.
 echo ============================================

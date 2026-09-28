@@ -227,7 +227,8 @@ phải tự đoán mốc gần nhất. Hai hậu quả, đều đã kiểm chứ
 
 1. **Mốc 22h chưa từng chạy trên máy công ty.** Đếm trong `logs/baocao.log` của máy công ty
    (14/09 – 28/09): mốc 8h có 51 dòng, 12h có 37, 17h có 27, **22h có 0**. Trên máy này báo cáo
-   "tổng kết cả ngày" chưa bao giờ tồn tại. (Máy nhà thì khác — mốc 22h có chạy, xem ghi chép 12/09.)
+   "tổng kết cả ngày" chưa bao giờ tồn tại. (Máy nhà thì khác — mốc 22h có chạy; xem ghi chép
+   ngày 12/09 trong `README.md`, mục "Ba điều cần biết".)
 2. **Vẫn gửi trùng.** Đếm số lần gửi thành công theo ngày: 14/09 = 5, 15/09 = 4, 18/09 = 4,
    24/09 = 4, 28/09 = 4 (bình thường chỉ nên 3). Sáng 28/09 lúc 08:26 gửi 4 tin trùng.
 
@@ -286,7 +287,7 @@ Tên đã kiểm chứng (nằm trong `report.py`):
 |---|---|
 | ~~12/09/2026 12:00~~ | Đã qua — lần đầu hệ thống tự chạy trên máy nhà |
 | ~~Thứ 2 (15/09)~~ | **Đã xong sớm** — cài đặt lên máy công ty ngày **14/09/2026** |
-| **14/09/2026 12:00** | Ba mốc tự chạy đầu tiên của máy công ty (12h, 17h, 22h) |
+| **14/09/2026 12:00** | Ba mốc tự chạy đầu tiên của máy công ty (12h, 17h, 22h) — ⚠️ **đã sửa:** nhật ký máy công ty chỉ có 12h và 17h, **mốc 22h có 0 dòng** (xem mục "BẢN SỬA NGÀY 28/09/2026" ở trên) |
 | **18/09/2026** | Token GitHub cũ `buddy-web-sync` hết hạn (không ảnh hưởng dự án này) |
 | **10/11/2026** | ⚠️ Token Meta **máy nhà** hết hạn |
 | **** | ⚠️ Token Meta **máy công ty** hết hạn |

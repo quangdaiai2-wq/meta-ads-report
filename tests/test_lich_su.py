@@ -1,4 +1,5 @@
 """Kiem thu module lich_su - kho luu lich su so lieu bao cao."""
+import json
 import tempfile
 import unittest
 from datetime import date, timedelta
@@ -70,6 +71,16 @@ class TestDocVaGhi(unittest.TestCase):
             lich_su.lay_mot_ngay(self.path, "2026-09-28")["tong"]["spend"], 900.0
         )
 
+    def test_ban_day_du_ghi_de_ban_day_du_khac_cung_ngay(self):
+        # Cac giai doan sau dua vao quy tac nay: moc 8h ghi ban ca ngay cho
+        # hom truoc, roi moc 22h ghi ban ca ngay moi hon cho cung khoa ngay.
+        lich_su.ghi(self.path, "2026-09-28", 8, stats_mau(spend=900.0))
+        lich_su.ghi(self.path, "2026-09-28", 22, stats_mau(spend=950.0))
+        ban_ghi = lich_su.lay_mot_ngay(self.path, "2026-09-28")
+        self.assertTrue(ban_ghi["day_du"])
+        self.assertEqual(ban_ghi["moc"], 22)
+        self.assertEqual(ban_ghi["tong"]["spend"], 950.0)
+
     def test_nhan_doi_tuong_date_chu_khong_chi_chuoi(self):
         lich_su.ghi(self.path, date(2026, 9, 27), 8, stats_mau())
         self.assertIsNotNone(lich_su.lay_mot_ngay(self.path, "2026-09-27"))
@@ -80,6 +91,21 @@ class TestDocVaGhi(unittest.TestCase):
     def test_file_hong_thi_doc_tra_ve_rong_khong_no(self):
         self.path.write_text("{ day khong phai json", encoding="utf-8")
         self.assertEqual(lich_su.doc(self.path), {})
+
+    def test_gia_tri_khong_phai_dict_khong_lam_no_ghi(self):
+        # File co mot gia tri hong (so thay vi dict) khong duoc lam ghi() no,
+        # va khong duoc lam mat cac ban ghi tot khac.
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=100.0))
+        du_lieu = json.loads(self.path.read_text(encoding="utf-8"))
+        du_lieu["2026-09-28"] = 5
+        self.path.write_text(json.dumps(du_lieu), encoding="utf-8")
+
+        lich_su.ghi(self.path, "2026-09-29", 8, stats_mau(spend=300.0))
+
+        self.assertEqual(
+            lich_su.lay_mot_ngay(self.path, "2026-09-27")["tong"]["spend"], 100.0
+        )
+        self.assertIsNotNone(lich_su.lay_mot_ngay(self.path, "2026-09-29"))
 
     def test_ghi_tu_tao_thu_muc_neu_chua_co(self):
         sau = Path(self.tmp.name) / "logs" / "lich-su.json"
@@ -141,6 +167,11 @@ class TestLayKhoang(unittest.TestCase):
         lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=400.0))
         kq = lich_su.lay_ky_truoc(self.path, "2026-09-27", 1)
         self.assertEqual(kq["so_ngay"], 0)
+
+    def test_lay_ky_truoc_ngay_sai_dinh_dang_tra_ve_tong_rong(self):
+        kq = lich_su.lay_ky_truoc(self.path, "khong-phai-ngay", 7)
+        self.assertEqual(kq["so_ngay"], 0)
+        self.assertEqual(kq["tong"]["spend"], 0.0)
 
 
 if __name__ == "__main__":

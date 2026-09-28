@@ -2,8 +2,8 @@
 REM ============================================
 REM CAI DAT LICH CHAY TU DONG CHO BAO CAO META ADS
 REM ============================================
-REM Chay file nay 1 lan duy nhat de tao 4 lich trong Windows Task Scheduler.
-REM Sau khi chay xong, script se tu dong gui bao cao vao 8h, 12h, 17h, 22h hang ngay.
+REM Chay file nay 1 lan duy nhat de tao 3 lich trong Windows Task Scheduler.
+REM Sau khi chay xong, script se tu dong gui bao cao vao 8h, 12h, 17h hang ngay.
 REM
 REM CACH CHAY: bam dup chuot vao file nay
 REM Neu bao loi quyen: chuot phai -> Run as administrator
@@ -81,11 +81,11 @@ REM --- Xoa lich cu neu co (de tranh trung) ---
 for %%H in (08 12 17 22) do (
     schtasks /Delete /TN "BaoCaoMetaAds_%%H" /F >nul 2>&1
 )
-for %%H in (8 22) do (
+for %%H in (8 12 17 22) do (
     schtasks /Delete /TN "BaoCaoMetaAds_%%H" /F >nul 2>&1
 )
 
-echo Dang tao 4 lich...
+echo Dang tao 3 lich...
 echo.
 
 REM Ngay 28/09/2026: bo moc 22h. Ly do: kiem tra logs/baocao.log cho thay moc 22h

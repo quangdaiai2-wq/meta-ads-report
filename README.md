@@ -59,6 +59,14 @@ Bạn sẽ thấy thông báo:
 [OK]  Moc 17:00 - da tao
 ```
 
+> ⚠️ **Chạy file này từ đúng thư mục dự án.** `cai-dat-lich.bat` tự lấy đường dẫn `report.py`
+> từ chính thư mục chứa nó, nên phải bấm nó ở thư mục có `.env` và `logs/`. Nếu bấm từ một bản
+> code khác, lịch đang chạy thật sẽ bị trỏ sang bản code đó.
+>
+> ⚠️ **Dòng `[OK]` của `schtasks` chỉ chứng tỏ lệnh tạo lịch không báo lỗi**, chứ không chứng
+> minh tham số truyền vào đã đúng. Phải kiểm riêng phần tham số — cách kiểm `--slot` nằm ở mục
+> "Kiểm chứng `--slot` đã vào lịch chưa" trong phần Ghi chú kỹ thuật.
+
 **Xong.** Từ nay hệ thống tự chạy.
 
 ---
@@ -185,7 +193,7 @@ Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đún
 
 > ⚠️ **Giới hạn:** Nếu lỡ NHIỀU mốc, khi máy bật lại hệ thống chỉ gửi bù **mốc gần nhất** (ví dụ bật lúc 14h chỉ gửi mốc 12h). Mốc 8h có thể không được gửi bù.
 
-> 🛡️ **Chống trùng (từ 14/09/2026):** Mỗi mốc giờ chỉ gửi **1 lần trong ngày**. Nhưng cơ chế này chỉ là **lưới an toàn**: nó kiểm tra sổ rồi mới ghi, nên khi nhiều lịch chạy bù **cùng lúc** thì cả loạt đều lọt qua — đã xảy ra thật, sáng 28/09/2026 gửi 4 tin trùng. Thứ chặn được từ gốc là tham số `--slot`, xem mục "Tham số `--slot`" ở phần Ghi chú kỹ thuật. Muốn gửi lại chủ động: `python report.py --force`.
+> 🛡️ **Chống trùng (từ 14/09/2026):** Mỗi mốc giờ chỉ gửi **1 lần trong ngày**. Nhưng cơ chế này chỉ là **lưới an toàn**: nó kiểm tra sổ rồi mới ghi, nên khi nhiều lịch chạy bù **cùng lúc** thì cả loạt đều lọt qua — đã xảy ra thật, sáng 28/09/2026 gửi 4 tin trùng. Tham số `--slot` (xem mục "Tham số `--slot`" ở phần Ghi chú kỹ thuật) chặn được những tin **giống hệt nhau** — loại do mọi lịch đều đoán ra cùng một mốc. Nhưng buổi sáng chạy bù, lịch 12h và lịch 17h vẫn có thể báo **cùng một khoảng** và trông như trùng nhau — chuyện này chỉ chữa dứt điểm ở Giai đoạn 2 (tiến trình thường trú). Muốn gửi lại chủ động: `python report.py --force`.
 
 ### 2. Token Meta Ads có thể hết hạn
 
@@ -334,6 +342,27 @@ mốc gần nhất với giờ hiện tại. Khi máy ngủ qua nhiều mốc, W
 
 **Lưu ý:** cơ chế chống trùng cũ (`logs/da_gui.json`) vẫn còn, nhưng chỉ là lưới an toàn —
 nó kiểm tra rồi mới ghi, nên khi nhiều tiến trình chạy đồng thời thì cả loạt đều lọt qua.
-`--slot` mới là thứ chặn từ gốc.
+`--slot` chặn được những tin **giống hệt nhau** (do mọi lịch đoán ra cùng một mốc).
+
+**Còn sót lại:** vào buổi sáng chạy bù, `determine_period()` cho mốc 12h và 17h cùng ra
+`(hôm nay, hôm nay)`, nên hai lịch này có thể báo **cùng một khoảng** và trông như trùng
+nhau — số tin trùng giảm từ 4 xuống 3, chứ không về 0. Việc này được chữa dứt điểm ở
+Giai đoạn 2 (tiến trình thường trú).
 
 **Không có `--slot`** (chạy tay): script vẫn đoán mốc gần nhất như cũ, để tương thích ngược.
+
+### Kiểm chứng `--slot` đã vào lịch chưa
+
+Dòng `[OK]` khi tạo lịch **không** chứng minh tham số đã đúng — nó chỉ nói `schtasks` không
+báo lỗi. Kiểm riêng bằng PowerShell (`schtasks.exe` có thể bị chính sách công ty chặn):
+
+```powershell
+foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17')) {
+  $t = Get-ScheduledTask -TaskName $n -ErrorAction SilentlyContinue
+  if (-not $t) { Write-Host "$n : KHONG TIM THAY"; continue }
+  foreach ($a in $t.Actions) { Write-Host ($n + " Args=" + $a.Arguments) }
+}
+```
+
+**Điều kiện đạt:** `Args` của `BaoCaoMetaAds_08` phải chứa `--slot 08`, của `BaoCaoMetaAds_12`
+phải chứa `--slot 12`, của `BaoCaoMetaAds_17` phải chứa `--slot 17`.

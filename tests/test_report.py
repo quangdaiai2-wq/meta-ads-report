@@ -1,6 +1,10 @@
 """Kiem thu phan chon moc gio cua report.py."""
+import tempfile
 import unittest
+from datetime import date
+from pathlib import Path
 
+import lich_su
 import report
 
 
@@ -33,13 +37,6 @@ class TestChonMoc(unittest.TestCase):
                 self.assertEqual(report.chon_moc(moc, 3, [8, 12, 17, 22]), moc)
 
 
-import tempfile
-from datetime import date
-from pathlib import Path
-
-import lich_su
-
-
 def _hang_camp(cid, ten, spend, purchase):
     """Tao mot dong du lieu giong Meta tra ve."""
     actions = []
@@ -58,10 +55,16 @@ def _hang_camp(cid, ten, spend, purchase):
 class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
     def setUp(self):
         self.goc = report.fetch_insights
+        # 6 camp "dainq" du dieu kien — nhieu hon TOP_CAMPAIGN_COUNT (5),
+        # de bai test "all khong bi cat theo top-N" that su bat duoc loi.
         self.rows = [
             _hang_camp("1", "dainq A", 100, 5),
             _hang_camp("2", "dainq B", 50, 0),
             _hang_camp("3", "thuonghieu X", 999, 9),
+            _hang_camp("4", "dainq C", 10, 1),
+            _hang_camp("5", "dainq D", 20, 2),
+            _hang_camp("6", "dainq E", 30, 3),
+            _hang_camp("7", "dainq F", 40, 4),
         ]
         report.fetch_insights = lambda env, since, until: (self.rows, None)
         self.env = {
@@ -81,7 +84,7 @@ class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
 
     def test_all_chua_moi_camp_du_dieu_kien_khong_chi_top(self):
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
-        self.assertEqual(len(stats["all"]), 2)
+        self.assertEqual(len(stats["all"]), 6)
 
     def test_all_loai_bo_camp_bi_loc(self):
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
@@ -97,16 +100,21 @@ class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
 
     def test_good_va_bad_van_nhu_cu(self):
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
-        self.assertEqual(len(stats["good"]), 1)
-        self.assertEqual(len(stats["bad"]), 2)
+        self.assertEqual(len(stats["good"]), 5)
+        self.assertEqual(len(stats["bad"]), 5)
 
 
 class TestLuuLichSu(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.path = Path(self.tmp.name) / "lich-su.json"
+        # Chan ghi vao logs/baocao.log THAT: bai test khong duoc lam ban nhat ky
+        # san xuat (truoc day chay test la thay dong "Khong luu duoc lich su").
+        self._log_goc = report.log
+        report.log = lambda *a, **k: None
 
     def tearDown(self):
+        report.log = self._log_goc
         self.tmp.cleanup()
 
     def test_luu_duoc_so_lieu(self):
