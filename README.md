@@ -26,9 +26,11 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 | ☀️ **12:00** | Kết quả từ 0h đến 12h hôm nay |
 | 🌤️ **17:00** | Kết quả từ 0h đến 17h hôm nay |
 
-> 📌 **Mốc 22h đã bỏ từ 28/09/2026.** Lý do: kiểm tra `logs/baocao.log` cho thấy mốc 22h
-> **chưa từng chạy một lần nào** kể từ khi lắp hệ thống, và khi máy thức dậy buổi sáng thì
-> lịch 22h chạy bù và tự đoán ra mốc 8h — gây ra báo cáo trùng.
+> 📌 **Mốc 22h đã bỏ trên máy công ty từ 28/09/2026.** Lý do: đếm trong `logs/baocao.log` **của máy
+> công ty** (14/09 – 28/09) thì mốc 8h có 51 dòng, 12h có 37, 17h có 27, còn **mốc 22h có 0 dòng** —
+> trên máy này nó chưa từng báo cáo một lần nào. Khi máy thức dậy buổi sáng, lịch 22h chạy bù và
+> tự đoán ra mốc 8h — gây ra báo cáo trùng.
+> (Máy nhà trước đây vẫn chạy được mốc 22h — xem ghi chép ngày 12/09 ở phần "Ba điều cần biết".)
 
 ---
 
@@ -151,7 +153,8 @@ Không có số cũ thì không thể trả lời những câu như *"tuần nà
 File này là nền cho các tính năng so sánh sẽ làm sau.
 
 **Có gì trong đó:** mỗi ngày một bản ghi, gồm tổng 7 chỉ số và danh sách toàn bộ campaign.
-Bản ghi của báo cáo 8h và 22h là bản **đầy đủ cả ngày**; bản của 12h và 17h là bản **một phần**.
+Bản ghi của báo cáo 8h — và của báo cáo 22h, **nếu máy đó có bật mốc này** — là bản **đầy đủ cả ngày**;
+bản của 12h và 17h là bản **một phần**.
 Khi cả hai loại cùng có, bản đầy đủ luôn thắng.
 
 **File này không lên GitHub** — nó nằm trong `logs/`, đã bị `.gitignore` chặn.
@@ -182,7 +185,7 @@ Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đún
 
 > ⚠️ **Giới hạn:** Nếu lỡ NHIỀU mốc, khi máy bật lại hệ thống chỉ gửi bù **mốc gần nhất** (ví dụ bật lúc 14h chỉ gửi mốc 12h). Mốc 8h có thể không được gửi bù.
 
-> 🛡️ **Chống trùng (từ 14/09/2026):** Mỗi mốc giờ chỉ gửi **1 lần trong ngày**. Nếu nhiều lịch cùng chạy bù một lúc, hệ thống tự bỏ qua các lần trùng — bạn **không còn nhận nhiều báo cáo giống nhau**. Muốn gửi lại chủ động: `python report.py --force`.
+> 🛡️ **Chống trùng (từ 14/09/2026):** Mỗi mốc giờ chỉ gửi **1 lần trong ngày**. Nhưng cơ chế này chỉ là **lưới an toàn**: nó kiểm tra sổ rồi mới ghi, nên khi nhiều lịch chạy bù **cùng lúc** thì cả loạt đều lọt qua — đã xảy ra thật, sáng 28/09/2026 gửi 4 tin trùng. Thứ chặn được từ gốc là tham số `--slot`, xem mục "Tham số `--slot`" ở phần Ghi chú kỹ thuật. Muốn gửi lại chủ động: `python report.py --force`.
 
 ### 2. Token Meta Ads có thể hết hạn
 

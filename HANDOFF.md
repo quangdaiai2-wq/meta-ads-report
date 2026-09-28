@@ -225,8 +225,9 @@ Telegram báo gửi thành công** (gửi lỗi thì lần sau vẫn thử lại
 **Vấn đề gốc:** `cai-dat-lich.bat` tạo lịch mà **không truyền mốc giờ**, nên `report.py`
 phải tự đoán mốc gần nhất. Hai hậu quả, đều đã kiểm chứng bằng `logs/baocao.log`:
 
-1. **Mốc 22h chưa từng chạy.** Đếm trong toàn bộ nhật ký: mốc 8h có 51 dòng, 12h có 37,
-   17h có 27, **22h có 0**. Báo cáo "tổng kết cả ngày" chưa bao giờ tồn tại.
+1. **Mốc 22h chưa từng chạy trên máy công ty.** Đếm trong `logs/baocao.log` của máy công ty
+   (14/09 – 28/09): mốc 8h có 51 dòng, 12h có 37, 17h có 27, **22h có 0**. Trên máy này báo cáo
+   "tổng kết cả ngày" chưa bao giờ tồn tại. (Máy nhà thì khác — mốc 22h có chạy, xem ghi chép 12/09.)
 2. **Vẫn gửi trùng.** Đếm số lần gửi thành công theo ngày: 14/09 = 5, 15/09 = 4, 18/09 = 4,
    24/09 = 4, 28/09 = 4 (bình thường chỉ nên 3). Sáng 28/09 lúc 08:26 gửi 4 tin trùng.
 
