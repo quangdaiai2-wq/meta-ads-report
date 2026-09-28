@@ -1,7 +1,11 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 28/09/2026 — **Giai đoạn 3 (phần nhận định do AI viết) đã thi công xong
-và đã kiểm chứng thật.** Giai đoạn 2 (Người trực) đã chạy trên máy công ty.
+**Cập nhật lần cuối:** 28/09/2026 — **Giai đoạn 3 (phần nhận định do AI viết) đã thi công xong,
+đã kiểm chứng thật, và ĐÃ ĐẨY LÊN GITHUB** (`37d927a`). Lỗi hai bảng xếp hạng trùng nhau cũng đã
+sửa xong. Giai đoạn 2 (Người trực) đã chạy trên máy công ty.
+
+> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3, rồi thêm `GEMINI_API_KEY` vào `.env`
+> (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
 
 ---
 
@@ -33,7 +37,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 2 | Người trực (từ 28/09/2026) | Một lịch `NguoiTruc` chạy `nguoi_truc.py` khi đăng nhập. Ba lịch `BaoCaoMetaAds_08/12/17` đã bị bỏ |
 | 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 3 lịch |
 | 4 | Dashboard HTML | Tự tạo lại mỗi lần chạy |
-| 5 | Đẩy code lên GitHub | 4 bản ghi, nhánh `main`, kho riêng tư |
+| 5 | Đẩy code lên GitHub | Nhánh `main`, kho riêng tư. **Mốc mới nhất 28/09/2026: `37d927a`** (gồm cả GĐ3) |
 | 6 | Cảnh báo lỗi qua Telegram | Tự gửi tin khi có sự cố |
 
 ### Đã hoàn thành (trên máy công ty — ngày 14/09/2026)
