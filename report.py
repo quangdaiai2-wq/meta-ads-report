@@ -26,6 +26,36 @@ GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 # Cac moc gio bao cao (gio Viet Nam)
 REPORT_SLOTS = [8, 12, 17, 22]
 
+
+def chon_moc(moc_tu_lenh, gio_hien_tai, danh_sach_moc=None):
+    """Chon moc gio bao cao.
+
+    moc_tu_lenh:  so nguyen do lich Windows truyen vao (co --slot), hoac None.
+    gio_hien_tai: gio cua may, 0-23.
+    danh_sach_moc: danh sach moc hop le; None thi dung REPORT_SLOTS.
+
+    CO --slot thi tra ve DUNG moc do, khong doan gi ca.
+    Day la diem chua loi gui trung: truoc day moi tien trinh deu tu doan moc
+    gan nhat, nen nhieu lich chay bu cung luc se cung doan ra mot moc va gui
+    ra nhieu bao cao giong het nhau.
+    """
+    if danh_sach_moc is None:
+        danh_sach_moc = REPORT_SLOTS
+    if not danh_sach_moc:
+        danh_sach_moc = REPORT_SLOTS
+
+    if moc_tu_lenh is not None:
+        if moc_tu_lenh not in danh_sach_moc:
+            raise ValueError(
+                f"Moc {moc_tu_lenh}h khong nam trong danh sach moc {danh_sach_moc}"
+            )
+        return moc_tu_lenh
+
+    # Khong co --slot: giu cach cu (doan moc gan nhat) de khong pha vo
+    # cac lich cu trong luc chuyen doi.
+    return min(danh_sach_moc, key=lambda s: abs(s - gio_hien_tai))
+
+
 # Canh bao SOM khi token Meta con song it hon nguong nay (ngay).
 # Muc dich: bao TRUOC khi token chet, de con kip lay token moi.
 # Truoc day he thong chi bao SAU khi token da chet (luc do moi bao cao that bai).
@@ -585,6 +615,8 @@ def main():
     parser = argparse.ArgumentParser(description="Bao cao Meta Ads -> Telegram")
     parser.add_argument("--mock", type=int, choices=REPORT_SLOTS,
                         help="Chay thu voi moc gio nay (khong gui Telegram)")
+    parser.add_argument("--slot", type=int, choices=REPORT_SLOTS,
+                        help="Moc gio do lich Windows truyen vao (dung khi gui that)")
     parser.add_argument("--dry", action="store_true",
                         help="Chay that nhung khong gui Telegram")
     parser.add_argument("--force", action="store_true",
@@ -598,9 +630,11 @@ def main():
         slot = args.mock
         print(f"[CHE DO THU] Moc gio: {slot}h")
     else:
-        # Tim moc gio gan nhat
-        slot = min(REPORT_SLOTS, key=lambda s: abs(s - now.hour))
-        print(f"Moc gio hien tai: {slot}h (gio may: {now.hour}h)")
+        slot = chon_moc(args.slot, now.hour, REPORT_SLOTS)
+        if args.slot is not None:
+            print(f"Mốc giờ do lịch truyền vào: {slot}h")
+        else:
+            print(f"Moc gio hien tai: {slot}h (gio may: {now.hour}h)")
 
     # --- CHONG TRUNG: moi moc chi gui 1 lan trong ngay ---
     # (Xem giai thich o phan khai bao DEDUP_FILE phia tren.)
