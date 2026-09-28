@@ -14,31 +14,42 @@
 
 ## Kế hoạch này đã được kiểm chứng trước khi giao
 
-Trước khi giao, tôi đã **dựng thử toàn bộ code của kế hoạch trong một thư mục tạm**: sao chép
-`report.py`, `lich_su.py`, `dashboard.py`, `nguoi_truc.py` và cả bốn file kiểm thử ra ngoài, áp
-đúng **tám sửa đổi** của kế hoạch vào `report.py`, viết `ai.py` và `tests/test_ai.py` theo đúng
-văn bản dưới đây, rồi chạy. Kết quả:
+Trước khi giao, tôi đã **dựng thử toàn bộ code của kế hoạch trong một thư mục tạm**. Cách làm:
+một script **trích thẳng các khối ```python từ chính file kế hoạch này** ra thành file thật
+(`ai.py`, `tests/test_ai.py`, các khối thêm vào `tests/test_report.py`), áp **tám sửa đổi** của
+kế hoạch vào `report.py`, rồi chạy. Nhờ trích thẳng nên phép kiểm này còn chứng minh **các khối
+code trong kế hoạch không bị thiếu**. Kết quả:
 
 | Phép kiểm | Kết quả |
 |---|---|
 | Tám sửa đổi áp vào `report.py` thật | Khớp **cả tám** vị trí, không chỗ nào lệch |
-| Toàn bộ kiểm thử | **144/144 đạt** |
+| Toàn bộ kiểm thử | **151/151 đạt** |
 | `report.py --help` khi **chưa có** `.env` | Vẫn chạy, in usage bình thường |
 | Gọi `build_report(env, stats, period_text)` **3 tham số như cũ** | Chạy được, **không** có dòng ghi chú AI (tương thích ngược tuyệt đối) |
 | Đường AI lỗi: `build_report(..., None, "thieu GEMINI_API_KEY trong .env")` | Mục NHẬN ĐỊNH hiện dòng ghi chú, **và** hai bảng `Camp hiệu quả` / `Camp kém hiệu quả` vẫn còn |
-| `build_report` có đúng 5 tham số, hai tham số cuối có giá trị mặc định | Đúng |
+| Gọi Gemini **thật** bằng chìa khoá của Đại | Chạy được; `gemini-3.6-flash` hoạt động ⇒ `MODEL_MAC_DINH` đã đặt đúng |
+| Phép kiểm tự động "AI có bịa số không" | `KHONG CO (dat)` — không con số nào ngoài dữ liệu |
 
-**Một lỗi của kế hoạch đã bị phép kiểm này bắt được và đã sửa:** bài
-`test_khi_co_ky_truoc_thi_cho_phep_so_sanh` ban đầu kiểm `assertNotIn("KHONG co so ky truoc")` —
-nhưng **chính câu đó có sẵn trong phần HUONG_DAN gửi cho AI** ("Neu KHONG co so ky truoc thi chi
-mo ta…"), nên phép kiểm **luôn thất bại** dù code đúng. Đã đổi dấu kiểm thành
-`CHUA CO SO KY TRUOC` (chữ in hoa, khác hẳn câu trong hướng dẫn) và ghi chú lý do ngay trong
-`ai.py` để người sau không vô tình đổi lại. Ghi lại đây để người thi công biết chỗ đó là **cố ý**.
+**Số bài kiểm thử đã đếm thật, không phải đoán:** `test_ai` 28 · `test_report` 52 ·
+`test_lich_su` 20 · `test_nguoi_truc` 51 · **tổng 151**.
 
-**Số bài kiểm thử đã đếm thật, không phải đoán:** `test_ai` 21 bài · `test_report` 52 bài ·
-`test_lich_su` 20 bài · `test_nguoi_truc` 51 bài · **tổng 144**.
+### Hai lỗi của kế hoạch đã bị các phép kiểm này bắt được và đã sửa
 
-Thư mục tạm đã được xoá sau khi kiểm chứng. Việc dựng thử **không** thay đổi gì trong repo thật.
+1. **Dấu kiểm trùng với câu trong hướng dẫn.** Bài `test_khi_co_ky_truoc_thi_cho_phep_so_sanh`
+   ban đầu kiểm `assertNotIn("KHONG co so ky truoc")` — nhưng **chính câu đó có sẵn trong phần
+   HUONG_DAN gửi cho AI**, nên phép kiểm **luôn thất bại** dù code đúng. Đã đổi sang dấu trong
+   ngoặc `(khong so sanh)` và ghi chú lý do ngay trong `ai.py`.
+2. **Số bài kiểm thử trong bản đầu là đoán.** Bản đầu ghi 125/131/139/143; đếm thật là
+   133/139/147/151. Đã sửa hết.
+
+### Một điểm thiết kế đã đổi hẳn nhờ phép thử thật
+
+Bản đầu giao cho AI tự đối chiếu hai dòng số rồi so sánh. Sau khi **gọi Gemini thật** và đọc
+kết quả, tôi đổi thành **code tính sẵn cột `chenh lech`** — xem lý do ở Task 1. Đây là thay đổi
+lớn nhất của kế hoạch so với bản nháp đầu.
+
+Thư mục tạm và các script dựng thử đã được xoá sau khi kiểm chứng. Việc dựng thử **không** thay
+đổi gì trong repo thật.
 
 ---
 
@@ -100,6 +111,7 @@ với một báo cáo thật đã gửi. **Nếu Đại không đồng ý thì b
 | 3 | Mục 6.1: luôn so với "số kỳ trước" | Chỉ so khi có **bản ghi đầy đủ thật**; không có thì chỉ mô tả | Xem mục "ĐỌC TRƯỚC KHI DUYỆT" — hiện có 0 ngày dữ liệu kỳ trước |
 | 4 | Mục 5.3: dùng Gemini, không nói tên model | **Không viết cứng tên model.** Đọc khoá `GEMINI_MODEL` trong `.env`, thiếu thì dùng mặc định | Tên model Gemini thay đổi theo thời gian; lỗi 404 vì tên model là lỗi đã gặp thật. Kèm cách **dò danh sách model** bằng chính chìa khoá của Đại |
 | 5 | Mục 5.4: "tách phần gửi thành hàm gọi được từ cả hai chỗ" | **Vẫn không làm** — giống quyết định của Giai đoạn 2 | `nguoi_truc.py` gọi `report.py` bằng tiến trình riêng; đã chạy đúng, không cần đụng lại |
+| 6 | Mục 6.1 + 11: AI tự so "số hôm nay với số kỳ trước" | **CODE tính sẵn bảng so sánh** (cột `chenh lech`), AI chỉ chép lại | Đây là **thay đổi quan trọng nhất** của kế hoạch. Lý do: tôi đã gọi Gemini thật và thấy nếu để AI tự đối chiếu hai dòng số thì nó phải tự làm phép so sánh — mà phép so sánh là **phép tính**, không phải phán đoán. Nguyên tắc của dự án là phép tính do code làm. Xem chi tiết ở Task 1 |
 
 ---
 
@@ -140,14 +152,29 @@ thiết kế gọi là "điều kiện bắt buộc": *Đại không bao giờ m
 
 ---
 
-## Việc Đại phải làm — và làm được NGAY, không cần chờ code xong
+## Việc Đại phải làm — ✅ ĐÃ LÀM XONG NGÀY 28/09/2026
 
-Đại lấy chìa khoá trước, song song với lúc tôi viết code. Bốn bước:
+Đại đã lấy chìa khoá Gemini và dán vào `.env`. **Đã kiểm chứng chạy được:**
 
-**Bước 1.** Mở trình duyệt, vào **aistudio.google.com/apikey** (đăng nhập bằng tài khoản Google).
+```
+KIEM TRA GEMINI API KEY
+Key: 53 ky tu
+[1/1] Dang goi Gemini API...
+    OK - Gemini tra loi: Bằng 4.
+KET QUA: GEMINI API KEY HOAT DONG TOT
+```
+
+⇒ **Không có lỗi 404.** Model `gemini-3.6-flash` (model `test_gemini.py` đang dùng) **chạy được
+với chìa khoá của Đại**, nên `MODEL_MAC_DINH` trong `ai.py` đã đặt đúng giá trị đó. Không cần
+dò danh sách model.
+
+Bốn bước đã làm, ghi lại để máy nhà làm theo:
+
+**Bước 1.** Vào **aistudio.google.com/apikey** (đăng nhập bằng tài khoản Google).
 **Bước 2.** Bấm **Create API key** → chọn project có sẵn hoặc tạo project mới → **copy chìa khoá**.
-**Bước 3.** Mở file `.env` bằng Notepad, tìm dòng `GEMINI_API_KEY=`, dán chìa khoá vào **sau dấu `=`**, lưu lại.
-**Bước 4.** Kiểm tra — mở cửa sổ lệnh tại thư mục dự án, dán dòng này:
+**Bước 3.** Bấm **`mo-file-env.bat`** để mở đúng file `.env`, tìm dòng `GEMINI_API_KEY=`, dán
+chìa khoá vào **sau dấu `=`**, bấm **Ctrl + S**.
+**Bước 4.** Kiểm tra:
 
 ```powershell
 python test_gemini.py
@@ -155,18 +182,14 @@ python test_gemini.py
 
 Kết quả phải ghi **`GEMINI API KEY HOAT DONG TOT`**.
 
-> ⚠️ **Nếu báo `LOI HTTP 404`** — nghĩa là **tên model** trong `test_gemini.py` không còn đúng,
-> không phải chìa khoá sai. Cách dò tên model đúng, dán nguyên dòng này (chìa khoá đọc từ `.env`,
-> không in ra màn hình):
+> ⚠️ **Nếu máy nhà báo `LOI HTTP 404`** — nghĩa là **tên model** không còn đúng, không phải chìa
+> khoá sai. Cách dò tên model đúng, dán nguyên dòng này (chìa khoá đọc từ `.env`, không in ra):
 >
 > ```powershell
 > python -c "import json,urllib.request,report; k=report.load_env('.env')['GEMINI_API_KEY']; d=json.loads(urllib.request.urlopen('https://generativelanguage.googleapis.com/v1beta/models?key='+k,timeout=30).read()); [print('  ', m['name'], '|', m.get('supportedGenerationMethods')) for m in d.get('models',[])]"
 > ```
 >
-> Tìm dòng có `generateContent` và có chữ `flash` trong tên → đó là tên model cần dùng. Gửi kết quả cho tôi.
-
-Hướng dẫn đầy đủ hơn (kèm ảnh chụp từng màn hình nếu cần) sẽ được viết thành file
-`HUONG-DAN-LAY-CHIA-KHOA-AI.md` ở Task 5.
+> Tìm dòng có `generateContent` và có chữ `flash` trong tên → ghi tên đó vào `GEMINI_MODEL` trong `.env`.
 
 ---
 
@@ -196,14 +219,51 @@ Hướng dẫn đầy đủ hơn (kèm ảnh chụp từng màn hình nếu cầ
 **Interfaces:**
 - Consumes: không (chỉ thư viện chuẩn)
 - Produces:
-  - `MODEL_MAC_DINH` (str), `TIMEOUT` (int = 60), `SO_NGAY_KY_TRUOC` (int = 7)
+  - `MODEL_MAC_DINH` (str), `TIMEOUT` (int = 60), `SO_NGAY_KY_TRUOC` (int = 7),
+    `SO_LAN_THU_LAI` (int = 1), `CHO_GIUA_HAI_LAN` (int = 3)
+  - `TEN_CHI_SO` — danh sách `(khoá trong stats, tên hiện cho AI, kiểu)`
+  - `fmt_tien(v) -> str`
+  - `bang_so_sanh(stats, ky_truoc) -> str` — **CODE tính sẵn bảng so sánh**
   - `soan_prompt(stats, ky_truoc, boi_canh) -> str`
+  - `doc_cau_tra_loi(du_lieu_tra_ve) -> str`
   - `goi_gemini(env, prompt, timeout=None, goi_mang_fn=None) -> (str|None, str|None)`
-  - `doc_cau_tra_loi(du_lieu_tra_ve) -> str` — bóc chữ ra khỏi JSON của Gemini; hỏng thì trả `""`
   - `viet_nhan_dinh(stats, ky_truoc=None, boi_canh="", env=None, goi_mang_fn=None) -> (str|None, str|None)`
 
-**Vì sao tách `doc_cau_tra_loi` ra riêng:** cấu trúc JSON của Gemini có thể đổi. Tách ra thì
-kiểm thử được cả trường hợp JSON lạ mà không cần mạng.
+### Vì sao phải có `bang_so_sanh()` — bài học từ phép thử thật ngày 28/09/2026
+
+Trước khi viết kế hoạch này, tôi đã **gọi Gemini thật** bằng chìa khoá của Đại để xem nó viết
+nhận định ra sao. Hai cách soạn câu lệnh, hai kết quả:
+
+| Cách soạn | Chuyện gì xảy ra |
+|---|---|
+| Đưa hai dòng số (kỳ này / kỳ trước) rồi bảo AI "hãy so sánh" | AI **phải tự đối chiếu 7 chỉ số giữa hai dòng** — việc này dễ sai, và sai thì rất khó phát hiện vì câu văn vẫn trôi chảy |
+| **CODE tính sẵn cột `chenh lech`**, AI chỉ chép lại | AI **không phải tính gì cả**. Phép kiểm tự động cho thấy **không có con số nào bịa** (xem Step 3b) |
+
+⇒ Nguyên tắc của dự án — *"Số liệu và phép tính LUÔN do code làm, AI chỉ làm chỗ cần phán đoán"* —
+áp dụng ở đây theo nghĩa chặt nhất: **phép so sánh cũng là phép tính, nên code làm.**
+
+### Số liệu thật dùng trong phép thử (để đối chiếu khi thi công)
+
+Lấy từ `logs/lich-su.json`, bản ghi ngày 28/09 — **không gọi Meta API**:
+
+```
+spend 7.034.942 d · msg 43 · contact 40 · order 15 · purchase 15 · payment 15 · comment 0
+```
+
+Kỳ trước giả lập: `spend 6.100.000 · msg 95 · contact 31 · order 7 · purchase 11 · payment 9 · comment 2`
+
+Với hai bộ số này, bảng mà code phải dựng ra là:
+
+```
+chi so | ky nay | ky truoc | chenh lech
+chi tieu (dong) | 7.034.942 | 6.100.000 | +934.942 (+15%)
+tin nhan moi | 43 | 95 | -52 (-55%)
+lien he moi | 40 | 31 | +9 (+29%)
+don hang | 15 | 7 | +8 (+114%)
+luot mua | 15 | 11 | +4 (+36%)
+luot thanh toan | 15 | 9 | +6 (+67%)
+binh luan | 0 | 2 | -2 (-100%)
+```
 
 - [ ] **Step 1: Viết kiểm thử thất bại**
 
@@ -212,6 +272,7 @@ Tạo `tests/test_ai.py`:
 ```python
 """Kiem thu ai.py - lop AI cua bao cao Meta Ads. KHONG goi mang."""
 import unittest
+import urllib.error
 
 import ai
 
@@ -220,12 +281,12 @@ STATS = {
     "total_campaigns": 19,
     "totals": {
         "spend": 7034942.0,
-        "msg": 120,
+        "msg": 43,
         "contact": 40,
-        "order": 9,
+        "order": 15,
         "purchase": 15,
-        "payment": 11,
-        "comment": 3,
+        "payment": 15,
+        "comment": 0,
     },
     "all": [
         {"id": "111", "name": "dainq - camp A", "spend": 3000000.0, "purchase": 9},
@@ -236,8 +297,8 @@ STATS = {
 }
 
 KY_TRUOC_CO_SO = {
-    "tong": {"spend": 6000000.0, "msg": 100, "contact": 30, "order": 8,
-             "purchase": 10, "payment": 8, "comment": 2},
+    "tong": {"spend": 6100000.0, "msg": 95, "contact": 31, "order": 7,
+             "purchase": 11, "payment": 9, "comment": 2},
     "so_ngay": 7,
 }
 
@@ -247,12 +308,48 @@ KY_TRUOC_RONG = {
     "so_ngay": 0,
 }
 
+# Co so ngay nhung tong bang 0: truong hop rieng, khong chia phan tram duoc.
+KY_TRUOC_CO_NGAY_TONG_0 = {
+    "tong": {"spend": 0.0, "msg": 0, "contact": 0, "order": 0,
+             "purchase": 0, "payment": 0, "comment": 0},
+    "so_ngay": 3,
+}
+
+
+class TestBangSoSanh(unittest.TestCase):
+    """CODE tinh bang so sanh. AI KHONG duoc tu tinh."""
+
+    def test_tinh_dung_chenh_lech_tang(self):
+        b = ai.bang_so_sanh(STATS, KY_TRUOC_CO_SO)
+        self.assertIn("7.034.942", b)
+        self.assertIn("6.100.000", b)
+        self.assertIn("+934.942", b)
+        self.assertIn("+15%", b)
+
+    def test_tinh_dung_chenh_lech_giam(self):
+        b = ai.bang_so_sanh(STATS, KY_TRUOC_CO_SO)
+        self.assertIn("-52", b)
+        self.assertIn("-55%", b)
+
+    def test_ky_truoc_bang_0_thi_ghi_ro(self):
+        b = ai.bang_so_sanh(STATS, KY_TRUOC_CO_NGAY_TONG_0)
+        self.assertIn("(ky truoc bang 0)", b)
+
+    def test_khong_co_ky_truoc_thi_ghi_khong_so_sanh(self):
+        b = ai.bang_so_sanh(STATS, None)
+        self.assertIn("(khong so sanh)", b)
+        self.assertNotIn("+", b)
+
+    def test_so_ngay_0_cung_la_khong_co_ky_truoc(self):
+        b = ai.bang_so_sanh(STATS, KY_TRUOC_RONG)
+        self.assertIn("(khong so sanh)", b)
+
 
 class TestSoanPrompt(unittest.TestCase):
-    def test_co_so_tong(self):
+    def test_co_bang_so_lieu(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "bao cao ngay 27/09/2026")
+        self.assertIn("BANG SO LIEU", p)
         self.assertIn("7.034.942", p)
-        self.assertIn("15", p)
 
     def test_co_ten_camp(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
@@ -262,22 +359,17 @@ class TestSoanPrompt(unittest.TestCase):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "bao cao ngay 27/09/2026")
         self.assertIn("bao cao ngay 27/09/2026", p)
 
-    def test_khi_khong_co_ky_truoc_thi_noi_ro_dung_so_sanh(self):
-        p = ai.soan_prompt(STATS, KY_TRUOC_RONG, "x")
-        self.assertIn("CHUA CO SO KY TRUOC", p)
-
-    def test_khi_ky_truoc_None_cung_noi_ro(self):
+    def test_khong_co_ky_truoc_thi_bang_ghi_khong_so_sanh(self):
         p = ai.soan_prompt(STATS, None, "x")
-        self.assertIn("CHUA CO SO KY TRUOC", p)
+        self.assertIn("(khong so sanh)", p)
 
-    def test_khi_co_ky_truoc_thi_cho_phep_so_sanh(self):
+    def test_co_ky_truoc_thi_KHONG_ghi_khong_so_sanh(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
-        self.assertNotIn("CHUA CO SO KY TRUOC", p)
-        self.assertIn("6.000.000", p)
+        self.assertNotIn("(khong so sanh)", p)
 
-    def test_prompt_cam_bia_so(self):
+    def test_prompt_cam_AI_tu_tinh(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
-        self.assertIn("khong duoc tu suy ra", p)
+        self.assertIn("Khong tu tinh", p)
 
     def test_stats_rong_khong_no(self):
         p = ai.soan_prompt({}, None, "x")
@@ -348,6 +440,50 @@ class TestGoiGemini(unittest.TestCase):
                       "x", goi_mang_fn=gia)
         self.assertIn("model-rieng", da_goi[0])
 
+    def test_gap_503_thi_thu_lai_mot_lan(self):
+        # Gemini thinh thoang tra 503 (qua tai). Da gap that ngay 28/09/2026.
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] == 1:
+                raise urllib.error.HTTPError(url, 503, "qua tai", {}, None)
+            return {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+
+        cu = ai.CHO_GIUA_HAI_LAN
+        ai.CHO_GIUA_HAI_LAN = 0
+        try:
+            text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        finally:
+            ai.CHO_GIUA_HAI_LAN = cu
+        self.assertEqual(text, "ok")
+        self.assertIsNone(loi)
+        self.assertEqual(dem["n"], 2)
+
+    def test_gap_503_hai_lan_thi_bo_cuoc_chu_khong_lap_vo_han(self):
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 503, "qua tai", {}, None)
+
+        cu = ai.CHO_GIUA_HAI_LAN
+        ai.CHO_GIUA_HAI_LAN = 0
+        try:
+            text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        finally:
+            ai.CHO_GIUA_HAI_LAN = cu
+        self.assertIsNone(text)
+        self.assertIn("503", loi)
+
+    def test_loi_400_thi_KHONG_thu_lai(self):
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            raise urllib.error.HTTPError(url, 400, "key sai", {}, None)
+
+        text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertIsNone(text)
+        self.assertEqual(dem["n"], 1)
+
 
 class TestVietNhanDinh(unittest.TestCase):
     def test_thanh_cong(self):
@@ -403,49 +539,67 @@ Nguyen tac bat buoc:
   - KHONG bao gio nem loi ra ngoai. AI loi thi bao cao van phai gui duoc.
   - KHONG gui token hay thong tin dang nhap cho AI. Ham soan_prompt() khong
     nhan tham so env, nen ve cau truc no khong the lam lo token.
+  - PHEP SO SANH DO CODE LAM, khong giao cho AI. Ly do: khi AI phai tu doi
+    chieu hai dong so voi nhau, no de doc sai ma cau van van troi chay. Khi
+    code tinh san cot 'chenh lech', AI chi chep lai. Da thu that 28/09/2026.
 
 Nha cung cap: Gemini. Chia khoa doc tu khoa GEMINI_API_KEY trong .env.
 """
 import json
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
 # Ten model mac dinh. Doi duoc bang khoa GEMINI_MODEL trong .env.
+# Gia tri nay DA DUOC THU THAT ngay 28/09/2026 voi chia khoa cua Dai.
 # Ten model Gemini thay doi theo thoi gian, nen KHONG viet cung trong code.
-MODEL_MAC_DINH = "gemini-2.5-flash"
+MODEL_MAC_DINH = "gemini-3.6-flash"
 
 BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 # Thoi gian toi da cho mot lan goi AI (giay). Bao cao khong duoc tre vi AI.
 TIMEOUT = 60
 
+# Gemini thinh thoang tra 503 (qua tai) - da gap that. Thu lai MOT lan, va chi
+# voi 503/429. Gioi han chat de bao cao khong bi tre qua lau.
+SO_LAN_THU_LAI = 1
+CHO_GIUA_HAI_LAN = 3
+
 # So ngay lay lam ky so sanh (chi dung cho bao cao TRON ngay).
 SO_NGAY_KY_TRUOC = 7
 
-# Cau khoa khi chua co so ky truoc. Phai la chuoi CO DAU vi day la cau gui
-# cho AI doc, khong phai chuoi hien cho nguoi dung.
-#
-# LUU Y: chuoi nay phai KHAC voi cau trong HUONG_DAN ben duoi. Neu trung nhau
-# thi khong the kiem bang assertNotIn duoc (da bi bat boi buoc dung thu).
-CHUA_CO_KY_TRUOC = "CHUA CO SO KY TRUOC"
+# Cac chi so dua vao bang so sanh: (khoa trong stats, ten hien cho AI, kieu)
+TEN_CHI_SO = [
+    ("spend", "chi tieu (dong)", "tien"),
+    ("msg", "tin nhan moi", "so"),
+    ("contact", "lien he moi", "so"),
+    ("order", "don hang", "so"),
+    ("purchase", "luot mua", "so"),
+    ("payment", "luot thanh toan", "so"),
+    ("comment", "binh luan", "so"),
+]
+
+# Cac dau ngoac nay KHONG duoc xuat hien trong HUONG_DAN, neu khong thi khong
+# the kiem bang assertNotIn duoc (da bi bat boi buoc dung thu).
+KHONG_SO_SANH = "(khong so sanh)"
+KY_TRUOC_BANG_0 = "(ky truoc bang 0)"
 
 HUONG_DAN = (
     "Ban la nguoi viet bao cao quang cao cho mot chu shop Viet Nam.\n"
-    "Hay viet 3 den 5 cau tieng Viet nhan xet ve so lieu duoi day.\n"
+    "Hay viet 3 den 5 cau tieng Viet nhan xet ve so lieu trong BANG duoi day.\n"
     "\n"
     "Quy tac bat buoc:\n"
-    "- CHI dung nhung con so duoc cung cap. khong duoc tu suy ra, khong duoc "
-    "uoc luong, khong duoc bia them so nao khac.\n"
-    "- Neu thieu so de ket luan thi noi thang la thieu, dung doan.\n"
-    "- Neu co so ky truoc thi so sanh va noi ro tang hay giam.\n"
-    "- Neu KHONG co so ky truoc thi chi mo ta, TUYET DOI khong so sanh.\n"
+    "- Moi con so ban viet ra PHAI chep nguyen tu BANG. Khong tu tinh, khong "
+    "uoc luong, khong lam tron, khong suy ra so nao khac.\n"
+    "- Cot 'chenh lech' trong bang da duoc tinh san. Chep nguyen, dung tu tinh lai.\n"
+    "- Neu bang ghi 'khong so sanh' thi chi mo ta, TUYET DOI khong so sanh.\n"
     "- Cau ngan, de hieu, tranh tu chuyen mon. Nguoi doc khong biet ky thuat.\n"
     "- Chi tra ve phan nhan xet, khong chao hoi, khong giai thich ban la ai.\n"
 )
 
 
-def _fmt_tien(v):
+def fmt_tien(v):
     """Dinh dang tien kieu Viet Nam: 7034942.0 -> '7.034.942'."""
     try:
         return f"{int(round(float(v))):,}".replace(",", ".")
@@ -453,18 +607,40 @@ def _fmt_tien(v):
         return "0"
 
 
-def _dong_chi_so(tong):
-    """Mot dong tom tat cac chi so, dung chung cho ca hai ky."""
-    tong = tong or {}
-    return (
-        f"chi tieu {_fmt_tien(tong.get('spend', 0))} d; "
-        f"tin nhan moi {tong.get('msg', 0)}; "
-        f"lien he moi {tong.get('contact', 0)}; "
-        f"don hang {tong.get('order', 0)}; "
-        f"luot mua {tong.get('purchase', 0)}; "
-        f"luot thanh toan {tong.get('payment', 0)}; "
-        f"binh luan {tong.get('comment', 0)}"
-    )
+def _fmt_so(v, kieu):
+    return fmt_tien(v) if kieu == "tien" else str(int(v or 0))
+
+
+def bang_so_sanh(stats, ky_truoc):
+    """Dung bang so sanh - CODE tinh, AI chi doc.
+
+    Day la cho quan trong nhat cua ai.py. Neu de AI tu doi chieu hai dong so
+    thi no de doc sai. Code tinh san cot 'chenh lech' thi AI chi con chep lai.
+    """
+    hien_tai = (stats or {}).get("totals") or {}
+    co_ky_truoc = bool((ky_truoc or {}).get("so_ngay"))
+    truoc = (ky_truoc or {}).get("tong") or {}
+
+    lines = ["chi so | ky nay | ky truoc | chenh lech"]
+    for khoa, ten, kieu in TEN_CHI_SO:
+        nay = _fmt_so(hien_tai.get(khoa, 0), kieu)
+        if not co_ky_truoc:
+            lines.append(f"{ten} | {nay} | (khong co) | {KHONG_SO_SANH}")
+            continue
+        cu_so = float(truoc.get(khoa, 0) or 0)
+        moi_so = float(hien_tai.get(khoa, 0) or 0)
+        cu = _fmt_so(cu_so, kieu)
+        chenh = moi_so - cu_so
+        if cu_so:
+            phan_tram = chenh / cu_so * 100
+            dau = "+" if chenh >= 0 else "-"
+            lines.append(
+                f"{ten} | {nay} | {cu} | {dau}{_fmt_so(abs(chenh), kieu)} "
+                f"({dau}{abs(phan_tram):.0f}%)"
+            )
+        else:
+            lines.append(f"{ten} | {nay} | {cu} | {KY_TRUOC_BANG_0}")
+    return "\n".join(lines)
 
 
 def soan_prompt(stats, ky_truoc, boi_canh):
@@ -475,29 +651,18 @@ def soan_prompt(stats, ky_truoc, boi_canh):
     stats = stats or {}
     lines = [HUONG_DAN, "", "--- BOI CANH ---", str(boi_canh or "")]
     lines.append("")
-    lines.append("--- SO KY BAO CAO NAY ---")
-    lines.append(f"so campaign: {stats.get('total_campaigns', 0)}")
-    lines.append(_dong_chi_so(stats.get("totals")))
+    lines.append("--- BANG SO LIEU ---")
+    lines.append(bang_so_sanh(stats, ky_truoc))
 
     camps = stats.get("all") or []
     if camps:
         lines.append("")
-        lines.append("Tung campaign (ten | chi tieu | luot mua):")
+        lines.append("--- TUNG CAMPAIGN (ten | chi tieu | luot mua) ---")
         for c in camps[:20]:
             lines.append(
-                f"- {c.get('name', '?')} | {_fmt_tien(c.get('spend', 0))} d "
+                f"- {c.get('name', '?')} | {fmt_tien(c.get('spend', 0))} d "
                 f"| {c.get('purchase', 0)}"
             )
-
-    so_ngay = (ky_truoc or {}).get("so_ngay", 0)
-    lines.append("")
-    if so_ngay:
-        lines.append(f"--- SO KY TRUOC ({so_ngay} ngay) ---")
-        lines.append(_dong_chi_so((ky_truoc or {}).get("tong")))
-    else:
-        lines.append(f"--- {CHUA_CO_KY_TRUOC} ---")
-        lines.append("Chi mo ta so o tren. TUYET DOI khong so sanh voi ky nao.")
-
     return "\n".join(lines)
 
 
@@ -524,7 +689,7 @@ def _goi_mang_that(url, payload, timeout):
 
 
 def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None):
-    """Goi Gemini mot lan. Tra ve (chu, loi).
+    """Goi Gemini mot lan (co thu lai khi qua tai). Tra ve (chu, loi).
 
     KHONG BAO GIO nem loi ra ngoai: moi loi deu tra ve qua kenh `loi`.
     """
@@ -537,12 +702,19 @@ def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None):
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     goi = goi_mang_fn or _goi_mang_that
 
-    try:
-        du_lieu = goi(url, payload, timeout or TIMEOUT)
-    except urllib.error.HTTPError as e:
-        return None, f"HTTP {e.code}"
-    except Exception as e:
-        return None, str(e)
+    du_lieu = None
+    for lan in range(SO_LAN_THU_LAI + 1):
+        try:
+            du_lieu = goi(url, payload, timeout or TIMEOUT)
+            break
+        except urllib.error.HTTPError as e:
+            loi = f"HTTP {e.code}"
+            if e.code in (503, 429) and lan < SO_LAN_THU_LAI:
+                time.sleep(CHO_GIUA_HAI_LAN)
+                continue
+            return None, loi
+        except Exception as e:
+            return None, str(e)
 
     text = doc_cau_tra_loi(du_lieu)
     if not text:
@@ -559,20 +731,54 @@ def viet_nhan_dinh(stats, ky_truoc=None, boi_canh="", env=None, goi_mang_fn=None
     return goi_gemini(env, prompt, goi_mang_fn=goi_mang_fn)
 ```
 
+- [ ] **Step 3b: Kiểm chứng bằng Gemini THẬT (chỉ làm khi đã có chìa khoá)**
+
+Bước này **không** phải kiểm thử tự động — nó gọi mạng thật. Chạy tay, một lần, để xem AI viết
+có đúng số không:
+
+```bash
+cd "D:/Buddy Work AI/2026-09-14-07-50-57"
+"C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" -c "
+import ai, report, re
+env = report.load_env('.env')
+stats = {'total_campaigns': 19,
+         'totals': {'spend': 7034942.0, 'msg': 43, 'contact': 40, 'order': 15,
+                    'purchase': 15, 'payment': 15, 'comment': 0},
+         'all': []}
+ky = {'tong': {'spend': 6100000.0, 'msg': 95, 'contact': 31, 'order': 7,
+               'purchase': 11, 'payment': 9, 'comment': 2}, 'so_ngay': 7}
+p = ai.soan_prompt(stats, ky, 'bao cao TRON ngay 27/09/2026')
+text, loi = ai.viet_nhan_dinh(stats, ky, 'bao cao TRON ngay 27/09/2026', env=env)
+print(text or ('LOI: ' + str(loi)))
+sach = lambda s: set(re.findall(r'\d+', s.replace('.', '').replace(',', '')))
+bia = sorted(sach(text or '') - sach(p) - {'0','1','2','3','4','5'})
+print()
+print('So AI viet ma KHONG co trong du lieu:', bia if bia else 'KHONG CO (dat)')
+"
+```
+
+**Điều kiện đạt:**
+- In ra 3–5 câu tiếng Việt, đọc hiểu được.
+- Dòng cuối ghi `KHONG CO (dat)` — tức **không có con số nào bị bịa**.
+
+> Kết quả chạy thật ngày 28/09/2026 (dùng đúng cách soạn này): AI viết 4 câu, các số
+> `7.034.942` `+934.942` `+15%` `-52` `-55%` `43` `40` `15` `+8` `+114%` `+4` `+36%` `+6` `+67%`
+> đều chép đúng từ bảng, và phép kiểm tự động báo `KHONG CO (dat)`.
+
 - [ ] **Step 4: Chạy kiểm thử để chắc chắn Task 1 đạt**
 
 ```bash
 "C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" -m unittest discover -s tests -t . 2>&1 | tail -5
 ```
 
-Kết quả mong đợi: `OK`, **126 bài** đạt (105 bài hiện có + 21 bài mới của Task 1).
+Kết quả mong đợi: `OK`, **133 bài** đạt (105 bài hiện có + 28 bài mới của Task 1).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd "D:/Buddy Work AI/2026-09-14-07-50-57"
 git add ai.py tests/test_ai.py
-git commit -m "Them ai.py: lop AI viet phan nhan dinh (chua ghep vao bao cao)"
+git commit -m "Them ai.py: lop AI viet phan nhan dinh, phep so sanh do code lam (chua ghep vao bao cao)"
 ```
 
 ---
@@ -693,7 +899,7 @@ Rồi tìm đoạn `lines.append("🔵 NHẬN ĐỊNH")` và chèn ngay **sau** 
 "C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" -m unittest discover -s tests -t . 2>&1 | tail -5
 ```
 
-Kết quả mong đợi: `OK`, **132 bài** đạt (126 + 6 bài mới).
+Kết quả mong đợi: `OK`, **139 bài** đạt (133 + 6 bài mới).
 
 - [ ] **Step 5: Commit**
 
@@ -850,7 +1056,7 @@ bằng:
 "C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" -m unittest discover -s tests -t . 2>&1 | tail -5
 ```
 
-Kết quả mong đợi: `OK`, **140 bài** đạt (132 + 8 bài mới).
+Kết quả mong đợi: `OK`, **147 bài** đạt (139 + 8 bài mới).
 
 - [ ] **Step 6: Kiểm chứng suy giảm êm — CHẠY THẬT, chưa có chìa khoá AI**
 
@@ -1055,7 +1261,7 @@ cd "D:/Buddy Work AI/2026-09-14-07-50-57"
 "C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" -m unittest discover -s tests -t . 2>&1 | tail -5
 ```
 
-Kết quả mong đợi: `OK`, 144 bài đạt (hoặc 140 nếu bỏ Task 4).
+Kết quả mong đợi: `OK`, 151 bài đạt (hoặc 147 nếu bỏ Task 4).
 
 - [ ] **Step 8: Commit**
 
