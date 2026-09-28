@@ -12,6 +12,38 @@
 
 ---
 
+## Cập nhật khi thi công (28/09/2026) — năm điều khác bản kế hoạch này
+
+**Đã thi công xong 5/5 task, `155/155` kiểm thử đạt** (không phải 151 — xem điều 4 và 5 bên dưới).
+Chi tiết đầy đủ nằm ở `HANDOFF.md`, mục "GIAI ĐOẠN 3". Tóm tắt năm chỗ khác:
+
+1. **`SO_LAN_THU_LAI` 1 → 2, `CHO_GIUA_HAI_LAN` 3 → 5.** Lần gọi Gemini **đầu tiên** khi kiểm
+   chứng trả **503 hai lần liên tiếp**; thử lại 1 lần vẫn hỏng. Chi phí: chậm nhất ~190 giây.
+2. **Task 4 (chỉ ghi lịch sử khi chạy thật) đã LÀM**, không bỏ. Đại giao toàn quyền quyết định,
+   và bằng chứng có sẵn ngay trong buổi thi công: **3 lần `--dry`** đã ghi hẳn một bản ghi
+   `2026-09-27 / moc=8 / day_du=True` vào lịch sử.
+3. **Đổi tên `test_gap_503_hai_lan_thi_bo_cuoc_chu_khong_lap_vo_han`** thành
+   `test_gap_503_lien_tuc_thi_bo_cuoc_chu_khong_lap_vo_han`, thêm phép kiểm số lần thử
+   (`assertEqual(dem["n"], ai.SO_LAN_THU_LAI + 1)`) — tên cũ nói "hai lần" nhưng với
+   `SO_LAN_THU_LAI = 2` thì phải là ba.
+4. **`HUONG_DAN` phải viết CÓ DẤU, và thêm quy tắc "Viết tiếng Việt CÓ DẤU đầy đủ".**
+   Đây là **lỗi thật mà bản kiểm chứng một lần của kế hoạch đã bỏ sót**: Gemini **bắt chước giọng
+   văn của chính câu lệnh**, nên câu lệnh không dấu thì nó trả về không dấu
+   (`Trong ngay 27/09/2026, tai khoan quang cao ghi nhan...`), đọc rất mệt. Gặp khoảng **50%**
+   số lần. Kế hoạch chỉ thử **một** lần và lần đó ra có dấu, nên tưởng đã xong. Đã kiểm chứng lại
+   **3/3 lần ra có dấu đầy đủ**. Kèm bài kiểm `test_prompt_bat_buoc_viet_co_dau`.
+5. **Lỗi AI phải nói rõ lý do, không chỉ mã HTTP.** Kế hoạch để `loi = f"HTTP {e.code}"`. Thực tế
+   dòng ghi chú ghi `HTTP 429` — Đại đọc **không biết là hết hạn mức hay sai chìa khoá**. Nay có
+   bảng dịch `ai.Y_NGHIA_LOI` + đọc `error.status`, ra:
+   `HTTP 429 - het han muc goi AI, thu lai sau [RESOURCE_EXHAUSTED]`.
+
+**Phát hiện thêm, đáng nhớ:** trần miễn phí của Gemini là **20 lượt/ngày** cho `gemini-3.6-flash`
+(`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Dùng thật chỉ 3 lượt/ngày, nhưng
+**chạy thử `report.py` cũng tốn lượt** — nên muốn thử code thì chạy bộ kiểm thử (không tốn lượt).
+Chạm trần thì báo cáo **vẫn gửi đầy đủ**, chỉ thiếu phần nhận định.
+
+---
+
 ## Kế hoạch này đã được kiểm chứng trước khi giao
 
 Trước khi giao, tôi đã **dựng thử toàn bộ code của kế hoạch trong một thư mục tạm**. Cách làm:
