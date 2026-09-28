@@ -719,6 +719,19 @@ def send_telegram_document(env, filepath, filename, caption=""):
         return False, str(e)
 
 
+def co_nen_ghi_lich_su(mock, dry):
+    """Chi ghi lich su khi day la mot lan chay THAT.
+
+    --mock va --dry khong gui bao cao, nen ban ghi cua chung khong tuong ung
+    voi bao cao nao. Te hon: --dry khong truyen moc gio nen report.py tu doan
+    moc, dan den lich su ghi SAI MOC (da xay ra that ngay 28/09/2026: mot lan
+    chay luc 14h07 ghi thanh moc 12h).
+
+    Vi Giai doan 3 lay lich su lam ky so sanh, ghi ban se lam AI nhan dinh sai.
+    """
+    return mock is None and not dry
+
+
 def luu_lich_su(stats, ngay, moc, path_lich_su=None):
     """Luu so lieu vao lich su. KHONG BAO GIO nem loi ra ngoai.
 
@@ -801,8 +814,8 @@ def main():
         sys.exit(1)
 
     # Luu lich su TRUOC khi gui: neu gui loi thi so lieu van con.
-    # Bo qua o che do --mock vi moc gio trong che do do la gia.
-    if args.mock is None:
+    # Chi ghi khi chay THAT - --mock va --dry khong ghi (xem co_nen_ghi_lich_su).
+    if co_nen_ghi_lich_su(args.mock, args.dry):
         luu_lich_su(stats, until, slot)
 
     # --- PHAN NHAN DINH DO AI VIET ---

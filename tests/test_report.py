@@ -324,5 +324,19 @@ class TestBoiCanh(unittest.TestCase):
         self.assertIn("khong so sanh", bc)
 
 
+class TestCoNenGhiLichSu(unittest.TestCase):
+    def test_chay_that_thi_ghi(self):
+        self.assertTrue(report.co_nen_ghi_lich_su(mock=None, dry=False))
+
+    def test_dry_thi_KHONG_ghi(self):
+        self.assertFalse(report.co_nen_ghi_lich_su(mock=None, dry=True))
+
+    def test_mock_thi_KHONG_ghi(self):
+        self.assertFalse(report.co_nen_ghi_lich_su(mock=12, dry=False))
+
+    def test_mock_va_dry_deu_khong_ghi(self):
+        self.assertFalse(report.co_nen_ghi_lich_su(mock=12, dry=True))
+
+
 if __name__ == "__main__":
     unittest.main()
