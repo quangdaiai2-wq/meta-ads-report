@@ -132,11 +132,11 @@ REM Ham tao 1 lich
 REM ============================================
 :TaoLich
 set MOC=%~1
-schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
+schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
 if errorlevel 1 (
     echo   [LOI] Moc %MOC%:00 - tao that bai
     echo         --- Chi tiet loi tu Windows: ---
-    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F
+    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%" /SC DAILY /ST %MOC%:00 /F
     echo         --------------------------------
 ) else (
     echo   [OK]  Moc %MOC%:00 - da tao
