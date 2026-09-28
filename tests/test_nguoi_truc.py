@@ -7,6 +7,16 @@ import nguoi_truc
 TrangThaiThu = nguoi_truc.TrangThaiThu
 
 
+def setUpModule():
+    """Kiem thu KHONG duoc ghi vao logs/baocao.log that.
+
+    report.log() ghi thang vao file nhat ky san xuat, nen chay kiem thu se
+    lam ban chinh file Dai mo dau tien khi co su co (thay cac dong nhu
+    "da tra loi mot tin nhan" cho nhung tin khong he ton tai).
+    """
+    nguoi_truc.report.log = lambda message: None
+
+
 def luc(gio, phut=0, giay=0, ngay=28):
     """Mot thoi diem gia de kiem thu, khong phu thuoc dong ho that."""
     return datetime(2026, 9, ngay, gio, phut, giay)

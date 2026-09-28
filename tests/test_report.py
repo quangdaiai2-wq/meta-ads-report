@@ -8,6 +8,15 @@ import lich_su
 import report
 
 
+def setUpModule():
+    """Kiem thu KHONG duoc ghi vao logs/baocao.log that.
+
+    report.log() ghi thang vao file nhat ky san xuat. Chay kiem thu ma ghi
+    vao do se lam ban file Dai mo dau tien khi co su co.
+    """
+    report.log = lambda message: None
+
+
 class TestChonMoc(unittest.TestCase):
     def test_co_slot_thi_tra_ve_dung_slot(self):
         self.assertEqual(report.chon_moc(22, 8, [8, 12, 17, 22]), 22)
