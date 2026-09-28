@@ -81,14 +81,19 @@ REM --- Xoa lich cu neu co (de tranh trung) ---
 for %%H in (08 12 17 22) do (
     schtasks /Delete /TN "BaoCaoMetaAds_%%H" /F >nul 2>&1
 )
+for %%H in (8 22) do (
+    schtasks /Delete /TN "BaoCaoMetaAds_%%H" /F >nul 2>&1
+)
 
 echo Dang tao 4 lich...
 echo.
 
+REM Ngay 28/09/2026: bo moc 22h. Ly do: kiem tra logs/baocao.log cho thay moc 22h
+REM CHUA TUNG chay mot lan nao (0 lan trong toan bo nhat ky), va khi may thuc day
+REM buoi sang thi lich 22h chay bu va tu doan ra moc 8h -> gay bao cao trung.
 call :TaoLich 08
 call :TaoLich 12
 call :TaoLich 17
-call :TaoLich 22
 
 echo.
 echo ============================================
@@ -112,7 +117,8 @@ if errorlevel 1 (
 
 echo [OK] Da tao lich thanh cong.
 echo.
-echo Cac moc gio: 08:00, 12:00, 17:00, 22:00 hang ngay
+echo Cac moc gio: 08:00, 12:00, 17:00 hang ngay
+echo (Moc 22h da bo tu 28/09/2026 - xem ghi chu trong file nay)
 echo.
 echo Kiem tra nhat ky chay tai: logs\baocao.log
 echo De XOA lich, chay file: go-lich.bat
@@ -126,11 +132,11 @@ REM Ham tao 1 lich
 REM ============================================
 :TaoLich
 set MOC=%~1
-schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\"" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
+schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
 if errorlevel 1 (
     echo   [LOI] Moc %MOC%:00 - tao that bai
     echo         --- Chi tiet loi tu Windows: ---
-    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\"" /SC DAILY /ST %MOC%:00 /F
+    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F
     echo         --------------------------------
 ) else (
     echo   [OK]  Moc %MOC%:00 - da tao
