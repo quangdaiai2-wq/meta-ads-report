@@ -16,31 +16,71 @@ Bản 28/09 sửa hai lỗi đang chạy thật. Bản 28/09 (Giai đoạn 2) th
 không còn ba lịch Windows rời rạc mà là **một tiến trình thường trú**. Vì vậy máy nhà **PHẢI
 chạy lại `cai-dat-nguoi-truc.bat`**.
 
-**Ba bước, theo đúng thứ tự:**
+**BỐN bước, theo đúng thứ tự:**
 
 1. **`git pull`** tại thư mục dự án → nhận code mới.
-2. **Bấm đúp `cai-dat-nguoi-truc.bat`.** Nếu báo lỗi quyền thì chuột phải → Run as administrator.
-   File này tạo **một** lịch duy nhất tên `NguoiTruc` và **xoá ba lịch cũ**. Phải chạy bước này,
-   vì lịch cũ không biết gì về nhau nên vẫn còn hai lỗi: báo cáo trùng, và mốc 8h chạy bù sai.
-3. **Kiểm tra kết quả.** File in ra phần đọc lại lịch:
+2. **Thêm một dòng vào `.env`** (làm ở bước 2b bên dưới). **Đây là bước MỚI, bắt buộc** — bỏ qua
+   thì mốc 22h quay trở lại máy nhà.
+3. **Bấm đúp `cai-dat-nguoi-truc.bat`.** Nếu báo lỗi quyền thì chuột phải → Run as administrator.
+   File này tạo **một** lịch duy nhất tên `NguoiTruc`, **xoá ba lịch cũ**, và **khởi động
+   Người trực ngay**. Phải chạy bước này, vì lịch cũ không biết gì về nhau nên vẫn còn hai lỗi:
+   báo cáo trùng, và mốc 8h chạy bù sai.
+4. **Kiểm tra kết quả.** File in ra phần đọc lại lịch:
 
    ```
    Ten lich    : NguoiTruc
-   Trang thai  : Ready
+   Trang thai  : Running
    Tham so     : "D:\...\nguoi_truc.py"
+   Tien trinh   : dang chay (PID ...)
    ```
 
-   Dòng phải nhìn là `Tham so` — phải **kết thúc bằng `nguoi_truc.py"`** (có dấu nháy đóng).
-   Thiếu dấu nháy đó thì đường dẫn có khoảng trắng bị Windows cắt làm hai, lịch không chạy được.
+   **Hai dòng phải đúng:**
+   - `Tham so` phải **kết thúc bằng `nguoi_truc.py"`** (có dấu nháy đóng). Thiếu dấu nháy đó thì
+     đường dẫn có khoảng trắng bị Windows cắt làm hai, lịch không chạy được.
+   - `Trang thai` phải là `Running` và có dòng `Tien trinh: dang chay`.
 
-**Một điều cần biết trước khi bấm bước 2:**
+### Bước 2b — Thêm dòng `REPORT_SLOTS` vào `.env` (BẮT BUỘC)
+
+`.env` là file riêng của từng máy, **không** nằm trên GitHub, nên `git pull` **không** mang dòng
+này sang máy nhà. Phải tự thêm.
+
+**Cách làm:**
+
+1. Mở **Notepad**
+2. Kéo file `.env` trong thư mục dự án thả vào cửa sổ Notepad (hoặc File → Open → chọn `.env`)
+3. Xuống **cuối file**, thêm một dòng mới:
+
+```
+REPORT_SLOTS=8,12,17
+```
+
+4. Bấm **Ctrl + S**, rồi đóng Notepad
+
+**Kiểm tra lại** — mở cửa sổ lệnh tại thư mục dự án, dán dòng này:
+
+```powershell
+python -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
+```
+
+Nếu báo lỗi `python is not recognized`, dùng đường dẫn đầy đủ (đường dẫn Python trên máy nhà
+có thể khác máy công ty — xem lại mục cài Python ở đầu file này):
+
+```powershell
+& "C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
+```
+
+Kết quả phải in ra **`[8, 12, 17]`**. Nếu in ra `[8, 12, 17, 22]` thì dòng vừa thêm bị sai chính tả
+(phải đúng `REPORT_SLOTS`, chữ in hoa, không có dấu cách quanh dấu `=`).
+
+**Một điều cần biết trước khi bấm bước 3:**
 
 - **Cả hai máy dùng chung ba mốc 8h, 12h, 17h.** Đại đã chốt bỏ mốc 22h ở cả hai máy ngày
-  28/09/2026. Kiểm trong `.env` phải thấy `REPORT_SLOTS=8,12,17`. Mốc giờ là cấu hình của
-  từng máy, nên **không copy `.env` giữa hai máy mà quên kiểm dòng này**. Nếu thiếu hẳn dòng
-  đó, hệ thống dùng mặc định `8,12,17,22` — tức **mốc 22h quay trở lại**.
+  28/09/2026. Nếu thiếu dòng `REPORT_SLOTS` trong `.env`, hệ thống dùng mặc định `8,12,17,22`
+  — tức **mốc 22h quay trở lại**.
 - **Không cần tính năng "tự thức máy" nữa.** Người trực chạy suốt khi máy bật; máy tắt thì
   không có báo cáo, nhưng khi bật lại nó gửi bù đúng **một** báo cáo cho mốc gần nhất bị lỡ.
+- **Sau khi bấm file xong hãy nhắn thử bot** câu `còn sống không?`. Phải nhắn **sau**, vì Người
+  trực bỏ qua mọi tin nhắn đến trước lúc nó khởi động — nhắn trước là mất tin, không phải lỗi.
 
 ---
 
@@ -54,7 +94,8 @@ Mở cửa sổ lệnh **tại đúng thư mục dự án** rồi chạy:
 git pull
 ```
 
-**Kết quả mong đợi:** thấy danh sách file thay đổi, trong đó có `report.py` và `kiem-tra-token.py`.
+**Kết quả mong đợi:** thấy danh sách file thay đổi, trong đó có `report.py`, `nguoi_truc.py`,
+`cai-dat-nguoi-truc.bat` và `tests/test_nguoi_truc.py`.
 
 > ⚠️ **Câu dưới đây đúng cho bản 14/09, KHÔNG đúng cho bản 28/09.**
 > Bản 28/09 (Giai đoạn 2) đổi **cách hệ thống chạy**, nên máy nhà **phải** bấm
@@ -164,12 +205,17 @@ Hệ thống sẽ **tự nhắn cảnh báo trước 7 ngày** — bạn không 
 ```
 MÁY NHÀ — BẢN 28/09 (mới nhất, làm theo mục đầu file)
 ├── git pull                                        ← nhận code mới
+├── thêm dòng REPORT_SLOTS=8,12,17 vào cuối .env     ← BẮT BUỘC, git pull không mang dòng này sang
 ├── cai-dat-nguoi-truc.bat (Run as administrator)   ← PHẢI chạy: tạo Người trực, xoá 3 lịch cũ
-└── nhìn dòng "Tham so": phải kết thúc bằng nguoi_truc.py"
+├── nhìn "Tham so": phải kết thúc bằng nguoi_truc.py"
+└── nhìn "Trang thai": phải là Running + có dòng "Tien trinh: dang chay"
 
-LƯU Ý: cả hai máy dùng mốc 8,12,17 — kiểm dòng REPORT_SLOTS=8,12,17 trong .env
-KHÔNG cần: sửa file .env nếu đã có dòng REPORT_SLOTS (token máy nhà không đổi)
+KIỂM TRA NHANH (dán vào cửa sổ lệnh tại thư mục dự án):
+   python -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
+   → phải in ra [8, 12, 17]
+
 KHÔNG cần: bat-chay-bu.bat, bat-danh-thuc-may.bat (Người trực chạy suốt, không cần đánh thức máy)
+KHÔNG cần: sửa token trong .env (token máy nhà không đổi)
 ```
 
-**Chỉ 2 lệnh. Xong.**
+**Xong.**
