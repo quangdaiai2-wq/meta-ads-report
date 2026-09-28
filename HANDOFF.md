@@ -240,6 +240,30 @@ từng lịch; bỏ mốc 22h. Thêm `lich_su.py` lưu số liệu 180 ngày và
 > khi chạy **đồng thời**. Từ nay, mọi thay đổi liên quan tới lịch chạy phải được thử bằng
 > **nhiều tiến trình song song**, không chỉ chạy lại một mình.
 
+### BẢN SỬA NGÀY 28/09/2026 (tiếp) — `cai-dat-lich.bat` tự đặt thiết lập lịch
+
+**Vấn đề, phát hiện khi cài thật:** `cai-dat-lich.bat` **xoá** lịch cũ rồi tạo lại bằng
+`schtasks /Create`, mà lệnh đó **không** đặt `StartWhenAvailable`, `WakeToRun` và
+`AllowStartIfOnBatteries`. Ba thiết lập này chỉ được đặt bởi `bat-chay-bu.bat`.
+
+⇒ Mỗi lần chạy lại `cai-dat-lich.bat` là **một lần mất** tính năng chạy bù và tự thức máy.
+Đã xảy ra thật ngày 28/09/2026: sau khi cài lại, `StartWhenAvailable` và `WakeToRun` chuyển từ
+`True` sang `False`, còn `DisallowStartIfOnBatteries` từ `False` sang `True` — nghĩa là máy ngủ
+đúng giờ sẽ **không** có báo cáo bù, đúng cái tính năng cần nhất.
+
+**Đã sửa:** `cai-dat-lich.bat` giờ tự đặt luôn 3 thiết lập đó sau khi tạo lịch, dùng đúng đoạn
+PowerShell của `bat-chay-bu.bat`, và in ra phần kiểm tra để thấy ngay `chay bu=True tu thuc=True`.
+Nếu chạy mà không có quyền Admin, nó in cảnh báo rõ ràng thay vì im lặng làm mất thiết lập.
+
+**Ba điều phải nhớ khi bàn giao:**
+- `cai-dat-lich.bat` **phải chạy bằng quyền Administrator**. Không có quyền Admin thì `schtasks`
+  có thể vẫn tạo được lịch, nhưng `Set-ScheduledTask` (phần đặt 3 thiết lập) sẽ báo `Access is denied`.
+- `bat-danh-thuc-may.bat` **không** đụng tới lịch — nó chỉ gọi `powercfg` để bật "Allow wake timers"
+  ở mức Windows. Việc chạy lại `cai-dat-lich.bat` **không** làm mất thiết lập này. Tài liệu cũ ghi
+  sai rằng file đó cũng gọi `Set-ScheduledTask`.
+- Kiểm chứng nhanh bằng `Get-ScheduledTask` (đọc `StartWhenAvailable`, `WakeToRun`,
+  `DisallowStartIfOnBatteries`, và `Args` phải chứa `--slot`).
+
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
 Meta trả về **NHIỀU TÊN cho CÙNG một hành động**: `omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase` đều phản ánh **cùng một số**.

@@ -47,7 +47,12 @@ META_ADS_ACCESS_TOKEN=...
 META_AD_ACCOUNT_ID=...
 ```
 
-### Bước 2: Bấm đúp vào file `cai-dat-lich.bat`
+### Bước 2: Chuột phải `cai-dat-lich.bat` → **Run as administrator**
+
+> ⚠️ **Phải chạy bằng quyền Administrator.** File này làm **hai** việc: tạo 3 lịch, và đặt luôn
+> 3 thiết lập quan trọng (chạy bù khi lỡ giờ, tự thức máy để chạy đúng giờ, cho phép chạy khi
+> dùng pin). Nếu chạy mà không có quyền Admin, lịch vẫn được tạo nhưng **thiếu 3 thiết lập đó**,
+> và file sẽ in cảnh báo rõ ràng.
 
 File này sẽ tự tạo 3 lịch trong Windows.
 
@@ -58,6 +63,16 @@ Bạn sẽ thấy thông báo:
 [OK]  Moc 12:00 - da tao
 [OK]  Moc 17:00 - da tao
 ```
+
+Ngay sau đó là phần kiểm tra thiết lập — **cả ba dòng đều phải ghi `True`**:
+
+```
+BaoCaoMetaAds_08 : chay bu=True  tu thuc=True
+BaoCaoMetaAds_12 : chay bu=True  tu thuc=True
+BaoCaoMetaAds_17 : chay bu=True  tu thuc=True
+```
+
+Nếu thấy `False` ở bất kỳ dòng nào, nghĩa là file chưa được chạy bằng quyền Admin — chạy lại.
 
 > ⚠️ **Chạy file này từ đúng thư mục dự án.** `cai-dat-lich.bat` tự lấy đường dẫn `report.py`
 > từ chính thư mục chứa nó, nên phải bấm nó ở thư mục có `.env` và `logs/`. Nếu bấm từ một bản
@@ -175,12 +190,17 @@ Khi cả hai loại cùng có, bản đầy đủ luôn thắng.
 
 Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đúng lúc 8h, báo cáo 8h có thể bị trễ.
 
-**Cách khắc phục (làm 2 file, mỗi file 1 lần):**
+**Cách khắc phục:**
 
-1. Bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator). Sau đó Windows sẽ:
+1. **Đã tự động.** Từ 28/09/2026, `cai-dat-lich.bat` đặt luôn 3 thiết lập này khi tạo lịch — miễn
+   là chạy bằng quyền Admin. Nếu vì lý do nào đó chúng bị mất, bấm **`bat-chay-bu.bat`**
+   (chuột phải → Run as administrator) để đặt lại. File đó bật:
    - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại.
-   - Đặt cờ "đánh thức máy để chạy" cho cả 3 lịch.
-2. Bấm file **`bat-danh-thuc-may.bat`** (chuột phải → Run as administrator). File này **cho phép Windows tự thức máy** để chạy báo cáo đúng giờ — kể cả khi máy đang ngủ hoặc chạy pin.
+   - **Tự thức máy** để chạy báo cáo đúng giờ.
+   - **Cho phép chạy khi dùng pin.**
+2. Bấm file **`bat-danh-thuc-may.bat`** (chuột phải → Run as administrator) — **một lần duy nhất**.
+   File này bật "Allow wake timers" ở mức Windows, khác với cờ `WakeToRun` của từng lịch.
+   Cần cả hai thì Windows mới thức được máy.
 
 **Ngoài ra, để báo cáo đến đúng giờ:**
 - **Cắm sạc** máy thường xuyên (đừng để pin cạn).

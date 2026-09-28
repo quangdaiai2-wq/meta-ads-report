@@ -95,6 +95,30 @@ call :TaoLich 08
 call :TaoLich 12
 call :TaoLich 17
 
+REM --- Buoc 2: dat 3 thiet lap quan trong cho lich vua tao ---
+REM Ly do (phat hien thuc te ngay 28/09/2026): cac lenh /Delete o tren XOA lich cu
+REM roi tao lai, ma schtasks /Create KHONG dat StartWhenAvailable, WakeToRun va
+REM AllowStartIfOnBatteries. Neu khong dat lai thi may ngu dung gio se KHONG chay bu
+REM -> mat bao cao. Truoc day phai chay them bat-chay-bu.bat moi co; gio file nay
+REM tu lam luon, nen chay lai bao nhieu lan cung khong bi mat.
+echo Dang dat thiet lap chay bu + tu thuc may...
+net session >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo [CANH BAO] Chua chay bang quyen Admin, nen THIEU 3 thiet lap:
+    echo   - chay bu khi may bat lai sau khi lo gio
+    echo   - tu thuc may de chay bao cao dung gio
+    echo   - cho phep chay khi may dung pin
+    echo.
+    echo Cach xu ly: dong cua so nay, chuot phai vao file nay,
+    echo chon "Run as administrator", roi bam lai.
+    echo Hoac chay rieng file bat-chay-bu.bat bang quyen Admin.
+    echo.
+) else (
+    powershell -NoProfile -Command "$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 15); foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17')) { try { Set-ScheduledTask -TaskName $n -Settings $s -ErrorAction Stop | Out-Null; Write-Host ('  [OK]  ' + $n + ' - da dat thiet lap') } catch { Write-Host ('  [LOI] ' + $n + ' - ' + $_.Exception.Message) } }"
+    echo.
+)
+
 echo.
 echo ============================================
 echo  KIEM TRA LAI
@@ -116,6 +140,9 @@ if errorlevel 1 (
 )
 
 echo [OK] Da tao lich thanh cong.
+echo.
+echo Kiem tra lai thiet lap (ca hai phai la True):
+powershell -NoProfile -Command "foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17')) { $t = Get-ScheduledTask -TaskName $n -ErrorAction SilentlyContinue; if ($t) { Write-Host ('  ' + $n + ' : chay bu=' + $t.Settings.StartWhenAvailable + '  tu thuc=' + $t.Settings.WakeToRun) } else { Write-Host ('  ' + $n + ' : KHONG TIM THAY') } }"
 echo.
 echo Cac moc gio: 08:00, 12:00, 17:00 hang ngay
 echo (Moc 22h da bo tu 28/09/2026 - xem ghi chu trong file nay)
