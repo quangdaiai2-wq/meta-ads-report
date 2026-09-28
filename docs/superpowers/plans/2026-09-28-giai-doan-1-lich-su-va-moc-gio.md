@@ -1077,6 +1077,35 @@ git commit -m "cai-dat-lich.bat: truyen --slot vao tung lich; bo moc 22h"
 - Modify: `README.md`
 - Modify: `HANDOFF.md`
 
+> **Ghi chú (bổ sung 28/09 — bắt buộc làm):** bốn bước dưới đây **chưa đủ**. Khi kiểm lại sau khi
+> làm bốn bước đó, tài liệu vẫn còn **13 câu nói sai về hệ thống hiện tại** — chúng vẫn ghi "4 lịch",
+> "4 mốc", hoặc liệt kê mốc 22h như đang tồn tại, trong khi bảng mốc giờ đã còn 3.
+> Mục tiêu của Task này là "tài liệu khớp với hành vi thật", nên để lại chúng là Task không đạt mục tiêu.
+>
+> **Phải sửa — mọi câu nói về trạng thái HIỆN TẠI:**
+> - `README.md:21` — "**4 lần mỗi ngày**" → 3
+> - `README.md:50` — "tự tạo 4 lịch trong Windows" → 3
+> - `README.md:58` — dòng `[OK]  Moc 22:00 - da tao` trong khối kết quả mong đợi → xoá
+> - `README.md:67` — "4 lịch bị xóa" → 3
+> - `README.md:172` — "cả 4 lịch" → 3
+> - `README.md:178` — "khung **8h–22h**" → "8h–17h"
+> - `README.md:311` — "4 task tên `BaoCaoMetaAds_8/12/17/22`" → "3 task tên `BaoCaoMetaAds_08/12/17`"
+> - `HANDOFF.md:19` — "**4 mốc mỗi ngày**: 8h, 12h, 17h, 22h" → 3 mốc, bỏ 22h
+> - `HANDOFF.md:32` — "4 lịch tự động | Tên `BaoCaoMetaAds_08/12/17/22`" → 3 lịch, bỏ 22
+> - `HANDOFF.md:33` — "cho cả 4 lịch" → 3
+> - `HANDOFF.md:45` — "4 lịch tự động" → 3
+> - `HANDOFF.md:159` — "Bật 4 lịch tự động" → 3
+> - `HANDOFF.md:160` — "Tắt 4 lịch" → 3
+> - `HANDOFF.md:208` — "cả 4 lịch chạy bù CÙNG LÚC" → "cả ba lịch"
+>
+> **KHÔNG sửa — đây là ghi chép lịch sử, đúng với thời điểm được ghi:**
+> `README.md:181` (nhật ký ngày 12/09 nói mốc 22h chạy đúng giờ) và `HANDOFF.md:288`
+> (dòng mốc thời gian ngày 14/09 liệt kê 22h). Chỉ cần bảo đảm chúng đọc ra là chuyện **đã qua** —
+> nếu câu chữ hiện tại khiến người đọc tưởng đó là trạng thái hiện tại thì thêm một chữ như "trước đây".
+>
+> `README.md:155` ("Bản ghi của báo cáo 8h và 22h là bản đầy đủ cả ngày") **giữ nguyên** — câu này
+> mô tả đúng **mã nguồn** (`MOC_DAY_DU = (8, 22)`), và máy nhà vẫn có thể bật mốc 22h.
+
 **Interfaces:**
 - Consumes: tất cả thay đổi của Task 1–4
 - Produces: tài liệu khớp với hành vi thật của hệ thống
