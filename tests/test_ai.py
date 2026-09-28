@@ -1,4 +1,6 @@
 """Kiem thu ai.py - lop AI cua bao cao Meta Ads. KHONG goi mang."""
+import io
+import json
 import unittest
 import urllib.error
 
@@ -97,7 +99,14 @@ class TestSoanPrompt(unittest.TestCase):
 
     def test_prompt_cam_AI_tu_tinh(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
-        self.assertIn("Khong tu tinh", p)
+        self.assertIn("Không tự tính", p)
+
+    def test_prompt_bat_buoc_viet_co_dau(self):
+        # Gemini bat chuoc giong van cua cau lenh. Cau lenh khong dau thi no
+        # tra ve khong dau (da gap that ~50% so lan ngay 28/09/2026), rat kho
+        # doc. Quy tac nay khong duoc xoa.
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("CÓ DẤU", p)
 
     def test_stats_rong_khong_no(self):
         p = ai.soan_prompt({}, None, "x")
@@ -217,6 +226,44 @@ class TestGoiGemini(unittest.TestCase):
         text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
         self.assertIsNone(text)
         self.assertEqual(dem["n"], 1)
+
+    def test_loi_429_thi_ghi_ro_ly_do_bang_tieng_Viet(self):
+        # Gemini tra 429 kem ly do trong phan than loi. Phai dich ra tieng
+        # Viet, khong de Dai doc mot dong "HTTP 429" tro troi.
+        def gia(url, payload, timeout):
+            than = io.BytesIO(json.dumps({
+                "error": {"status": "RESOURCE_EXHAUSTED",
+                          "message": "You exceeded your current quota"}
+            }).encode("utf-8"))
+            raise urllib.error.HTTPError(url, 429, "quota", {}, than)
+
+        cu = ai.CHO_GIUA_HAI_LAN
+        ai.CHO_GIUA_HAI_LAN = 0
+        try:
+            text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        finally:
+            ai.CHO_GIUA_HAI_LAN = cu
+        self.assertIsNone(text)
+        self.assertIn("429", loi)
+        self.assertIn("het han muc", loi)
+        self.assertIn("RESOURCE_EXHAUSTED", loi)
+
+    def test_loi_404_thi_chi_dung_ten_model(self):
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 404, "not found", {}, None)
+
+        text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertIsNone(text)
+        self.assertIn("ten model", loi)
+
+    def test_ma_loi_la_khong_no(self):
+        # Ma loi khong nam trong bang dich, va phan than khong doc duoc.
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 418, "teapot", {}, None)
+
+        text, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertIsNone(text)
+        self.assertEqual(loi, "HTTP 418")
 
 
 class TestVietNhanDinh(unittest.TestCase):

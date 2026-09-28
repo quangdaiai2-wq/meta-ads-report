@@ -63,17 +63,24 @@ TEN_CHI_SO = [
 KHONG_SO_SANH = "(khong so sanh)"
 KY_TRUOC_BANG_0 = "(ky truoc bang 0)"
 
+# Cau lenh nay viet CO DAU, khac voi cac chuoi ky thuat khac trong file.
+# Ly do: Gemini bat chuoc giong van cua chinh cau lenh. Khi cau lenh viet
+# khong dau thi no cung tra ve khong dau (da gap that ngay 28/09/2026), trong
+# khi nguoi doc bao cao can chu co dau cho de doc. Gap khoang 50/50 nen phai
+# ghi thanh quy tac ro rang, khong the dua vao may man.
 HUONG_DAN = (
-    "Ban la nguoi viet bao cao quang cao cho mot chu shop Viet Nam.\n"
-    "Hay viet 3 den 5 cau tieng Viet nhan xet ve so lieu trong BANG duoi day.\n"
+    "Bạn là người viết báo cáo quảng cáo cho một chủ shop Việt Nam.\n"
+    "Hãy viết 3 đến 5 câu tiếng Việt nhận xét về số liệu trong BẢNG dưới đây.\n"
     "\n"
-    "Quy tac bat buoc:\n"
-    "- Moi con so ban viet ra PHAI chep nguyen tu BANG. Khong tu tinh, khong "
-    "uoc luong, khong lam tron, khong suy ra so nao khac.\n"
-    "- Cot 'chenh lech' trong bang da duoc tinh san. Chep nguyen, dung tu tinh lai.\n"
-    "- Neu bang ghi 'khong so sanh' thi chi mo ta, TUYET DOI khong so sanh.\n"
-    "- Cau ngan, de hieu, tranh tu chuyen mon. Nguoi doc khong biet ky thuat.\n"
-    "- Chi tra ve phan nhan xet, khong chao hoi, khong giai thich ban la ai.\n"
+    "Quy tắc bắt buộc:\n"
+    "- Viết tiếng Việt CÓ DẤU đầy đủ, như người Việt đọc hằng ngày. "
+    "Tuyệt đối không viết kiểu không dấu.\n"
+    "- Mọi con số bạn viết ra PHẢI chép nguyên từ BẢNG. Không tự tính, không "
+    "ước lượng, không làm tròn, không suy ra số nào khác.\n"
+    "- Cột 'chenh lech' trong bảng đã được tính sẵn. Chép nguyên, đừng tự tính lại.\n"
+    "- Nếu bảng ghi 'khong so sanh' thì chỉ mô tả, TUYỆT ĐỐI không so sánh.\n"
+    "- Câu ngắn, dễ hiểu, tránh từ chuyên môn. Người đọc không biết kỹ thuật.\n"
+    "- Chỉ trả về phần nhận xét, không chào hỏi, không giải thích bạn là ai.\n"
 )
 
 
@@ -156,6 +163,33 @@ def doc_cau_tra_loi(du_lieu_tra_ve):
         return ""
 
 
+# Dich vai ma loi hay gap sang tieng Viet, de dong ghi chu trong bao cao
+# thuc su co ich. Truoc day loi chi ghi "HTTP 429" - Dai doc khong biet
+# la het han muc hay sai chia khoa.
+Y_NGHIA_LOI = {
+    400: "chia khoa AI sai, hoac cau lenh khong hop le",
+    403: "chia khoa AI bi tu choi",
+    404: "ten model AI khong dung (xem HUONG-DAN-LAY-CHIA-KHOA-AI.md)",
+    429: "het han muc goi AI, thu lai sau",
+    503: "may chu AI dang qua tai",
+}
+
+
+def _trang_thai_loi(e):
+    """Boc truong `error.status` trong phan than loi (vi du RESOURCE_EXHAUSTED).
+
+    Khong bao gio nem loi: doc khong duoc thi tra ve chuoi rong.
+    """
+    try:
+        body = e.read().decode("utf-8", "replace")
+    except Exception:
+        return ""
+    try:
+        return str((json.loads(body).get("error") or {}).get("status", "")).strip()
+    except Exception:
+        return ""
+
+
 def _goi_mang_that(url, payload, timeout):
     """Goi Gemini that. Tach rieng de kiem thu thay duoc bang ham gia."""
     req = urllib.request.Request(
@@ -187,6 +221,12 @@ def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None):
             break
         except urllib.error.HTTPError as e:
             loi = f"HTTP {e.code}"
+            y_nghia = Y_NGHIA_LOI.get(e.code)
+            if y_nghia:
+                loi += f" - {y_nghia}"
+            trang_thai = _trang_thai_loi(e)
+            if trang_thai:
+                loi += f" [{trang_thai}]"
             if e.code in (503, 429) and lan < SO_LAN_THU_LAI:
                 time.sleep(CHO_GIUA_HAI_LAN)
                 continue
