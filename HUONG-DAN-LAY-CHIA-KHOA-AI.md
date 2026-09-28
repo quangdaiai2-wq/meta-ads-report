@@ -119,11 +119,8 @@ nên rất khó chạm trần.
 `python report.py --dry` là **một lượt**. Chạy thử 20 lần trong một ngày là hết trần — và lúc đó
 báo cáo vẫn gửi nhưng **thiếu phần nhận định** cho tới hôm sau.
 
-👉 **Muốn thử code thì chạy bộ kiểm thử, không cần chìa khoá và không tốn lượt nào:**
-
-```powershell
-python -m unittest discover -s tests -t .
-```
+👉 **Muốn thử code thì bấm đúp `chay-kiem-thu.bat`** — không cần chìa khoá, **không tốn lượt nào**,
+không gửi tin nhắn nào, không đụng tới số liệu.
 
 **Nếu có chạm trần thật:** báo cáo **vẫn gửi bình thường**, chỉ thiếu phần nhận định. Dòng ghi
 chú sẽ ghi rõ `het han muc goi AI`. Hôm sau tự có lại, không cần làm gì.

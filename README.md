@@ -55,9 +55,9 @@ Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm n
 Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
 
 > 💰 **Trần miễn phí: 20 lượt/ngày** (đo thật 28/09/2026). Dùng thật chỉ 3 lượt/ngày.
-> Nhưng **chạy thử `report.py` cũng tốn lượt** — muốn thử code thì chạy
-> `python -m unittest discover -s tests -t .` (không gọi mạng, không tốn lượt).
-> Hết trần thì báo cáo vẫn gửi, chỉ thiếu phần nhận định, hôm sau tự có lại.
+> Nhưng **chạy thử `report.py` cũng tốn lượt** — muốn thử code thì bấm đúp **`chay-kiem-thu.bat`**
+> (không gọi mạng, không tốn lượt). Hết trần thì báo cáo vẫn gửi, chỉ thiếu phần nhận định,
+> hôm sau tự có lại.
 
 ---
 
@@ -355,6 +355,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 cai-dat-nguoi-truc.bat     ← Bấm để BẬT (tạo Người trực, xoá 3 lịch cũ)
 ├── 📄 go-nguoi-truc.bat          ← Bấm để TẮT (xoá lịch, dừng tiến trình)
 ├── 📄 mo-file-env.bat            ← Bấm để mở file bí mật .env bằng Notepad (khỏi phải tìm)
+├── 📄 chay-kiem-thu.bat          ← Bấm để tự kiểm tra code còn đúng không (không tốn lượt AI)
 ├── 📄 cai-dat-lich.bat           ← Cách cũ (3 lịch rời rạc) — đường lùi nếu Người trực có sự cố
 ├── 📄 go-lich.bat                ← Xoá 3 lịch cũ
 ├── 📄 bat-chay-bu.bat            ← Chỉ còn dùng cho cách cũ (cần Admin)
@@ -408,7 +409,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | `dashboard.html` mở ra trắng/trống | Chạy lại `python report.py --dry` để tạo lại file |
 | Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | **Đọc lý do trong ngoặc** ngay sau đó — hệ thống ghi rõ bằng tiếng Việt (hết hạn mức / tên model sai / chìa khoá sai / mất mạng). **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
 | Phần nhận định chỉ mô tả, không so sánh | Bình thường trong ~7 ngày đầu: sổ lịch sử chưa đủ số kỳ trước. Xem mục "NHẬN ĐỊNH nay do AI viết" ở đầu file |
-| Ghi chú AI báo `het han muc goi AI` | Bản miễn phí cho **20 lượt/ngày**; chạy thử `report.py` nhiều lần cũng tốn lượt. Hôm sau tự có lại. Muốn thử code thì chạy `python -m unittest discover -s tests -t .` (không tốn lượt) |
+| Ghi chú AI báo `het han muc goi AI` | Bản miễn phí cho **20 lượt/ngày**; chạy thử `report.py` nhiều lần cũng tốn lượt. Hôm sau tự có lại. Muốn thử code thì bấm đúp **`chay-kiem-thu.bat`** (không tốn lượt) |
 
 ---
 
