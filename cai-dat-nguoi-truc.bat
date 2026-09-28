@@ -109,8 +109,16 @@ echo.
 REM --- Buoc 3: tao lich NguoiTruc bang PowerShell ---
 REM Duong dan duoc truyen qua BIEN MOI TRUONG, khong nhung vao chuoi lenh,
 REM nen khong dinh bay dau nhay (bai hoc tu cai-dat-lich.bat ngay 28/09/2026).
+REM
+REM HAI trigger, co y:
+REM   - AtLogOn: chay khi dang nhap.
+REM   - Once + lap moi 5 phut: neu tien trinh CHET thi Windows tu bat lai trong
+REM     vong 5 phut. Ket hop MultipleInstances=IgnoreNew nen khi tien trinh dang
+REM     chay thi lan lap bi bo qua, khong tao ban thu hai.
+REM     (Chi co AtLogOn la khong du: tien trinh chet giua ngay thi nam chet cho
+REM      toi lan dang nhap sau. Da xay ra that ngay 28/09/2026.)
 echo Dang tao lich "%TASK_NAME%"...
-powershell -NoProfile -Command "$py=$env:PYTHON_EXE; $sp=$env:SCRIPT_PATH; $wd=$env:SCRIPT_DIR; $a = New-ScheduledTaskAction -Execute $py -Argument ([char]34 + $sp + [char]34) -WorkingDirectory $wd; $t = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME; $s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Seconds 0) -RestartInterval (New-TimeSpan -Minutes 5) -RestartCount 3 -MultipleInstances IgnoreNew; try { Register-ScheduledTask -TaskName 'NguoiTruc' -Action $a -Trigger $t -Settings $s -Force -ErrorAction Stop | Out-Null; Write-Host '  [OK]  Da tao lich NguoiTruc' } catch { Write-Host ('  [LOI] ' + $_.Exception.Message) }"
+powershell -NoProfile -Command "$py=$env:PYTHON_EXE; $sp=$env:SCRIPT_PATH; $wd=$env:SCRIPT_DIR; $a = New-ScheduledTaskAction -Execute $py -Argument ([char]34 + $sp + [char]34) -WorkingDirectory $wd; $t1 = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME; $t2 = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5); $s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Seconds 0) -RestartInterval (New-TimeSpan -Minutes 5) -RestartCount 3 -MultipleInstances IgnoreNew; try { Register-ScheduledTask -TaskName 'NguoiTruc' -Action $a -Trigger $t1, $t2 -Settings $s -Force -ErrorAction Stop | Out-Null; Write-Host '  [OK]  Da tao lich NguoiTruc' } catch { Write-Host ('  [LOI] ' + $_.Exception.Message) }"
 
 echo.
 echo ============================================

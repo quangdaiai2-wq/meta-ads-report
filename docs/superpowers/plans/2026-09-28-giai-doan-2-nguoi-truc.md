@@ -38,6 +38,18 @@
 > **Rút ra:** với mọi `.bat` vừa *xoá* cơ chế cũ vừa *tạo* cơ chế mới, phải bảo đảm cơ chế mới
 > **chạy được ngay trong cùng lượt bấm** — không được để nó chờ một sự kiện hệ thống (đăng nhập,
 > khởi động lại) mới hoạt động.
+4. **Lịch có HAI trigger, không phải một.** Kế hoạch chỉ có `-AtLogOn`. Tiến trình thật đã
+   **chết giữa ngày** (28/09, ~14:31–14:39): `LastTaskResult = 3221225786` = `0xC000013A`
+   (`STATUS_CONTROL_C_EXIT`) ⇒ bị kết thúc cưỡng bức từ bên ngoài, không phải lỗi chương trình.
+   Với chỉ `-AtLogOn`, nó **nằm chết tới lần đăng nhập sau**. `-RestartInterval`/`-RestartCount`
+   trong kế hoạch **không cứu được**: đó là "restart on **failure**", còn đây là bị giết.
+   Đã thêm trigger thứ hai: `-Once -RepetitionInterval (New-TimeSpan -Minutes 5)`, **không** đặt
+   `-RepetitionDuration` ⇒ lặp vô hạn. Kết hợp `MultipleInstances=IgnoreNew` ⇒ đang chạy thì lần
+   lặp bị bỏ qua, đã chết thì được bật lại trong 5 phút. Đây là cơ chế **tự chữa bệnh**.
+
+> ⚠️ **Nâng cấp lịch đã tồn tại cần quyền Administrator.** `Register-ScheduledTask -Force` trên
+> lịch có sẵn trả `Access is denied` nếu không nâng quyền — khác với việc **tạo** lịch mới thì
+> không cần. Nên muốn đổi cấu hình lịch đang sống, **người dùng phải tự bấm `.bat`**.
 
 ---
 

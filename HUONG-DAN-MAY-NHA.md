@@ -31,12 +31,15 @@ chạy lại `cai-dat-nguoi-truc.bat`**.
    Ten lich    : NguoiTruc
    Trang thai  : Running
    Tham so     : "D:\...\nguoi_truc.py"
+   So trigger  : 2
    Tien trinh   : dang chay (PID ...)
    ```
 
-   **Hai dòng phải đúng:**
+   **Ba dòng phải đúng:**
    - `Tham so` phải **kết thúc bằng `nguoi_truc.py"`** (có dấu nháy đóng). Thiếu dấu nháy đó thì
      đường dẫn có khoảng trắng bị Windows cắt làm hai, lịch không chạy được.
+   - `So trigger` phải là **`2`** — một cái chạy khi đăng nhập, một cái lặp mỗi 5 phút để tự bật
+     lại nếu tiến trình chết.
    - `Trang thai` phải là `Running` và có dòng `Tien trinh: dang chay`.
 
 ### Bước 2b — Thêm dòng `REPORT_SLOTS` vào `.env` (BẮT BUỘC)

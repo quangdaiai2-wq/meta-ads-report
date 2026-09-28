@@ -52,7 +52,10 @@ META_AD_ACCOUNT_ID=...
 
 File này làm **bốn** việc, chỉ cần bấm một lần:
 
-1. Tạo **một** lịch Windows duy nhất tên `NguoiTruc`, tự chạy khi Đại đăng nhập máy.
+1. Tạo **một** lịch Windows duy nhất tên `NguoiTruc`, với **hai** cơ chế kích hoạt:
+   - **Khi đăng nhập Windows** — để Người trực luôn sống sau mỗi lần khởi động máy.
+   - **Lặp lại mỗi 5 phút** — nếu tiến trình chết giữa ngày, Windows tự bật lại trong vòng
+     5 phút. Khi tiến trình đang chạy thì lần lặp này **bị bỏ qua**, không tạo bản thứ hai.
 2. **Xoá ba lịch cũ** (`BaoCaoMetaAds_08/12/17`) — để hai lịch cùng sống là có hai nguồn
    gửi báo cáo, sẽ bị trùng.
 3. **Khởi động Người trực ngay**, không đợi lần đăng nhập sau. Lịch chỉ kích hoạt khi đăng
@@ -61,6 +64,7 @@ File này làm **bốn** việc, chỉ cần bấm một lần:
 4. Đọc lại lịch vừa tạo và in ra để kiểm tra.
 
 Nếu báo lỗi quyền: chuột phải vào file → **Run as administrator** → bấm lại.
+(Chạy lại lên lịch **đã có** bắt buộc cần quyền Administrator.)
 
 **Bấm từ đúng thư mục dự án** (`D:\Buddy Work AI\2026-09-14-07-50-57`). File này tự lấy
 đường dẫn `nguoi_truc.py` từ chỗ nó đứng — bấm từ bản sao ở nơi khác là trỏ sai chỗ.
@@ -79,15 +83,17 @@ Kết quả mong đợi:
   Trang thai  : Running
   Chuong trinh: C:\...\python.exe
   Tham so     : "D:\Buddy Work AI\2026-09-14-07-50-57\nguoi_truc.py"
+  So trigger  : 2
   Chay khi dung pin: True
   Chay bu khi lo gio: True
   Gioi han thoi gian: PT0S
   Tien trinh   : dang chay (PID ...)
 ```
 
-**Hai dòng phải đúng:**
+**Ba dòng phải đúng:**
 - **`Tham so`** phải **kết thúc bằng `nguoi_truc.py"`** — có dấu nháy đóng ở cuối. Thiếu dấu
   nháy đó thì đường dẫn có khoảng trắng bị Windows cắt làm hai và lịch không chạy được.
+- **`So trigger`** phải là **`2`**.
 - **`Trang thai`** phải là **`Running`** và có dòng **`Tien trinh: dang chay`**.
 
 > ⚠️ **Đừng tin dòng `[OK]`.** Nó chỉ nói Windows không báo lỗi, không nói tham số đã đúng.
@@ -216,6 +222,7 @@ do `nguoi_truc.py` đảm nhiệm. Nó:
 | Nghe Telegram | Chỉ trả lời tin từ `TELEGRAM_CHAT_ID` của Đại. Tin từ người lạ bị bỏ qua và ghi nhật ký |
 | Bỏ qua tin cũ | Lúc vừa khởi động, **bỏ qua toàn bộ tin nhắn đến trước đó** (chủ ý — để không trả lời một loạt tin cũ). Nhắn trước khi nó chạy thì tin đó mất, phải nhắn lại |
 | Nhịp tim | Ghi một dòng nhật ký mỗi 30 phút để biết còn sống |
+| Tự bật lại nếu chết | Lịch có trigger **lặp mỗi 5 phút**; tiến trình đang chạy thì lần lặp bị bỏ qua, tiến trình đã chết thì được bật lại |
 
 **Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
 
@@ -406,7 +413,8 @@ Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn k
 - **Python**: `C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe`
 - **Không cần thư viện ngoài** — script dùng `urllib` có sẵn của Python.
 - **Meta Graph API**: `v21.0`
-- **Task Scheduler**: **một** task tên `NguoiTruc`, kích hoạt khi đăng nhập, có "Restart on failure".
+- **Task Scheduler**: **một** task tên `NguoiTruc`, **hai** trigger — kích hoạt khi đăng nhập,
+  và lặp mỗi 5 phút để tự bật lại nếu tiến trình chết. Có "Restart on failure".
   Cách cũ dùng 3 task `BaoCaoMetaAds_08/12/17` — `cai-dat-lich.bat` vẫn tạo được nếu cần.
 - **Tiến trình thường trú**: `nguoi_truc.py`, kiểm tra đồng hồ mỗi 30 giây. Gọi `report.py`
   ở **tiến trình riêng** kèm `--slot N`.

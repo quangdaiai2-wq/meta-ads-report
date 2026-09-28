@@ -329,8 +329,24 @@ gì gửi báo cáo**. Đã xảy ra thật: Đại bấm file lúc ~14:20, lị
 ai trả lời. **Đã sửa:** `.bat` giờ gọi `Start-ScheduledTask` ngay sau khi tạo lịch, và phần
 kiểm tra in thêm `Trang thai` + dòng `Tien trinh: dang chay (PID ...)`.
 
+**Lỗ hổng thứ hai (phát hiện 14:39 cùng ngày): lịch không tự bật lại khi tiến trình chết.**
+Tiến trình chạy từ 14:26:29, trả lời được một tin lúc 14:31:07, rồi **chết** —
+`LastTaskResult = 3221225786` = `0xC000013A` (`STATUS_CONTROL_C_EXIT`) ⇒ **bị kết thúc cưỡng
+bức từ bên ngoài**, không phải lỗi chương trình (nhật ký không có dòng lỗi nào). Nhiều khả năng
+do phiên làm việc của trợ lý AI dọn dẹp tiến trình khi kết thúc. **Vấn đề thật:** lịch chỉ có
+`-AtLogOn`, nên tiến trình chết giữa ngày thì **nằm chết tới lần đăng nhập sau**;
+`-RestartInterval/-RestartCount` không cứu được vì đó là "restart on **failure**", còn đây là
+bị giết. **Đã sửa:** `.bat` tạo **HAI trigger** — `-AtLogOn` + `-Once -RepetitionInterval 5 phút`
+(không đặt duration = lặp vô hạn). Kết hợp `MultipleInstances=IgnoreNew` ⇒ đang chạy thì lần lặp
+bị bỏ qua, đã chết thì được bật lại trong 5 phút. Đây là cơ chế tự chữa bệnh.
+
+> ⚠️ **`Register-ScheduledTask -Force` lên lịch ĐÃ CÓ cần quyền Administrator** (`Access is
+> denied` nếu không). Vì vậy nâng cấp lịch đang tồn tại **bắt buộc Đại tự bấm `.bat`** — trợ lý
+> AI không làm hộ được. Tạo lịch mới thì không cần quyền Admin.
+
 > Ghi chú kèm: Người trực **bỏ qua mọi tin nhắn đến trước lúc nó khởi động** (xả tồn đọng bằng
 > `offset=-1`). Nên nhắn thử bot phải làm **sau** khi nó chạy; nhắn trước là mất tin, không phải lỗi.
+> Hệ quả: **mỗi lần khởi động lại đều nuốt tin đang chờ** — nhắn lại là được.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
