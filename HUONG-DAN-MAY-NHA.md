@@ -35,9 +35,10 @@ chạy lại `cai-dat-nguoi-truc.bat`**.
 
 **Một điều cần biết trước khi bấm bước 2:**
 
-- **Máy nhà GIỮ mốc 22h, máy công ty thì không.** Mốc giờ là cấu hình của từng máy, nằm ở
-  khoá `REPORT_SLOTS` trong `.env`. Máy nhà để `REPORT_SLOTS=8,12,17,22`; máy công ty để
-  `REPORT_SLOTS=8,12,17`. **Không copy `.env` giữa hai máy mà quên sửa dòng này.**
+- **Cả hai máy dùng chung ba mốc 8h, 12h, 17h.** Đại đã chốt bỏ mốc 22h ở cả hai máy ngày
+  28/09/2026. Kiểm trong `.env` phải thấy `REPORT_SLOTS=8,12,17`. Mốc giờ là cấu hình của
+  từng máy, nên **không copy `.env` giữa hai máy mà quên kiểm dòng này**. Nếu thiếu hẳn dòng
+  đó, hệ thống dùng mặc định `8,12,17,22` — tức **mốc 22h quay trở lại**.
 - **Không cần tính năng "tự thức máy" nữa.** Người trực chạy suốt khi máy bật; máy tắt thì
   không có báo cáo, nhưng khi bật lại nó gửi bù đúng **một** báo cáo cho mốc gần nhất bị lỡ.
 
@@ -166,7 +167,7 @@ MÁY NHÀ — BẢN 28/09 (mới nhất, làm theo mục đầu file)
 ├── cai-dat-nguoi-truc.bat (Run as administrator)   ← PHẢI chạy: tạo Người trực, xoá 3 lịch cũ
 └── nhìn dòng "Tham so": phải kết thúc bằng nguoi_truc.py"
 
-LƯU Ý: máy nhà GIỮ mốc 22h — kiểm dòng REPORT_SLOTS=8,12,17,22 trong .env
+LƯU Ý: cả hai máy dùng mốc 8,12,17 — kiểm dòng REPORT_SLOTS=8,12,17 trong .env
 KHÔNG cần: sửa file .env nếu đã có dòng REPORT_SLOTS (token máy nhà không đổi)
 KHÔNG cần: bat-chay-bu.bat, bat-danh-thuc-may.bat (Người trực chạy suốt, không cần đánh thức máy)
 ```

@@ -26,11 +26,12 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 | ☀️ **12:00** | Kết quả từ 0h đến 12h hôm nay |
 | 🌤️ **17:00** | Kết quả từ 0h đến 17h hôm nay |
 
-> 📌 **Mốc 22h đã bỏ trên máy công ty từ 28/09/2026.** Lý do: đếm trong `logs/baocao.log` **của máy
+> 📌 **Mốc 22h đã bỏ trên CẢ HAI MÁY từ 28/09/2026.** Lý do: đếm trong `logs/baocao.log` **của máy
 > công ty** (14/09 – 28/09) thì mốc 8h có 51 dòng, 12h có 37, 17h có 27, còn **mốc 22h có 0 dòng** —
 > trên máy này nó chưa từng báo cáo một lần nào. Khi máy thức dậy buổi sáng, lịch 22h chạy bù và
-> tự đoán ra mốc 8h — gây ra báo cáo trùng.
-> (Máy nhà trước đây vẫn chạy được mốc 22h — xem ghi chép ngày 12/09 ở phần "Ba điều cần biết".)
+> tự đoán ra mốc 8h — gây ra báo cáo trùng. Máy nhà trước đây có chạy được mốc 22h (xem ghi chép
+> ngày 12/09 ở phần "Ba điều cần biết"), nhưng từ 28/09 Đại chốt dùng chung ba mốc 8h, 12h, 17h
+> cho cả hai máy. Muốn lấy lại thì xem mục "Người trực là gì" bên dưới.
 
 ---
 
@@ -203,12 +204,15 @@ do `nguoi_truc.py` đảm nhiệm. Nó:
 **Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
 
 ```
-REPORT_SLOTS=8,12,17        ← máy công ty (đã bỏ mốc 22h)
-REPORT_SLOTS=8,12,17,22     ← máy nhà
+REPORT_SLOTS=8,12,17
 ```
 
-Muốn lấy lại mốc 22h thì sửa một dòng trong `.env` và khởi động lại Người trực. Nếu thiếu
-khoá này, hệ thống dùng mặc định `8,12,17,22`.
+**Cả hai máy đều dùng `8,12,17`** — mốc 22h đã bỏ từ 28/09/2026 (xem lý do ở đầu file).
+Đây là **cấu hình của từng máy**, không copy y nguyên `.env` giữa hai máy mà quên kiểm dòng này.
+
+Muốn lấy lại mốc 22h ở một máy nào đó: sửa dòng đó thành `REPORT_SLOTS=8,12,17,22` rồi khởi
+động lại Người trực. Nếu thiếu khoá này, hệ thống dùng mặc định `8,12,17,22` — nghĩa là **mốc
+22h quay trở lại**, nên đừng để thiếu.
 
 **Giới hạn phải biết:** Người trực chỉ sống khi máy **đang bật và đang đăng nhập Windows**.
 Máy tắt thì không có báo cáo — nhưng khi bật lại, nó gửi bù đúng một báo cáo cho mốc gần

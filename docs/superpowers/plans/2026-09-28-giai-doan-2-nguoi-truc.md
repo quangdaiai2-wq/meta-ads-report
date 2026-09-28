@@ -12,6 +12,25 @@
 
 ---
 
+## Cập nhật khi thi công (28/09/2026) — hai điều khác bản kế hoạch này
+
+**Đã thi công xong 5/5 task, 105/105 kiểm thử đạt.** Hai chỗ dưới đây khác bản kế hoạch viết ở trên:
+
+1. **Máy nhà BỎ mốc 22h, không giữ.** Kế hoạch này (mục Task 1 Step 9, Task 5 Step 4 và Step 11d)
+   viết "máy nhà giữ 22h". Khi thi công, Đại chốt lại: **cả hai máy dùng chung `8,12,17`**.
+   Đã sửa `README.md`, `.env.example`, `HUONG-DAN-MAY-NHA.md`, `HUONG-DAN-MAY-CONG-TY.md` theo
+   đúng quyết định đó. Phần **code** không đổi — `REPORT_SLOTS` vẫn là cấu hình của từng máy,
+   chỉ khác giá trị ghi trong `.env`. Kế hoạch vẫn dùng được nguyên vẹn nếu sau này muốn lấy lại
+   mốc 22h ở một máy nào đó.
+2. **Dòng kiểm tra cuối của `cai-dat-nguoi-truc.bat` in ba thuộc tính khác.** Kế hoạch viết
+   `$t.Settings.AllowStartIfOnBatteries` — thuộc tính này **không tồn tại** trên đối tượng lịch,
+   luôn trả rỗng, in ra một dòng trống vô nghĩa. Đã đổi thành `Chay khi dung pin`
+   (`-not DisallowStartIfOnBatteries`), `Khong tat khi sang pin` (`-not StopIfGoingOnBatteries`)
+   và `Chay bu khi lo gio` (`StartWhenAvailable`). Chỉ ảnh hưởng phần in ra, không ảnh hưởng
+   việc tạo lịch.
+
+---
+
 ## Kế hoạch này đã được kiểm chứng trước khi giao
 
 Trước khi giao kế hoạch, tôi đã **dựng thử toàn bộ code của kế hoạch trong một thư mục tạm**

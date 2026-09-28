@@ -296,6 +296,8 @@ khởi động chỉ gửi **một** báo cáo bù cho mốc gần nhất bị l
 3. **Mốc giờ chuyển vào `.env`** (khoá `REPORT_SLOTS`). `determine_period()` không còn viết
    cứng `if slot_hour == 8`; nó nhận `moc_sang_bao_cao` với mặc định 8, và `main()` truyền
    `moc_sang(danh_sach_moc)` = mốc nhỏ nhất.
+   **Giá trị đang dùng: cả hai máy đều `REPORT_SLOTS=8,12,17`** (Đại chốt 28/09/2026, bỏ mốc
+   22h ở cả hai máy). Không có khoá thì mặc định là `8,12,17,22` — tức mốc 22h quay trở lại.
 4. **`cai-dat-nguoi-truc.bat` tự xoá ba lịch cũ.** Bản thiết kế mục 10 ghi hai bước riêng,
    nhưng để hai lịch cùng sống là hai nguồn gửi báo cáo, mà cơ chế chống trùng cũ đọc-rồi-ghi
    **không có khoá** nên hai tiến trình chạy sát nhau vẫn lọt.

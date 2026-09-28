@@ -251,8 +251,10 @@ REPORT_SLOTS=8,12,17
 
 | Máy | Giá trị |
 |---|---|
-| Máy công ty | `REPORT_SLOTS=8,12,17` (đã bỏ mốc 22h từ 28/09/2026) |
-| Máy nhà | `REPORT_SLOTS=8,12,17,22` |
+| Máy công ty | `REPORT_SLOTS=8,12,17` |
+| Máy nhà | `REPORT_SLOTS=8,12,17` |
+
+Cả hai máy dùng chung ba mốc 8h, 12h, 17h — mốc 22h đã bỏ từ 28/09/2026.
 
 Nếu thiếu dòng này, hệ thống dùng mặc định `8,12,17,22` — nghĩa là **mốc 22h quay trở lại
 trên máy công ty**. File `cai-dat-nguoi-truc.bat` sẽ in cảnh báo nếu thiếu.
