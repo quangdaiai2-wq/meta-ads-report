@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dashboard import save_dashboard
+import lich_su
 
 API_VERSION = "v21.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
@@ -450,6 +451,7 @@ def compute_stats(env, since, until):
         "totals": totals,
         "good": [pack(r, i + 1) for i, r in enumerate(good)],
         "bad": [pack(r, i + 1) for i, r in enumerate(bad)],
+        "all": [pack(r, i + 1) for i, r in enumerate(filtered)],
         "include_kw": include_kw,
         "exclude_kw": env.get("FILTER_EXCLUDE", ""),
         "account_name": env.get("REPORT_ACCOUNT_NAME", ""),
@@ -611,6 +613,20 @@ def send_telegram_document(env, filepath, filename, caption=""):
         return False, str(e)
 
 
+def luu_lich_su(stats, ngay, moc, path_lich_su=None):
+    """Luu so lieu vao lich su. KHONG BAO GIO nem loi ra ngoai.
+
+    Muc dich: mot su co khi luu lich su khong duoc phep lam hong viec gui
+    bao cao. Moi loi deu bi nuot va chi ghi nhat ky.
+    """
+    try:
+        if path_lich_su is None:
+            path_lich_su = LOG_DIR / "lich-su.json"
+        lich_su.ghi(path_lich_su, ngay, moc, stats)
+    except Exception as e:
+        log(f"Khong luu duoc lich su: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bao cao Meta Ads -> Telegram")
     parser.add_argument("--mock", type=int, choices=REPORT_SLOTS,
@@ -660,6 +676,11 @@ def main():
         if args.mock is None and not args.dry:
             send_error_alert(env, err)
         sys.exit(1)
+
+    # Luu lich su TRUOC khi gui: neu gui loi thi so lieu van con.
+    # Bo qua o che do --mock vi moc gio trong che do do la gia.
+    if args.mock is None:
+        luu_lich_su(stats, until, slot)
 
     report = build_report(env, stats, period_text)
 
