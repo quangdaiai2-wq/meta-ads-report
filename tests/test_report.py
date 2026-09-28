@@ -107,10 +107,95 @@ class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
             {"rank", "id", "name", "spend", "purchase", "payment", "msg", "cpr"},
         )
 
-    def test_good_va_bad_van_nhu_cu(self):
+    def test_bang_kem_khong_lap_bang_hieu_qua(self):
+        """Truoc 28/09/2026 bai nay khang dinh len(bad) == 5.
+
+        Con so do khoa lai MOT LOI THAT: voi 6 camp nay, 4 camp vua nam o
+        bang "hieu qua" vua nam o bang "kem hieu qua" (C, D, E, F). Da sua
+        ngay 28/09/2026 - xem class TestKhongLapGiuaHaiBang ben duoi.
+        """
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
         self.assertEqual(len(stats["good"]), 5)
+        # 6 camp: 5 camp co don (A, C, D, E, F) deu vao bang hieu qua;
+        # chi con B (0 don) la thuc su kem => bang kem dung 1 dong.
+        self.assertEqual(len(stats["bad"]), 1)
+        self.assertEqual(stats["bad"][0]["id"], "2")
+
+
+class TestKhongLapGiuaHaiBang(unittest.TestCase):
+    """Mot camp KHONG duoc nam o CA HAI bang xep hang.
+
+    Loi that phat hien ngay 28/09/2026: bang "kem hieu qua" uu tien camp 0 don,
+    nhung khi tai khoan it camp thi het camp 0 don, no lay bu bang nhung camp
+    CO don - va lay tu duoi len, tuc la trung voi bang "hieu qua" (lay tu tren
+    xuong). Tai khoan 5 camp deu co don thi CA 5 nam o ca hai bang, ke ca camp
+    tot nhat. Giai doan 3 lam loi nay nang hon vi AI doc ca hai bang de viet
+    nhan dinh => nhan dinh tu mau thuan.
+    """
+
+    def _chay(self, rows, top="5"):
+        goc = report.fetch_insights
+        report.fetch_insights = lambda env, since, until: (rows, None)
+        try:
+            env = {
+                "FILTER_INCLUDE": "dainq",
+                "FILTER_EXCLUDE": "",
+                "TOP_CAMPAIGN_COUNT": top,
+                "REPORT_ACCOUNT_NAME": "Test",
+            }
+            stats, err = report.compute_stats(env, date(2026, 9, 27), date(2026, 9, 27))
+            self.assertIsNone(err)
+            return stats
+        finally:
+            report.fetch_insights = goc
+
+    def _id(self, ds):
+        return {c["id"] for c in ds}
+
+    def test_5_camp_deu_co_don_thi_bang_kem_RONG(self):
+        rows = [_hang_camp(str(i), f"dainq {i}", 1000 * i, i) for i in range(5, 0, -1)]
+        stats = self._chay(rows)
+        self.assertEqual(len(stats["good"]), 5)
+        self.assertEqual(stats["bad"], [])
+
+    def test_5_camp_deu_co_don_KHONG_camp_nao_nam_ca_hai_bang(self):
+        rows = [_hang_camp(str(i), f"dainq {i}", 1000 * i, i) for i in range(5, 0, -1)]
+        stats = self._chay(rows)
+        self.assertEqual(self._id(stats["good"]) & self._id(stats["bad"]), set())
+
+    def test_camp_0_don_VAN_nam_trong_bang_kem(self):
+        rows = [
+            _hang_camp("a", "dainq A", 100, 5),
+            _hang_camp("b", "dainq B", 200, 0),
+        ]
+        stats = self._chay(rows)
+        self.assertIn("b", self._id(stats["bad"]))
+        self.assertNotIn("b", self._id(stats["good"]))
+
+    def test_tai_khoan_nhieu_camp_bang_kem_van_du_5_dong(self):
+        # Giong du lieu that ngay 28/09/2026: 13 camp, 2 camp 0 don.
+        rows = [_hang_camp(f"c{i}", f"dainq {i}", 100 * i, i) for i in range(1, 12)]
+        rows.append(_hang_camp("z1", "dainq Z1", 5000, 0))
+        rows.append(_hang_camp("z2", "dainq Z2", 4000, 0))
+        stats = self._chay(rows)
         self.assertEqual(len(stats["bad"]), 5)
+        self.assertEqual(self._id(stats["good"]) & self._id(stats["bad"]), set())
+
+    def test_khong_bao_gio_lap_voi_moi_co_tai_khoan(self):
+        for so_camp in (1, 2, 3, 5, 6, 8, 13, 30):
+            with self.subTest(so_camp=so_camp):
+                rows = [
+                    _hang_camp(f"c{i}", f"dainq {i}", 100 * i, i % 4)
+                    for i in range(1, so_camp + 1)
+                ]
+                stats = self._chay(rows)
+                chung = self._id(stats["good"]) & self._id(stats["bad"])
+                self.assertEqual(chung, set(), f"so_camp={so_camp} bi lap: {chung}")
+
+    def test_bang_kem_khong_dai_hon_top(self):
+        rows = [_hang_camp(f"c{i}", f"dainq {i}", 100 * i, 0) for i in range(1, 30)]
+        stats = self._chay(rows)
+        self.assertLessEqual(len(stats["bad"]), 5)
 
 
 class TestLuuLichSu(unittest.TestCase):

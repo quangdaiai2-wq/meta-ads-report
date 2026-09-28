@@ -1372,7 +1372,15 @@ git ls-files | grep -E "^ai.py|test_ai.py|HUONG-DAN-LAY-CHIA-KHOA-AI"
 - **Rủi ro mang sang:** câu trả lời cho Đại sẽ dựa trên `logs/lich-su.json`. Nếu lịch sử còn
   mỏng (xem mục "ĐỌC TRƯỚC KHI DUYỆT" số 1) thì AI **phải nói thật là chưa có số**, không được
   đoán. Prompt của Giai đoạn 4 phải có cùng ràng buộc "không được tự suy ra số".
-- **Còn tồn đọng từ Giai đoạn 1, chưa xử lý:** `compute_stats()` không loại trừ `good` khỏi
-  `bad`, nên tài khoản ít campaign có thể thấy cùng một camp ở cả hai mục. Đến Giai đoạn 3 việc
-  này còn đáng sửa hơn, vì AI đọc cả hai bảng đó để viết nhận định — thấy cùng một camp ở cả
-  "hiệu quả" lẫn "kém hiệu quả" thì nhận định sẽ mâu thuẫn. **Cần Đại quyết trước khi làm Giai đoạn 4.**
+- ~~**Còn tồn đọng từ Giai đoạn 1, chưa xử lý:** `compute_stats()` không loại trừ `good` khỏi
+  `bad`, nên tài khoản ít campaign có thể thấy cùng một camp ở cả hai mục.~~
+  ✅ **ĐÃ SỬA ngày 28/09/2026** (sau khi GĐ3 thi công xong, Đại yêu cầu xử lý luôn).
+  `bad` nay loại trừ mọi camp đã nằm trong `good` theo `campaign_id`. Thêm 7 bài kiểm thử trong
+  `tests/test_report.py` (class `TestKhongLapGiuaHaiBang`), có một bài quét mọi cỡ tài khoản
+  1/2/3/5/6/8/13/30 camp. Kiểm chứng trên dữ liệu thật: 13 camp vẫn ra đủ 5+5 dòng, không trùng.
+  **Hệ quả chấp nhận được:** tài khoản ít camp thì bảng "kém hiệu quả" ngắn lại hoặc trống —
+  đúng, vì khi đó thật sự không có camp nào kém.
+- **Còn lại, cân nhắc cho Giai đoạn 4 (chưa làm, chưa cần Đại quyết gấp):** bảng "hiệu quả" xếp
+  theo **số lượt mua**, không theo **CPR** (chi phí cho mỗi lượt mua). Nên một camp đốt 10 triệu
+  được 9 đơn vẫn xếp trên camp chi 500 nghìn được 4 đơn. Đổi sang xếp theo CPR là đổi ý nghĩa
+  báo cáo — cần Đại xác nhận trước.

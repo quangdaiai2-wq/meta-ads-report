@@ -229,6 +229,9 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 - 8 ô số liệu lớn: Chi tiêu, Lượt mua, CPR, Lượt thanh toán, Trò chuyện, Liên hệ mới, Đơn hàng, Bình luận.
 - Khung bộ lọc đang áp dụng.
 - 2 bảng xếp hạng: 🟢 Camp hiệu quả (top 5) và 🔴 Camp kém hiệu quả (top 5).
+  **Một camp chỉ xuất hiện ở MỘT trong hai bảng** (sửa 28/09/2026). Nên nếu tài khoản ít camp,
+  bảng "kém hiệu quả" sẽ **ngắn hơn 5 dòng hoặc trống** — đó là đúng, không phải lỗi: khi mọi
+  camp đều ra đơn thì thật sự không có camp nào kém.
 - Cột **CPR** tự đổi màu: 🟢 xanh = rẻ hơn mức trung bình, 🔴 đỏ = đắt hơn.
 
 **Lưu ý:** Số liệu được **ghi sẵn** vào file lúc tạo — file này là **ảnh chụp (snapshot)**, không tự cập nhật. Muốn số mới, chạy lại script.

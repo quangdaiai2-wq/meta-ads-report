@@ -410,11 +410,32 @@ Nghĩa là **không một con số nào bị bịa** — kể cả cột chênh 
 trong `tests/test_report.py`. Kiểm thử **không gọi mạng** — mọi lời gọi Gemini đều đi qua hàm
 giả tiêm vào bằng `goi_mang_fn=`.
 
-**Còn tồn đọng, CHƯA xử lý (cần Đại quyết trước Giai đoạn 4):** `compute_stats()` **không loại
-`good` khỏi `bad`**, nên tài khoản ít campaign có thể thấy **cùng một camp** ở cả hai bảng.
-Đến GĐ3 việc này còn đáng sửa hơn, vì AI đọc cả hai bảng để viết nhận định — thấy cùng một camp
-ở cả "hiệu quả" lẫn "kém hiệu quả" thì nhận định sẽ **mâu thuẫn**. Xem mục cuối của
-`docs/superpowers/plans/2026-09-28-giai-doan-3-nhan-dinh-ai.md`.
+**ĐÃ SỬA ngày 28/09/2026 (sau khi GĐ3 thi công xong) — hai bảng xếp hạng không còn trùng nhau.**
+
+Lỗi cũ: `compute_stats()` **không loại `good` khỏi `bad`**. Bảng "hiệu quả" lấy từ **trên xuống**
+theo số lượt mua, bảng "kém hiệu quả" lấy từ **dưới lên**; tài khoản ít camp thì hai đầu gặp nhau.
+Đã đo được thật: tài khoản **5 camp đều có đơn ⇒ CẢ 5 nằm ở cả hai bảng**, kể cả camp tốt nhất
+(9 lượt mua bị xếp vào "kém hiệu quả"). Tài khoản 13 camp trở lên thì **không** bị — nên lỗi này
+ẩn rất lâu.
+
+Cách sửa: `bad` **loại trừ mọi camp đã nằm trong `good`** theo `campaign_id`.
+
+**Hệ quả phải biết (cố ý):** tài khoản ít camp thì bảng "kém hiệu quả" **ngắn lại, hoặc trống** —
+báo cáo sẽ ghi *"Không có camp nào kém hiệu quả."* Đó là **đúng**, vì khi mọi camp đều ra đơn thì
+thật sự không có camp nào kém. **Đừng "sửa" lại cho đủ 5 dòng** — làm thế là quay lại lỗi cũ.
+
+Kiểm thử: `161/161` đạt. Thêm 7 bài trong `tests/test_report.py` (class `TestKhongLapGiuaHaiBang`),
+trong đó có một bài quét **mọi cỡ tài khoản** 1/2/3/5/6/8/13/30 camp. Kiểm chứng trên dữ liệu
+thật 28/09: 13 camp vẫn ra đủ 5+5 dòng, không trùng.
+
+> 📌 **Một bài kiểm thử CŨ đã phải sửa:** `test_good_va_bad_van_nhu_cu` khẳng định `len(bad) == 5`
+> cho bộ dữ liệu 6 camp — con số đó **khoá lại chính lỗi này**. Đã đổi tên thành
+> `test_bang_kem_khong_lap_bang_hieu_qua` và khẳng định đúng hành vi mới. Nếu thấy bài cũ ở đâu
+> khác thì đừng khôi phục.
+
+**Việc còn lại, KHÔNG gấp (cân nhắc cho Giai đoạn 4):** bảng "hiệu quả" xếp theo **số lượt mua**,
+không theo **CPR** (chi phí mỗi lượt mua). Nên camp đốt 10 triệu được 9 đơn vẫn xếp trên camp chi
+500 nghìn được 4 đơn. Đổi sang xếp theo CPR là **đổi ý nghĩa báo cáo** — cần Đại xác nhận trước.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 

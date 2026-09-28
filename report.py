@@ -514,11 +514,27 @@ def compute_stats(env, since, until):
     # Camp tot: sap theo luot mua giam dan
     good = sorted(filtered, key=purchase_count, reverse=True)[:top_n]
     good = [r for r in good if purchase_count(r) > 0]
+    good_ids = {str(r.get("campaign_id", "")) for r in good}
 
-    # Camp kem: uu tien chi tieu > 0 ma 0 don
+    # Camp kem: uu tien chi tieu > 0 ma 0 don.
+    #
+    # Neu chua du top_n thi moi lay them camp co it don nhat - NHUNG BAT BUOC
+    # phai loai nhung camp da nam o bang "hieu qua".
+    #
+    # Vi sao: bang "hieu qua" lay tu TREN xuong, bang "kem" lay tu DUOI len.
+    # Danh sach ngan thi hai dau gap nhau. Da xay ra that ngay 28/09/2026: tai
+    # khoan 5 camp deu co don => CA 5 nam o ca hai bang, ke ca camp tot nhat.
+    # Giai doan 3 lam loi nay nang hon vi AI doc ca hai bang de viet nhan dinh,
+    # thay cung mot camp vua "hieu qua" vua "kem" thi nhan dinh tu mau thuan.
+    #
+    # He qua chap nhan duoc: tai khoan it camp thi bang "kem" ngan lai, hoac
+    # trong. Dung - vi khi do that su khong co camp nao kem ca.
     zero_result = [r for r in filtered if purchase_count(r) == 0]
     zero_result.sort(key=spend_of, reverse=True)
-    low_result = [r for r in filtered if purchase_count(r) > 0]
+    low_result = [
+        r for r in filtered
+        if purchase_count(r) > 0 and str(r.get("campaign_id", "")) not in good_ids
+    ]
     low_result.sort(key=purchase_count)
     bad = (zero_result + low_result)[:top_n]
 
