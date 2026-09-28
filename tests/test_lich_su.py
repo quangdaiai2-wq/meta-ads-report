@@ -1,0 +1,147 @@
+"""Kiem thu module lich_su - kho luu lich su so lieu bao cao."""
+import tempfile
+import unittest
+from datetime import date, timedelta
+from pathlib import Path
+
+import lich_su
+
+
+def stats_mau(spend=1000.0, purchase=10, ten_camp="Camp A"):
+    """Tao mot dict stats gia, giong cau truc compute_stats() tra ve."""
+    return {
+        "total_campaigns": 1,
+        "totals": {
+            "spend": spend, "msg": 5, "contact": 4, "order": 3,
+            "purchase": purchase, "payment": 2, "comment": 1,
+        },
+        "all": [
+            {
+                "id": "1", "name": ten_camp, "spend": spend,
+                "purchase": purchase, "payment": 2, "msg": 5,
+                "cpr": (spend / purchase) if purchase else None,
+            }
+        ],
+    }
+
+
+class TestDocVaGhi(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "lich-su.json"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_file_chua_co_thi_doc_tra_ve_rong(self):
+        self.assertEqual(lich_su.doc(self.path), {})
+
+    def test_ghi_roi_doc_lai_duoc(self):
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau())
+        ban_ghi = lich_su.lay_mot_ngay(self.path, "2026-09-27")
+        self.assertIsNotNone(ban_ghi)
+        self.assertEqual(ban_ghi["moc"], 8)
+        self.assertTrue(ban_ghi["day_du"])
+        self.assertEqual(ban_ghi["tong"]["spend"], 1000.0)
+        self.assertEqual(ban_ghi["so_camp"], 1)
+        self.assertEqual(len(ban_ghi["camp"]), 1)
+        self.assertEqual(ban_ghi["camp"][0]["name"], "Camp A")
+
+    def test_moc_12h_khong_phai_ban_day_du(self):
+        lich_su.ghi(self.path, "2026-09-28", 12, stats_mau())
+        self.assertFalse(lich_su.lay_mot_ngay(self.path, "2026-09-28")["day_du"])
+
+    def test_moc_22h_la_ban_day_du(self):
+        lich_su.ghi(self.path, "2026-09-28", 22, stats_mau())
+        self.assertTrue(lich_su.lay_mot_ngay(self.path, "2026-09-28")["day_du"])
+
+    def test_ban_day_du_ghi_de_ban_so_khong_day_du(self):
+        lich_su.ghi(self.path, "2026-09-28", 17, stats_mau(spend=500.0))
+        lich_su.ghi(self.path, "2026-09-28", 8, stats_mau(spend=900.0))
+        self.assertEqual(
+            lich_su.lay_mot_ngay(self.path, "2026-09-28")["tong"]["spend"], 900.0
+        )
+
+    def test_ban_so_khong_day_du_KHONG_ghi_de_ban_day_du(self):
+        lich_su.ghi(self.path, "2026-09-28", 8, stats_mau(spend=900.0))
+        ket_qua = lich_su.ghi(self.path, "2026-09-28", 17, stats_mau(spend=500.0))
+        self.assertFalse(ket_qua)
+        self.assertEqual(
+            lich_su.lay_mot_ngay(self.path, "2026-09-28")["tong"]["spend"], 900.0
+        )
+
+    def test_nhan_doi_tuong_date_chu_khong_chi_chuoi(self):
+        lich_su.ghi(self.path, date(2026, 9, 27), 8, stats_mau())
+        self.assertIsNotNone(lich_su.lay_mot_ngay(self.path, "2026-09-27"))
+
+    def test_lay_mot_ngay_khong_co_tra_ve_None(self):
+        self.assertIsNone(lich_su.lay_mot_ngay(self.path, "2020-01-01"))
+
+    def test_file_hong_thi_doc_tra_ve_rong_khong_no(self):
+        self.path.write_text("{ day khong phai json", encoding="utf-8")
+        self.assertEqual(lich_su.doc(self.path), {})
+
+    def test_ghi_tu_tao_thu_muc_neu_chua_co(self):
+        sau = Path(self.tmp.name) / "logs" / "lich-su.json"
+        lich_su.ghi(sau, "2026-09-27", 8, stats_mau())
+        self.assertTrue(sau.exists())
+
+    def test_don_dep_ban_ghi_cu_hon_180_ngay(self):
+        hom_nay = date.today()
+        cu = (hom_nay - timedelta(days=200)).strftime("%Y-%m-%d")
+        moi = hom_nay.strftime("%Y-%m-%d")
+        lich_su.ghi(self.path, cu, 8, stats_mau())
+        lich_su.ghi(self.path, moi, 8, stats_mau())
+        self.assertIsNone(lich_su.lay_mot_ngay(self.path, cu))
+
+
+class TestLayKhoang(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "lich-su.json"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_cong_dung_cac_ngay_trong_khoang(self):
+        lich_su.ghi(self.path, "2026-09-26", 8, stats_mau(spend=100.0, purchase=1))
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=200.0, purchase=2))
+        lich_su.ghi(self.path, "2026-09-28", 8, stats_mau(spend=400.0, purchase=4))
+        kq = lich_su.lay_khoang(self.path, "2026-09-26", "2026-09-27")
+        self.assertEqual(kq["tong"]["spend"], 300.0)
+        self.assertEqual(kq["tong"]["purchase"], 3)
+        self.assertEqual(kq["so_ngay"], 2)
+
+    def test_bao_gom_ca_hai_dau_mut(self):
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=200.0))
+        kq = lich_su.lay_khoang(self.path, "2026-09-27", "2026-09-27")
+        self.assertEqual(kq["tong"]["spend"], 200.0)
+        self.assertEqual(kq["so_ngay"], 1)
+
+    def test_bo_qua_ngay_chua_co_du_lieu(self):
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=200.0))
+        kq = lich_su.lay_khoang(self.path, "2026-09-25", "2026-09-27")
+        self.assertEqual(kq["tong"]["spend"], 200.0)
+        self.assertEqual(kq["so_ngay"], 1)
+
+    def test_khoang_rong_tra_ve_tong_0(self):
+        kq = lich_su.lay_khoang(self.path, "2020-01-01", "2020-12-31")
+        self.assertEqual(kq["so_ngay"], 0)
+        self.assertEqual(kq["tong"]["spend"], 0.0)
+
+    def test_lay_ky_truoc_lay_dung_so_ngay_ngay_truoc(self):
+        lich_su.ghi(self.path, "2026-09-25", 8, stats_mau(spend=100.0))
+        lich_su.ghi(self.path, "2026-09-26", 8, stats_mau(spend=200.0))
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=400.0))
+        kq = lich_su.lay_ky_truoc(self.path, "2026-09-27", 2)
+        self.assertEqual(kq["tong"]["spend"], 300.0)
+        self.assertEqual(kq["so_ngay"], 2)
+
+    def test_lay_ky_truoc_khong_bao_gom_chinh_ngay_do(self):
+        lich_su.ghi(self.path, "2026-09-27", 8, stats_mau(spend=400.0))
+        kq = lich_su.lay_ky_truoc(self.path, "2026-09-27", 1)
+        self.assertEqual(kq["so_ngay"], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
