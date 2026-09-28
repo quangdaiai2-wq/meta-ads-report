@@ -25,7 +25,10 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 | 🌅 **8:00** | Tổng kết ngày hôm qua |
 | ☀️ **12:00** | Kết quả từ 0h đến 12h hôm nay |
 | 🌤️ **17:00** | Kết quả từ 0h đến 17h hôm nay |
-| 🌙 **22:00** | Tổng kết cả ngày hôm nay |
+
+> 📌 **Mốc 22h đã bỏ từ 28/09/2026.** Lý do: kiểm tra `logs/baocao.log` cho thấy mốc 22h
+> **chưa từng chạy một lần nào** kể từ khi lắp hệ thống, và khi máy thức dậy buổi sáng thì
+> lịch 22h chạy bù và tự đoán ra mốc 8h — gây ra báo cáo trùng.
 
 ---
 
@@ -137,6 +140,22 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 - Cột **CPR** tự đổi màu: 🟢 xanh = rẻ hơn mức trung bình, 🔴 đỏ = đắt hơn.
 
 **Lưu ý:** Số liệu được **ghi sẵn** vào file lúc tạo — file này là **ảnh chụp (snapshot)**, không tự cập nhật. Muốn số mới, chạy lại script.
+
+---
+
+## 🗂️ Lịch sử số liệu (file `logs/lich-su.json`)
+
+Mỗi lần chạy, hệ thống ghi lại số liệu vào `logs/lich-su.json`, giữ **180 ngày**.
+
+**Để làm gì:** trước đây `dashboard.html` bị ghi đè mỗi lần chạy nên không giữ lại số cũ.
+Không có số cũ thì không thể trả lời những câu như *"tuần này so với tuần trước thế nào"*.
+File này là nền cho các tính năng so sánh sẽ làm sau.
+
+**Có gì trong đó:** mỗi ngày một bản ghi, gồm tổng 7 chỉ số và danh sách toàn bộ campaign.
+Bản ghi của báo cáo 8h và 22h là bản **đầy đủ cả ngày**; bản của 12h và 17h là bản **một phần**.
+Khi cả hai loại cùng có, bản đầy đủ luôn thắng.
+
+**File này không lên GitHub** — nó nằm trong `logs/`, đã bị `.gitignore` chặn.
 
 ---
 
@@ -295,3 +314,24 @@ Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn k
 ### ⚠️ Lưu ý quan trọng khi sửa script
 
 Meta trả về **nhiều tên action cho cùng một hành động** (`omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase`...). **Cộng hết sẽ bị đếm gấp đôi.** Chỉ dùng một tên duy nhất cho mỗi chỉ số.
+
+### Tham số `--slot` — chống gửi trùng báo cáo
+
+Mỗi lịch Windows gọi `report.py` kèm mốc giờ của chính nó:
+
+```
+python report.py --slot 08
+python report.py --slot 12
+python report.py --slot 17
+```
+
+**Vì sao cần:** trước 28/09/2026, lịch không truyền mốc giờ, nên `report.py` phải tự đoán
+mốc gần nhất với giờ hiện tại. Khi máy ngủ qua nhiều mốc, Windows cho nhiều lịch chạy bù
+**cùng lúc** — tất cả cùng đoán ra một mốc và gửi ra nhiều báo cáo giống hệt nhau.
+Đã xảy ra thật: sáng 28/09/2026 lúc 08:26 gửi 4 tin trùng + 4 file HTML.
+
+**Lưu ý:** cơ chế chống trùng cũ (`logs/da_gui.json`) vẫn còn, nhưng chỉ là lưới an toàn —
+nó kiểm tra rồi mới ghi, nên khi nhiều tiến trình chạy đồng thời thì cả loạt đều lọt qua.
+`--slot` mới là thứ chặn từ gốc.
+
+**Không có `--slot`** (chạy tay): script vẫn đoán mốc gần nhất như cũ, để tương thích ngược.
