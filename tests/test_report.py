@@ -140,5 +140,87 @@ class TestLuuLichSu(unittest.TestCase):
         self.assertIsNotNone(lich_su.lay_mot_ngay(self.path, "2026-09-27"))
 
 
+from datetime import datetime
+
+
+class TestDocMocTuEnv(unittest.TestCase):
+    def test_doc_danh_sach_thuong(self):
+        self.assertEqual(
+            report.doc_moc_tu_env({"REPORT_SLOTS": "8,12,17"}), [8, 12, 17]
+        )
+
+    def test_co_khoang_trang(self):
+        self.assertEqual(
+            report.doc_moc_tu_env({"REPORT_SLOTS": "8, 12, 17"}), [8, 12, 17]
+        )
+
+    def test_sap_xep_lai_va_bo_trung(self):
+        self.assertEqual(
+            report.doc_moc_tu_env({"REPORT_SLOTS": "17,8,8,12"}), [8, 12, 17]
+        )
+
+    def test_thieu_khoa_thi_dung_mac_dinh(self):
+        self.assertEqual(report.doc_moc_tu_env({}), report.REPORT_SLOTS)
+
+    def test_rong_thi_dung_mac_dinh(self):
+        self.assertEqual(
+            report.doc_moc_tu_env({"REPORT_SLOTS": ""}), report.REPORT_SLOTS
+        )
+
+    def test_chu_thi_dung_mac_dinh(self):
+        self.assertEqual(
+            report.doc_moc_tu_env({"REPORT_SLOTS": "tam,muoi"}), report.REPORT_SLOTS
+        )
+
+    def test_bo_qua_phan_tu_sai_giu_phan_tu_dung(self):
+        self.assertEqual(report.doc_moc_tu_env({"REPORT_SLOTS": "8,abc,17"}), [8, 17])
+
+    def test_so_ngoai_khoang_bi_bo_qua(self):
+        self.assertEqual(report.doc_moc_tu_env({"REPORT_SLOTS": "8,99,-1"}), [8])
+
+    def test_dung_dau_cham_phay(self):
+        self.assertEqual(report.doc_moc_tu_env({"REPORT_SLOTS": "8;12;17"}), [8, 12, 17])
+
+    def test_None_cung_dung_mac_dinh(self):
+        self.assertEqual(report.doc_moc_tu_env(None), report.REPORT_SLOTS)
+
+
+class TestMocSang(unittest.TestCase):
+    def test_lay_moc_nho_nhat(self):
+        self.assertEqual(report.moc_sang([8, 12, 17]), 8)
+
+    def test_danh_sach_khac_van_lay_min(self):
+        self.assertEqual(report.moc_sang([7, 13, 20]), 7)
+
+    def test_danh_sach_rong_tra_ve_mac_dinh(self):
+        self.assertEqual(report.moc_sang([]), report.MOC_SANG_MAC_DINH)
+
+
+class TestDeterminePeriodTheoMocSang(unittest.TestCase):
+    def setUp(self):
+        self.now = datetime(2026, 9, 28, 9, 0, 0)
+
+    def test_moc_8_la_bao_cao_hom_qua(self):
+        since, until, _ = report.determine_period(self.now, 8, 8)
+        self.assertEqual(since, date(2026, 9, 27))
+        self.assertEqual(until, date(2026, 9, 27))
+
+    def test_moc_12_la_bao_cao_trong_ngay(self):
+        since, _, _ = report.determine_period(self.now, 12, 8)
+        self.assertEqual(since, date(2026, 9, 28))
+
+    def test_khong_truyen_moc_sang_thi_mac_dinh_8(self):
+        since, _, _ = report.determine_period(self.now, 8)
+        self.assertEqual(since, date(2026, 9, 27))
+
+    def test_doi_moc_sang_thanh_7_thi_moc_7_la_hom_qua(self):
+        since, _, _ = report.determine_period(self.now, 7, 7)
+        self.assertEqual(since, date(2026, 9, 27))
+
+    def test_doi_moc_sang_thanh_7_thi_moc_8_la_trong_ngay(self):
+        since, _, _ = report.determine_period(self.now, 8, 7)
+        self.assertEqual(since, date(2026, 9, 28))
+
+
 if __name__ == "__main__":
     unittest.main()

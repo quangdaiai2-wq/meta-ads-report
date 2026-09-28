@@ -24,8 +24,13 @@ import lich_su
 API_VERSION = "v21.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 
-# Cac moc gio bao cao (gio Viet Nam)
+# Cac moc gio bao cao MAC DINH (gio Viet Nam).
+# Doi duoc bang khoa REPORT_SLOTS trong .env, vi du: REPORT_SLOTS=8,12,17
+# (may cong ty bo moc 22h ngay 28/09/2026; may nha giu 22h).
 REPORT_SLOTS = [8, 12, 17, 22]
+
+# Moc gio bao cao NGAY HOM TRUOC khi khong xac dinh duoc moc nao khac.
+MOC_SANG_MAC_DINH = 8
 
 
 def chon_moc(moc_tu_lenh, gio_hien_tai, danh_sach_moc=None):
@@ -53,6 +58,44 @@ def chon_moc(moc_tu_lenh, gio_hien_tai, danh_sach_moc=None):
     # Khong co --slot: giu cach cu (doan moc gan nhat) de khong pha vo
     # cac lich cu trong luc chuyen doi.
     return min(danh_sach_moc, key=lambda s: abs(s - gio_hien_tai))
+
+
+def doc_moc_tu_env(env):
+    """Doc danh sach moc gio bao cao tu khoa REPORT_SLOTS trong .env.
+
+    Chap nhan: "8,12,17" hoac "8, 12, 17" hoac "17,8,8" hoac "8;12;17".
+    Tra ve danh sach da sap xep tang dan, bo trung.
+
+    Phan tu sai (chu, so ngoai 0-23) bi bo qua tung cai mot. Neu khong doc
+    duoc moc nao hop le thi tra ve REPORT_SLOTS.
+
+    Khong bao gio nem loi: mot dong cau hinh go sai khong duoc lam chet
+    bao cao.
+    """
+    raw = (env or {}).get("REPORT_SLOTS", "")
+    ds = []
+    for phan in str(raw).replace(";", ",").split(","):
+        phan = phan.strip()
+        if not phan:
+            continue
+        try:
+            moc = int(phan)
+        except ValueError:
+            continue
+        if 0 <= moc <= 23 and moc not in ds:
+            ds.append(moc)
+    return sorted(ds) if ds else list(REPORT_SLOTS)
+
+
+def moc_sang(danh_sach_moc):
+    """Moc gio bao cao NGAY HOM TRUOC = moc NHO NHAT trong danh sach.
+
+    Truoc day determine_period() viet cung `if slot_hour == 8`. Khi danh sach
+    moc doi (vi du bo moc 8h), bao cao moc dau tien se bi hieu sai thanh
+    "trong ngay" thay vi "hom qua". Lay min() de doi danh sach moc ma khong
+    phai sua code.
+    """
+    return min(danh_sach_moc) if danh_sach_moc else MOC_SANG_MAC_DINH
 
 
 # Canh bao SOM khi token Meta con song it hon nguong nay (ngay).
@@ -126,10 +169,21 @@ def _doc_da_gui():
     return {}
 
 
+def ds_moc_da_gui(ngay=None):
+    """Danh sach cac moc da gui THANH CONG trong mot ngay (mac dinh hom nay).
+
+    Nguoi truc (nguoi_truc.py) doc ham nay de biet moc nao con thieu.
+    File hong hoac gia tri sai kieu thi tra ve danh sach rong.
+    """
+    data = _doc_da_gui()
+    ngay = ngay or datetime.now().strftime("%Y-%m-%d")
+    ds = data.get(ngay, [])
+    return list(ds) if isinstance(ds, list) else []
+
+
 def da_gui_hom_nay(slot):
     """True neu moc nay da duoc gui thanh cong trong ngay hom nay."""
-    data = _doc_da_gui()
-    return slot in data.get(datetime.now().strftime("%Y-%m-%d"), [])
+    return slot in ds_moc_da_gui()
 
 
 def ghi_da_gui(slot):
@@ -308,11 +362,18 @@ def get_action_value(actions, action_type):
     return total
 
 
-def determine_period(now, slot_hour):
-    """Tra ve (tu_ngay, den_ngay, mo_ta) theo moc gio."""
+def determine_period(now, slot_hour, moc_sang_bao_cao=None):
+    """Tra ve (tu_ngay, den_ngay, mo_ta) theo moc gio.
+
+    moc_sang_bao_cao: moc gio bao cao NGAY HOM TRUOC (thuong la moc nho nhat).
+                      None thi dung 8 - giu dung hanh vi cu.
+    """
+    if moc_sang_bao_cao is None:
+        moc_sang_bao_cao = MOC_SANG_MAC_DINH
+
     today = now.date()
 
-    if slot_hour == 8:
+    if slot_hour == moc_sang_bao_cao:
         # Bao cao ngay hom truoc
         target = today - timedelta(days=1)
         return target, target, f"{target.strftime('%d/%m/%Y')}"
@@ -627,10 +688,22 @@ def luu_lich_su(stats, ngay, moc, path_lich_su=None):
 
 
 def main():
+    duong_dan_env = Path(__file__).parent / ".env"
+
+    # Doc .env TRUOC argparse: danh sach moc gio la cua TUNG MAY, nen --slot va
+    # --mock phai kiem tra theo dung danh sach do. Doc kieu "khong nem loi" de
+    # `--help` van chay duoc khi chua co .env.
+    env = {}
+    try:
+        env = load_env(duong_dan_env)
+    except Exception:
+        pass
+    danh_sach_moc = doc_moc_tu_env(env)
+
     parser = argparse.ArgumentParser(description="Báo cáo Meta Ads → Telegram")
-    parser.add_argument("--mock", type=int, choices=REPORT_SLOTS,
+    parser.add_argument("--mock", type=int, choices=danh_sach_moc,
                         help="Chạy thử với mốc giờ này (không gửi Telegram)")
-    parser.add_argument("--slot", type=int, choices=REPORT_SLOTS,
+    parser.add_argument("--slot", type=int, choices=danh_sach_moc,
                         help="Mốc giờ do lịch Windows truyền vào (dùng khi gửi thật)")
     parser.add_argument("--dry", action="store_true",
                         help="Chạy thật nhưng không gửi Telegram")
@@ -638,14 +711,18 @@ def main():
                         help="Gửi lại dù mốc này đã gửi hôm nay (bỏ qua chống trùng)")
     args = parser.parse_args()
 
-    env = load_env(Path(__file__).parent / ".env")
+    if not env:
+        print(f"LOI: Khong doc duoc file .env tai {duong_dan_env}")
+        print("Cach xu ly: copy .env.example thanh .env roi dien token vao.")
+        sys.exit(1)
+
     now = datetime.now()
 
     if args.mock is not None:
         slot = args.mock
         print(f"[CHE DO THU] Moc gio: {slot}h")
     else:
-        slot = chon_moc(args.slot, now.hour, REPORT_SLOTS)
+        slot = chon_moc(args.slot, now.hour, danh_sach_moc)
         if args.slot is not None:
             print(f"Mốc giờ do lịch truyền vào: {slot}h")
         else:
@@ -659,7 +736,7 @@ def main():
         log(f"BO QUA - moc {slot}h (da gui hom nay, tranh trung)")
         sys.exit(0)
 
-    since, until, period_text = determine_period(now, slot)
+    since, until, period_text = determine_period(now, slot, moc_sang(danh_sach_moc))
     print(f"Khoang thoi gian: {since} -> {until}")
     print()
     log(f"BAT DAU - moc {slot}h, khoang {since} -> {until}")
