@@ -101,7 +101,12 @@ Người trực **biết rõ lịch của chính nó**. Nó không đoán mốc 
 
 ## 5. Thành phần
 
-### 5.1. `nguoi-truc.py` (mới) — tiến trình chính
+> **Ghi chú về tên file (sửa ngày 28/09):** các file Python phải dùng dấu gạch dưới (`lich_su.py`,
+> `nguoi_truc.py`), **không** dùng gạch ngang. Đã kiểm chứng: `import lich-su` báo `SyntaxError`,
+> nên file có gạch ngang không thể được file khác import. Các file `.bat` vẫn dùng gạch ngang được
+> (`cai-dat-lich.bat`) vì không ai import chúng. File dữ liệu `logs/lich-su.json` giữ gạch ngang, không sao.
+
+### 5.1. `nguoi_truc.py` (mới) — tiến trình chính
 
 Vòng lặp chính, kiểm tra đồng hồ mỗi 30 giây:
 
@@ -125,7 +130,7 @@ Cờ dòng lệnh:
 | `python nguoi-truc.py --thu` | Chạy toàn bộ luồng, **không gửi gì** — dùng để kiểm chứng |
 | `python nguoi-truc.py --gui-ngay 17` | Gửi ngay mốc 17h, bỏ qua canh giờ |
 
-### 5.2. `lich-su.py` (mới) — lịch sử số liệu
+### 5.2. `lich_su.py` (mới) — lịch sử số liệu
 
 Lưu vào `logs/lich-su.json`, giữ 180 ngày. Mỗi bản ghi gồm: ngày, mốc giờ, tổng các chỉ số,
 danh sách campaign (id, tên, chi tiêu, lượt mua, CPR).
@@ -159,7 +164,7 @@ một dòng ghi chú rằng phần đó tạm lỗi. Đại không bao giờ m�
 Thay đổi tối thiểu:
 - Thêm tham số `--slot N`: nhận mốc giờ từ ngoài thay vì tự đoán. Đây là chìa khoá chữa lỗi gốc.
 - Phần `build_report()` gọi `ai.viet_nhan_dinh()` cho mục NHẬN ĐỊNH; nếu AI lỗi thì rơi về bản mẫu cũ.
-- Tách phần gửi (Telegram + file HTML) thành hàm gọi được từ cả `nguoi-truc.py` và dòng lệnh tay.
+- Tách phần gửi (Telegram + file HTML) thành hàm gọi được từ cả `nguoi_truc.py` và dòng lệnh tay.
 - Giữ nguyên `--mock`, `--dry`, `--force` như cũ.
 
 **Không đụng tới:** `fetch_insights`, `apply_filter`, `compute_stats`, `get_action_value`, `fmt_money`,
@@ -322,8 +327,8 @@ Mỗi giai đoạn đứng độc lập được và chạy thử được ngay.
 | Giai đoạn | Nội dung | Giá trị đem lại |
 |---|---|---|
 | **0** | Thử nghiệm tự gia hạn token | Biết được có nên hứa tính năng này không |
-| **1** | `lich-su.py` + `report.py --slot` | **Chữa cả hai lỗi đang hoạt động.** Chưa cần AI. |
-| **2** | `nguoi-truc.py` + hai file `.bat` cài/gỡ | Thay bốn lịch, hết gửi trùng tận gốc |
+| **1** | `lich_su.py` + `report.py --slot` | **Chữa cả hai lỗi đang hoạt động.** Chưa cần AI. |
+| **2** | `nguoi_truc.py` + hai file `.bat` cài/gỡ | Thay bốn lịch, hết gửi trùng tận gốc |
 | **3** | `ai.py` — viết nhận định | Mục NHẬN ĐỊNH có nội dung thật |
 | **4** | `ai.py` — trả lời câu hỏi | Đại nhắn hỏi được |
 | **5** | Tự xử lý lỗi + tự gia hạn token | Bớt phải làm tay |
