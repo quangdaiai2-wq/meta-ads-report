@@ -18,7 +18,7 @@ File đó có đủ: dự án là gì, đã làm được gì, còn việc gì, 
 
 ## Hệ thống này làm gì
 
-Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo cáo vào Telegram của bạn — **4 lần mỗi ngày**:
+Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo cáo vào Telegram của bạn — **3 lần mỗi ngày**:
 
 | Giờ | Nội dung báo cáo |
 |---|---|
@@ -47,7 +47,7 @@ META_AD_ACCOUNT_ID=...
 
 ### Bước 2: Bấm đúp vào file `cai-dat-lich.bat`
 
-File này sẽ tự tạo 4 lịch trong Windows.
+File này sẽ tự tạo 3 lịch trong Windows.
 
 Bạn sẽ thấy thông báo:
 
@@ -55,7 +55,6 @@ Bạn sẽ thấy thông báo:
 [OK]  Moc 8:00 - da tao
 [OK]  Moc 12:00 - da tao
 [OK]  Moc 17:00 - da tao
-[OK]  Moc 22:00 - da tao
 ```
 
 **Xong.** Từ nay hệ thống tự chạy.
@@ -64,7 +63,7 @@ Bạn sẽ thấy thông báo:
 
 ## Cách tắt
 
-Bấm đúp vào file **`go-lich.bat`** → 4 lịch bị xóa, hệ thống ngừng gửi báo cáo.
+Bấm đúp vào file **`go-lich.bat`** → 3 lịch bị xóa, hệ thống ngừng gửi báo cáo.
 
 ---
 
@@ -169,13 +168,13 @@ Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đún
 
 1. Bấm file **`bat-chay-bu.bat`** (chuột phải → Run as administrator). Sau đó Windows sẽ:
    - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại.
-   - Đặt cờ "đánh thức máy để chạy" cho cả 4 lịch.
+   - Đặt cờ "đánh thức máy để chạy" cho cả 3 lịch.
 2. Bấm file **`bat-danh-thuc-may.bat`** (chuột phải → Run as administrator). File này **cho phép Windows tự thức máy** để chạy báo cáo đúng giờ — kể cả khi máy đang ngủ hoặc chạy pin.
 
 **Ngoài ra, để báo cáo đến đúng giờ:**
 - **Cắm sạc** máy thường xuyên (đừng để pin cạn).
 - **Đừng tắt máy** — chỉ để máy ngủ là đủ.
-- Trong khung **8h–22h**, hạn chế để máy ngủ quá sâu.
+- Trong khung **8h–17h**, hạn chế để máy ngủ quá sâu.
 
 > 📌 **Thực tế đã gặp:**
 > - **12/09:** Máy ngủ lúc 12h → báo cáo 12h trễ; khi máy "thức" lúc 14:27, tính năng chạy bù **tự gửi bù**. Mốc 17h, 22h chạy **đúng giờ**.
@@ -308,7 +307,7 @@ Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn k
 - **Python**: `C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe`
 - **Không cần thư viện ngoài** — script dùng `urllib` có sẵn của Python.
 - **Meta Graph API**: `v21.0`
-- **Task Scheduler**: 4 task tên `BaoCaoMetaAds_8/12/17/22`, chạy DAILY.
+- **Task Scheduler**: 3 task tên `BaoCaoMetaAds_08/12/17`, chạy DAILY.
 - **Dashboard**: `dashboard.py` sinh HTML tĩnh, không dùng thư viện ngoài, không cần server. `report.py` gọi `compute_stats()` **một lần duy nhất** rồi dùng chung cho cả text lẫn HTML (tránh gọi API 2 lần).
 
 ### ⚠️ Lưu ý quan trọng khi sửa script

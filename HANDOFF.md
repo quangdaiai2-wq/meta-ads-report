@@ -16,7 +16,7 @@
 
 ## 🎯 DỰ ÁN LÀ GÌ
 
-Hệ thống tự động lấy số liệu **Meta Ads** và gửi báo cáo vào **Telegram**, chạy theo lịch **4 mốc mỗi ngày**: 8h, 12h, 17h, 22h.
+Hệ thống tự động lấy số liệu **Meta Ads** và gửi báo cáo vào **Telegram**, chạy theo lịch **3 mốc mỗi ngày**: 8h, 12h, 17h.
 
 Chủ dự án: **Đại** — người không biết lập trình, cần hướng dẫn từng bước.
 
@@ -29,8 +29,8 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | # | Hạng mục | Chi tiết |
 |---|---|---|
 | 1 | Token Meta 60 ngày | Hết hạn **10/11/2026** |
-| 2 | 4 lịch tự động | Tên `BaoCaoMetaAds_08/12/17/22` |
-| 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 4 lịch |
+| 2 | 3 lịch tự động | Tên `BaoCaoMetaAds_08/12/17` |
+| 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 3 lịch |
 | 4 | Dashboard HTML | Tự tạo lại mỗi lần chạy |
 | 5 | Đẩy code lên GitHub | 4 bản ghi, nhánh `main`, kho riêng tư |
 | 6 | Cảnh báo lỗi qua Telegram | Tự gửi tin khi có sự cố |
@@ -42,7 +42,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 1 | Kéo code từ GitHub | Về `D:\Buddy Work AI\2026-09-14-07-50-57` |
 | 2 | Token Meta 60 ngày | Hết hạn **** (xem mục 2 bên dưới — KHÁC máy nhà) |
 | 3 | Bot Telegram riêng | `@boongbonbap_QuangDai_bot` ("Bot Báo Cáo Company👍") |
-| 4 | 4 lịch tự động | Đã xác minh độc lập bằng cách đọc lịch trong Windows |
+| 4 | 3 lịch tự động | Đã xác minh độc lập bằng cách đọc lịch trong Windows |
 | 5 | Chạy bù + đánh thức máy | Đã bật, và "Allow wake timers" đã chuyển sang Enable |
 | 6 | Chạy thử thật | Đã gửi báo cáo ngày 13/09 vào Telegram thành công |
 
@@ -156,8 +156,8 @@ File `cai-dat-lich.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ 
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
 | `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
-| `cai-dat-lich.bat` | Bật 4 lịch tự động |
-| `go-lich.bat` | Tắt 4 lịch |
+| `cai-dat-lich.bat` | Bật 3 lịch tự động |
+| `go-lich.bat` | Tắt 3 lịch |
 | `bat-chay-bu.bat` | Bật chạy bù khi lỡ giờ (cần quyền Admin) |
 | `.env` | 🔐 **BÍ MẬT** — chứa token. Không đẩy lên GitHub |
 | `.env.example` | File mẫu (an toàn để đẩy lên) |
@@ -181,7 +181,7 @@ python report.py --mock 12  # giả lập mốc 12h, không gửi
 ### Thông số
 - **Python thuần** — không cần thư viện ngoài (`urllib`, `json`, `argparse`)
 - **Meta Graph API v21.0**
-- Lịch Windows: `BaoCaoMetaAds_08`, `_12`, `_17`, `_22`
+- Lịch Windows: `BaoCaoMetaAds_08`, `_12`, `_17`
 
 ### BẢN SỬA NGÀY 14/09/2026 — `report.py` gọi Meta API 1 lần thay vì 2
 
@@ -205,7 +205,7 @@ thời gian giảm từ 12 giây xuống 5 giây.
 
 ### BẢN SỬA NGÀY 14/09/2026 (tối) — CHỐNG GỬI TRÙNG BÁO CÁO
 
-**Vấn đề:** khi máy ngủ/tắt qua nhiều mốc giờ, Windows cho **cả 4 lịch chạy bù CÙNG LÚC**.
+**Vấn đề:** khi máy ngủ/tắt qua nhiều mốc giờ, Windows cho **cả ba lịch chạy bù CÙNG LÚC**.
 Mỗi lịch chạy `python report.py` (không truyền mốc giờ) nên đều tự chọn **mốc gần nhất**
 ⇒ gửi ra nhiều báo cáo **giống hệt nhau**. Đã gặp thật ngày 14/09: máy nhà ngủ cả ngày,
 tới 19:30 gửi **3 báo cáo 17h trùng nhau** (kèm 3 file HTML).
