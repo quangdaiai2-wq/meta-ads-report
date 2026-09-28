@@ -203,5 +203,166 @@ class TestCanhMoc(unittest.TestCase):
         self.assertEqual(tg.gui_roi, [12, 12])
 
 
+class TestTinTuDai(unittest.TestCase):
+    def _tin(self, chat_id, text="hi"):
+        return {"update_id": 1, "message": {"chat": {"id": chat_id}, "text": text}}
+
+    def test_dung_chat_id_thi_nhan(self):
+        self.assertTrue(nguoi_truc.tin_tu_dai(self._tin(123), "123"))
+
+    def test_chat_id_khac_thi_bo_qua(self):
+        self.assertFalse(nguoi_truc.tin_tu_dai(self._tin(999), "123"))
+
+    def test_so_va_chuoi_deu_khop(self):
+        self.assertTrue(nguoi_truc.tin_tu_dai(self._tin(123), 123))
+
+    def test_tin_khong_co_message_thi_bo_qua(self):
+        self.assertFalse(nguoi_truc.tin_tu_dai({"update_id": 1}, "123"))
+
+    def test_tin_khong_co_chat_thi_bo_qua(self):
+        self.assertFalse(nguoi_truc.tin_tu_dai({"update_id": 1, "message": {}}, "123"))
+
+
+class TestNoiDungTin(unittest.TestCase):
+    def test_lay_duoc_chu(self):
+        tin = {"message": {"chat": {"id": 1}, "text": "  còn sống không?  "}}
+        self.assertEqual(nguoi_truc.noi_dung_tin(tin), "còn sống không?")
+
+    def test_tin_khong_co_chu_tra_ve_rong(self):
+        self.assertEqual(nguoi_truc.noi_dung_tin({"message": {"chat": {"id": 1}}}), "")
+
+    def test_tin_hong_tra_ve_rong(self):
+        self.assertEqual(nguoi_truc.noi_dung_tin({}), "")
+
+
+class TestThamSoLayTin(unittest.TestCase):
+    def test_co_offset_thi_truyen_offset(self):
+        self.assertEqual(nguoi_truc.tham_so_lay_tin(100)["offset"], 100)
+
+    def test_offset_None_thi_khong_truyen(self):
+        self.assertNotIn("offset", nguoi_truc.tham_so_lay_tin(None))
+
+    def test_chi_nhan_update_loai_message(self):
+        self.assertEqual(
+            nguoi_truc.tham_so_lay_tin(None)["allowed_updates"], '["message"]'
+        )
+
+
+class TestOffsetMoi(unittest.TestCase):
+    def test_khong_co_tin_thi_None(self):
+        self.assertIsNone(nguoi_truc.offset_moi_tu_ket_qua([]))
+
+    def test_lay_tin_cuoi_cong_mot(self):
+        self.assertEqual(
+            nguoi_truc.offset_moi_tu_ket_qua([{"update_id": 5}, {"update_id": 9}]), 10
+        )
+
+
+class TestTraLoiTinNhan(unittest.TestCase):
+    def _tra_loi(self, cau_hoi):
+        return nguoi_truc.tra_loi_tin_nhan(
+            cau_hoi=cau_hoi,
+            env={"REPORT_ACCOUNT_NAME": "Test"},
+            danh_sach_moc=[8, 12, 17],
+            bat_dau=luc(6),
+            lan_gui_cuoi=luc(12, 1),
+            da_gui={8, 12},
+            now=luc(13),
+        )
+
+    def test_hoi_con_song_thi_tra_loi_tinh_trang(self):
+        tl = self._tra_loi("còn sống không?")
+        self.assertIn("đang chạy", tl)
+        self.assertIn("17h", tl)
+
+    def test_hoi_khong_dau_cung_hieu(self):
+        self.assertIn("đang chạy", self._tra_loi("con song khong"))
+
+    def test_tinh_trang_liet_ke_moc_da_gui_hom_nay(self):
+        tl = self._tra_loi("còn sống không?")
+        self.assertIn("8h", tl)
+        self.assertIn("12h", tl)
+
+    def test_hoi_cau_khac_thi_noi_ro_chua_co_AI(self):
+        tl = self._tra_loi("camp nào tệ nhất tuần này?")
+        self.assertIn("giai đoạn sau", tl)
+        self.assertNotIn("✅", tl)
+
+    def test_cau_hoi_rong_cung_tra_loi_chua_co_AI(self):
+        self.assertIn("giai đoạn sau", self._tra_loi(""))
+
+
+class TestDinhDangThoiGian(unittest.TestCase):
+    def test_duoi_mot_gio_thi_ra_phut(self):
+        self.assertEqual(nguoi_truc._thoi_gian_da_chay(90), "1 phút")
+
+    def test_vai_gio_thi_ra_gio_va_phut(self):
+        self.assertEqual(nguoi_truc._thoi_gian_da_chay(3 * 3600 + 120), "3 giờ 2 phút")
+
+    def test_qua_mot_ngay_thi_ra_ngay(self):
+        self.assertEqual(
+            nguoi_truc._thoi_gian_da_chay(86400 + 2 * 3600), "1 ngày 2 giờ"
+        )
+
+
+class TestXuLyTin(unittest.TestCase):
+    """Dung lai TrucGia da dinh nghia trong Task 2."""
+
+    def test_tin_tu_nguoi_la_thi_khong_tra_loi(self):
+        tg = TrucGia(luc(13))
+        tg.truc.xu_ly_tin({
+            "update_id": 1,
+            "message": {"chat": {"id": 999}, "text": "cho xin so lieu"},
+        })
+        self.assertEqual(tg.tin_da_gui, [])
+
+    def test_tin_tu_dai_hoi_con_song_thi_tra_loi(self):
+        tg = TrucGia(luc(13))
+        tg.truc.xu_ly_tin({
+            "update_id": 1,
+            "message": {"chat": {"id": 123}, "text": "còn sống không?"},
+        })
+        self.assertEqual(len(tg.tin_da_gui), 1)
+        self.assertIn("đang chạy", tg.tin_da_gui[0])
+
+    def test_tin_tu_dai_hoi_so_lieu_thi_bao_chua_co(self):
+        tg = TrucGia(luc(13))
+        tg.truc.xu_ly_tin({
+            "update_id": 1,
+            "message": {"chat": {"id": 123}, "text": "camp nào tệ nhất tuần này?"},
+        })
+        self.assertEqual(len(tg.tin_da_gui), 1)
+        self.assertIn("giai đoạn sau", tg.tin_da_gui[0])
+
+    def test_che_do_thu_thi_khong_gui_tin_ra_ngoai(self):
+        tg = TrucGia(luc(13), che_do_thu=True)
+        tg.truc.xu_ly_tin({
+            "update_id": 1,
+            "message": {"chat": {"id": 123}, "text": "còn sống không?"},
+        })
+        self.assertEqual(tg.tin_da_gui, [])
+
+
+class TestMotVong(unittest.TestCase):
+    """Ca mot vong lap. `nghe_telegram` vong dau chi xa tin ton dong."""
+
+    def test_vong_dau_khong_gui_gi_khi_chua_toi_moc(self):
+        tg = TrucGia(luc(7, 30))
+        tg.truc.mot_vong()
+        self.assertEqual(tg.gui_roi, [])
+
+    def test_vong_dau_xa_tin_ton_dong_roi_moi_nghe(self):
+        tg = TrucGia(luc(13))
+        self.assertFalse(tg.truc.da_xa_tin_ton_dong)
+        tg.truc.mot_vong()
+        self.assertTrue(tg.truc.da_xa_tin_ton_dong)
+
+    def test_nhip_tim_ghi_sau_dung_so_vong(self):
+        tg = TrucGia(luc(13))
+        tg.truc.so_vong = nguoi_truc.NHIP_TIM_MOI_VONG - 1
+        tg.truc.mot_vong()
+        self.assertEqual(tg.truc.so_vong, nguoi_truc.NHIP_TIM_MOI_VONG)
+
+
 if __name__ == "__main__":
     unittest.main()
