@@ -179,7 +179,7 @@ cd meta-ads-report
 dir
 ```
 
-Phải thấy các file: `report.py`, `dashboard.py`, `cai-dat-lich.bat`, `README.md`...
+Phải thấy các file: `report.py`, `dashboard.py`, `nguoi_truc.py`, `cai-dat-nguoi-truc.bat`, `README.md`...
 
 > 💡 **Thư mục không cần giống máy nhà.** Git tự hiểu đường dẫn, đặt ở đâu cũng được.
 > Nhưng từ giờ **mọi lệnh phải chạy khi đang ở trong thư mục này** — nếu mở PowerShell mới, nhớ `cd` lại về đây.
@@ -241,42 +241,77 @@ FILTER_EXCLUDE=...
 TOP_CAMPAIGN_COUNT=5
 ```
 
+**④ Mốc giờ báo cáo — KHÁC NHAU GIỮA HAI MÁY**
+
+```
+REPORT_SLOTS=8,12,17
+```
+
+Đây là **cấu hình riêng của từng máy**, không copy y nguyên giữa hai máy:
+
+| Máy | Giá trị |
+|---|---|
+| Máy công ty | `REPORT_SLOTS=8,12,17` (đã bỏ mốc 22h từ 28/09/2026) |
+| Máy nhà | `REPORT_SLOTS=8,12,17,22` |
+
+Nếu thiếu dòng này, hệ thống dùng mặc định `8,12,17,22` — nghĩa là **mốc 22h quay trở lại
+trên máy công ty**. File `cai-dat-nguoi-truc.bat` sẽ in cảnh báo nếu thiếu.
+
 ### 5d. Lưu file
 
 Bấm **Ctrl + S**, rồi đóng Notepad.
 
 ---
 
-## Bước 6: Bật lịch tự động
+## Bước 6: Bật Người trực
 
-1. Trong thư mục `meta-ads-report`, tìm file **`cai-dat-lich.bat`**
+1. Trong thư mục `meta-ads-report`, tìm file **`cai-dat-nguoi-truc.bat`**
 2. **Bấm đúp** vào nó
 3. Nếu báo lỗi quyền → **chuột phải** → **Run as administrator**
+
+File này tạo **một** lịch duy nhất tên `NguoiTruc` và **xoá ba lịch cũ**
+(`BaoCaoMetaAds_08/12/17`). Xoá là chủ ý: để hai lịch cùng sống là có hai nguồn gửi báo cáo,
+sẽ bị trùng.
 
 **Kết quả mong đợi:**
 
 ```
 Python : C:\Users\...\python.exe
-Script : D:\meta-ads-report\report.py
+Script : D:\meta-ads-report\nguoi_truc.py
 
-Dang tao 3 lich...
+Dang tat ba lich cu...
+  [--]  Lich cu BaoCaoMetaAds_08 khong ton tai
+  ...
+Dang tao lich "NguoiTruc"...
+  [OK]  Da tao lich NguoiTruc
 
-  [OK]  Moc 08:00 - da tao
-  [OK]  Moc 12:00 - da tao
-  [OK]  Moc 17:00 - da tao
-
-[OK] Da tao lich thanh cong.
+  Ten lich    : NguoiTruc
+  Trang thai  : Ready
+  Chuong trinh: C:\Users\...\python.exe
+  Tham so     : "D:\meta-ads-report\nguoi_truc.py"
 ```
+
+⚠️ **Dòng phải nhìn là `Tham so`** — nó phải kết thúc bằng `nguoi_truc.py"` (có dấu nháy đóng).
+Thiếu dấu nháy đó thì đường dẫn có khoảng trắng bị Windows cắt làm hai và lịch không chạy được.
 
 ✅ Xong. Máy công ty sẽ tự gửi báo cáo.
 
 ---
 
-## Bước 7 (khuyến nghị): Bật chạy bù khi lỡ giờ
+## Bước 7: Nhắn thử bot Telegram
 
-**Chuột phải** vào file **`bat-chay-bu.bat`** → **Run as administrator**.
+Mở Telegram, nhắn cho bot của máy công ty câu:
 
-Việc này giúp: nếu máy tắt đúng lúc 12h, khi bật lại Windows sẽ tự gửi bù.
+```
+còn sống không?
+```
+
+Bot trả lời kèm tình trạng: đã chạy bao lâu, mốc giờ của máy này, hôm nay đã gửi mốc nào.
+Đây là cách kiểm tra nhanh nhất khi nghi ngờ hệ thống có vấn đề.
+
+> **Không cần chạy `bat-chay-bu.bat` nữa.** Người trực chạy suốt khi máy bật, nên không cần
+> Windows đánh thức máy để chạy bù. Khi bật lại sau khi tắt, nó tự gửi bù **một** báo cáo cho
+> mốc gần nhất bị lỡ.
 
 ---
 
@@ -319,7 +354,7 @@ Mở file **`logs\baocao.log`**:
 **Ưu điểm:** máy này tắt thì máy kia vẫn gửi.
 **Nhược điểm:** nội dung trùng nhau.
 
-**Nếu muốn chỉ nhận 1 bộ:** bấm `go-lich.bat` ở máy không muốn chạy.
+**Nếu muốn chỉ nhận 1 bộ:** bấm `go-nguoi-truc.bat` ở máy không muốn chạy.
 
 ## 2. File `.env` KHÔNG BAO GIỜ đưa lên GitHub
 
@@ -372,8 +407,8 @@ MÁY CÔNG TY (thứ 2)
 ├── git clone ...
 ├── copy .env.example .env
 ├── Điền token bot MỚI + copy token Meta từ máy nhà
-├── Bấm cai-dat-lich.bat
-└── Bấm bat-chay-bu.bat (Run as administrator)
+├── Sửa dòng REPORT_SLOTS trong .env cho đúng máy này
+└── Bấm cai-dat-nguoi-truc.bat
 ```
 
 **Chỉ khác nhau 1 dòng:** `TELEGRAM_BOT_TOKEN`

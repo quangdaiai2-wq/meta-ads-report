@@ -47,48 +47,61 @@ META_ADS_ACCESS_TOKEN=...
 META_AD_ACCOUNT_ID=...
 ```
 
-### Bước 2: Chuột phải `cai-dat-lich.bat` → **Run as administrator**
+### Bước 2: Bấm đúp `cai-dat-nguoi-truc.bat`
 
-> ⚠️ **Phải chạy bằng quyền Administrator.** File này làm **hai** việc: tạo 3 lịch, và đặt luôn
-> 3 thiết lập quan trọng (chạy bù khi lỡ giờ, tự thức máy để chạy đúng giờ, cho phép chạy khi
-> dùng pin). Nếu chạy mà không có quyền Admin, lịch vẫn được tạo nhưng **thiếu 3 thiết lập đó**,
-> và file sẽ in cảnh báo rõ ràng.
+File này làm **ba** việc, chỉ cần bấm một lần:
 
-File này sẽ tự tạo 3 lịch trong Windows.
+1. Tạo **một** lịch Windows duy nhất tên `NguoiTruc`, tự chạy khi Đại đăng nhập máy.
+2. **Xoá ba lịch cũ** (`BaoCaoMetaAds_08/12/17`) — để hai lịch cùng sống là có hai nguồn
+   gửi báo cáo, sẽ bị trùng.
+3. Đọc lại lịch vừa tạo và in ra để kiểm tra.
 
-Bạn sẽ thấy thông báo:
+Nếu báo lỗi quyền: chuột phải vào file → **Run as administrator** → bấm lại.
 
-```
-[OK]  Moc 8:00 - da tao
-[OK]  Moc 12:00 - da tao
-[OK]  Moc 17:00 - da tao
-```
+**Bấm từ đúng thư mục dự án** (`D:\Buddy Work AI\2026-09-14-07-50-57`). File này tự lấy
+đường dẫn `nguoi_truc.py` từ chỗ nó đứng — bấm từ bản sao ở nơi khác là trỏ sai chỗ.
 
-Ngay sau đó là phần kiểm tra thiết lập — **cả ba dòng đều phải ghi `True`**:
+Kết quả mong đợi:
 
 ```
-BaoCaoMetaAds_08 : chay bu=True  tu thuc=True
-BaoCaoMetaAds_12 : chay bu=True  tu thuc=True
-BaoCaoMetaAds_17 : chay bu=True  tu thuc=True
+  [XOA] Da xoa lich cu BaoCaoMetaAds_08
+  [XOA] Da xoa lich cu BaoCaoMetaAds_12
+  [XOA] Da xoa lich cu BaoCaoMetaAds_17
+  [--]  Lich cu BaoCaoMetaAds_22 khong ton tai
+  [OK]  Da tao lich NguoiTruc
+
+  Ten lich    : NguoiTruc
+  Trang thai  : Ready
+  Chuong trinh: C:\...\python.exe
+  Tham so     : "D:\Buddy Work AI\2026-09-14-07-50-57\nguoi_truc.py"
 ```
 
-Nếu thấy `False` ở bất kỳ dòng nào, nghĩa là file chưa được chạy bằng quyền Admin — chạy lại.
+> ⚠️ **Đừng tin dòng `[OK]`.** Nó chỉ nói Windows không báo lỗi, không nói tham số đã đúng.
+> Điều phải nhìn là dòng **`Tham so`**: nó phải **kết thúc bằng `nguoi_truc.py"`** — có dấu
+> nháy đóng ở cuối. Thiếu dấu nháy đó thì đường dẫn có khoảng trắng bị cắt làm hai và lịch
+> không chạy được.
 
-> ⚠️ **Chạy file này từ đúng thư mục dự án.** `cai-dat-lich.bat` tự lấy đường dẫn `report.py`
-> từ chính thư mục chứa nó, nên phải bấm nó ở thư mục có `.env` và `logs/`. Nếu bấm từ một bản
-> code khác, lịch đang chạy thật sẽ bị trỏ sang bản code đó.
->
-> ⚠️ **Dòng `[OK]` của `schtasks` chỉ chứng tỏ lệnh tạo lịch không báo lỗi**, chứ không chứng
-> minh tham số truyền vào đã đúng. Phải kiểm riêng phần tham số — cách kiểm `--slot` nằm ở mục
-> "Kiểm chứng `--slot` đã vào lịch chưa" trong phần Ghi chú kỹ thuật.
+### Bước 3: Nhắn thử bot
 
-**Xong.** Từ nay hệ thống tự chạy.
+Mở Telegram, nhắn cho bot câu:
+
+```
+còn sống không?
+```
+
+Bot trả lời kèm tình trạng: đã chạy bao lâu, mốc giờ của máy này, hôm nay đã gửi mốc nào.
+Đây là cách kiểm tra nhanh nhất khi nghi ngờ hệ thống có vấn đề.
 
 ---
 
 ## Cách tắt
 
-Bấm đúp vào file **`go-lich.bat`** → 3 lịch bị xóa, hệ thống ngừng gửi báo cáo.
+Bấm đúp vào file **`go-nguoi-truc.bat`** → lịch `NguoiTruc` bị xoá và tiến trình đang chạy
+bị dừng, hệ thống ngừng gửi báo cáo hoàn toàn.
+
+Muốn quay lại cách cũ (ba lịch rời rạc, không có Người trực): bấm **`cai-dat-lich.bat`**.
+Cách cũ vẫn chạy được, nhưng vẫn còn chuyện gửi gần trùng vào các buổi sáng máy bật lại
+sau khi tắt qua nhiều mốc — xem mục "Người trực là gì" bên dưới.
 
 ---
 
@@ -167,6 +180,42 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 
 ---
 
+## 🧍 Người trực là gì
+
+Trước 28/09/2026, hệ thống dùng **ba lịch Windows rời rạc**: 8h, 12h, 17h. Mỗi lịch chạy
+`report.py` và script tự đoán xem mình là mốc mấy giờ. Cách đó có hai bệnh:
+
+- **Gửi trùng.** Khi máy ngủ qua nhiều mốc, Windows cho **cả ba lịch chạy bù cùng lúc**;
+  cả ba cùng đoán ra một mốc và gửi ra nhiều báo cáo giống hệt nhau.
+- **Không nghe được tin nhắn.** Lịch chỉ biết *chạy*, không biết *nghe*, nên không thể
+  trả lời khi Đại nhắn hỏi.
+
+Từ Giai đoạn 2, cả ba lịch được thay bằng **một tiến trình chạy suốt** tên `NguoiTruc`,
+do `nguoi_truc.py` đảm nhiệm. Nó:
+
+| Việc | Cách làm |
+|---|---|
+| Canh mốc giờ | Kiểm tra đồng hồ mỗi 30 giây. Tới mốc và mốc đó chưa gửi hôm nay → gọi `report.py` kèm `--slot` |
+| Gửi bù khi lỡ | Lúc khởi động, đối chiếu sổ đã gửi. Chỉ gửi **MỘT** báo cáo cho mốc gần nhất bị lỡ; các mốc cũ hơn ghi nhật ký là bỏ qua |
+| Nghe Telegram | Chỉ trả lời tin từ `TELEGRAM_CHAT_ID` của Đại. Tin từ người lạ bị bỏ qua và ghi nhật ký |
+| Nhịp tim | Ghi một dòng nhật ký mỗi 30 phút để biết còn sống |
+
+**Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
+
+```
+REPORT_SLOTS=8,12,17        ← máy công ty (đã bỏ mốc 22h)
+REPORT_SLOTS=8,12,17,22     ← máy nhà
+```
+
+Muốn lấy lại mốc 22h thì sửa một dòng trong `.env` và khởi động lại Người trực. Nếu thiếu
+khoá này, hệ thống dùng mặc định `8,12,17,22`.
+
+**Giới hạn phải biết:** Người trực chỉ sống khi máy **đang bật và đang đăng nhập Windows**.
+Máy tắt thì không có báo cáo — nhưng khi bật lại, nó gửi bù đúng một báo cáo cho mốc gần
+nhất bị lỡ, không gửi một loạt báo cáo cũ.
+
+---
+
 ## 🗂️ Lịch sử số liệu (file `logs/lich-su.json`)
 
 Mỗi lần chạy, hệ thống ghi lại số liệu vào `logs/lich-su.json`, giữ **180 ngày**.
@@ -186,28 +235,21 @@ Khi cả hai loại cùng có, bản đầy đủ luôn thắng.
 
 ## ⚠️ Ba điều cần biết
 
-### 1. Máy phải đang bật (hoặc đang ngủ)
+### 1. Máy phải đang bật VÀ đang đăng nhập Windows
 
-Hệ thống chạy trên máy này. Nếu máy **tắt** hoặc **ngủ** đúng lúc 8h, báo cáo 8h có thể bị trễ.
+Hệ thống chạy trên máy này. **Người trực chỉ sống khi máy đang bật VÀ đã đăng nhập Windows.**
+Máy tắt thì không có báo cáo — nhưng khi bật lại, nó tự gửi bù **đúng một** báo cáo cho mốc
+gần nhất bị lỡ, không gửi một loạt báo cáo cũ.
 
-**Cách khắc phục:**
+**Không cần bật "tự thức máy" nữa.** Trước đây ba lịch rời rạc cần Windows đánh thức máy để
+chạy bù; Người trực chạy suốt nên chuyện đó không còn. File `bat-danh-thuc-may.bat` vẫn nằm
+đó nhưng **không cần bấm** khi dùng Người trực.
 
-1. **Đã tự động.** Từ 28/09/2026, `cai-dat-lich.bat` đặt luôn 3 thiết lập này khi tạo lịch — miễn
-   là chạy bằng quyền Admin. Nếu vì lý do nào đó chúng bị mất, bấm **`bat-chay-bu.bat`**
-   (chuột phải → Run as administrator) để đặt lại. File đó bật:
-   - **Tự chạy bù** báo cáo đã lỡ ngay khi máy được bật lại.
-   - **Tự thức máy** để chạy báo cáo đúng giờ.
-   - **Cho phép chạy khi dùng pin.**
-2. Bấm file **`bat-danh-thuc-may.bat`** (chuột phải → Run as administrator) — **một lần duy nhất**.
-   File này bật "Allow wake timers" ở mức Windows, khác với cờ `WakeToRun` của từng lịch.
-   Cần cả hai thì Windows mới thức được máy.
-
-**Ngoài ra, để báo cáo đến đúng giờ:**
+**Để báo cáo đến đúng giờ:**
 - **Cắm sạc** máy thường xuyên (đừng để pin cạn).
-- **Đừng tắt máy** — chỉ để máy ngủ là đủ.
-- Trong khung **8h–17h**, hạn chế để máy ngủ quá sâu.
+- **Đừng tắt máy, đừng đăng xuất Windows** — chỉ để máy ngủ là đủ.
 
-> 📌 **Thực tế đã gặp:**
+> 📌 **Thực tế đã gặp (trước 28/09/2026, khi còn dùng ba lịch rời rạc):**
 > - **12/09:** Máy ngủ lúc 12h → báo cáo 12h trễ; khi máy "thức" lúc 14:27, tính năng chạy bù **tự gửi bù**. Mốc 17h, 22h chạy **đúng giờ**.
 > - **13/09:** Máy ngủ/ngủ đông suốt sáng → lỡ mốc 8h và 12h; máy thức lúc 14:05. Nguyên nhân: **"Allow wake timers" bị tắt** → cần chạy `bat-danh-thuc-may.bat`.
 
@@ -243,9 +285,12 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 dashboard.html            ← Dashboard xem báo cáo (tự tạo lại mỗi lần chạy)
 ├── 📄 doi-token-60-ngay.py      ← Công cụ gia hạn token Meta lên 60 ngày
 ├── 📄 kiem-tra-token.py         ← Kiểm tra CẢ 2 nhóm token + token Meta còn sống bao lâu
-├── 📄 cai-dat-lich.bat          ← Bấm để BẬT tự động
-├── 📄 go-lich.bat               ← Bấm để TẮT tự động
-├── 📄 bat-chay-bu.bat           ← Bấm để bật "chạy bù khi lỡ giờ" (cần Admin)
+├── 📄 cai-dat-nguoi-truc.bat     ← Bấm để BẬT (tạo Người trực, xoá 3 lịch cũ)
+├── 📄 go-nguoi-truc.bat          ← Bấm để TẮT (xoá lịch, dừng tiến trình)
+├── 📄 cai-dat-lich.bat           ← Cách cũ (3 lịch rời rạc) — đường lùi nếu Người trực có sự cố
+├── 📄 go-lich.bat                ← Xoá 3 lịch cũ
+├── 📄 bat-chay-bu.bat            ← Chỉ còn dùng cho cách cũ (cần Admin)
+├── 📄 nguoi_truc.py              ← Tiến trình chạy suốt: canh mốc giờ + nghe Telegram
 ├── 📄 bat-danh-thuc-may.bat     ← Bấm để cho phép Windows tự thức máy chạy báo cáo (cần Admin)
 ├── 📄 logs/baocao.log           ← Nhật ký chạy (xem khi cần chẩn đoán)
 │
@@ -282,7 +327,9 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Vấn đề | Cách xử lý |
 |---|---|
 | Không nhận được báo cáo | Kiểm tra máy có bật không; mở `logs/baocao.log` xem có dòng nào không |
-| `logs/baocao.log` trống hoàn toàn | Lịch chưa được cài → bấm `cai-dat-lich.bat` |
+| `logs/baocao.log` trống hoàn toàn | Chưa cài gì → bấm `cai-dat-nguoi-truc.bat` |
+| Không thấy báo cáo nhưng nhật ký vẫn có dòng nhịp tim | Người trực sống, nhưng việc gửi thất bại → tìm dòng `NGUOI TRUC: gui moc ... THAT BAI` và đọc lý do |
+| Nhắn bot không trả lời | Mở Task Manager (Ctrl+Shift+Esc), tìm `python.exe` chạy `nguoi_truc.py`. Không có → bấm `cai-dat-nguoi-truc.bat` lại |
 | Telegram báo "Token Meta đã HẾT HẠN" | Làm theo `HUONG-DAN-DIEN-TOKEN.md` → mục `META_ADS_ACCESS_TOKEN` |
 | Báo cáo ghi "LOI lay du lieu Meta" | Token Meta hết hạn → lấy token mới |
 | Báo cáo ghi "LOI GUI TELEGRAM" | Kiểm tra token Telegram và Chat ID |
@@ -338,7 +385,11 @@ Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn k
 - **Python**: `C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe`
 - **Không cần thư viện ngoài** — script dùng `urllib` có sẵn của Python.
 - **Meta Graph API**: `v21.0`
-- **Task Scheduler**: 3 task tên `BaoCaoMetaAds_08/12/17`, chạy DAILY.
+- **Task Scheduler**: **một** task tên `NguoiTruc`, kích hoạt khi đăng nhập, có "Restart on failure".
+  Cách cũ dùng 3 task `BaoCaoMetaAds_08/12/17` — `cai-dat-lich.bat` vẫn tạo được nếu cần.
+- **Tiến trình thường trú**: `nguoi_truc.py`, kiểm tra đồng hồ mỗi 30 giây. Gọi `report.py`
+  ở **tiến trình riêng** kèm `--slot N`.
+- **Mốc giờ**: khoá `REPORT_SLOTS` trong `.env`. Không có khoá thì mặc định `8,12,17,22`.
 - **Dashboard**: `dashboard.py` sinh HTML tĩnh, không dùng thư viện ngoài, không cần server. `report.py` gọi `compute_stats()` **một lần duy nhất** rồi dùng chung cho cả text lẫn HTML (tránh gọi API 2 lần).
 
 ### ⚠️ Lưu ý quan trọng khi sửa script
@@ -347,7 +398,7 @@ Meta trả về **nhiều tên action cho cùng một hành động** (`omni_pur
 
 ### Tham số `--slot` — chống gửi trùng báo cáo
 
-Mỗi lịch Windows gọi `report.py` kèm mốc giờ của chính nó:
+Mỗi lần gửi đều truyền **đúng mốc giờ** vào `report.py`, không để script tự đoán:
 
 ```
 python report.py --slot 08
@@ -355,34 +406,41 @@ python report.py --slot 12
 python report.py --slot 17
 ```
 
-**Vì sao cần:** trước 28/09/2026, lịch không truyền mốc giờ, nên `report.py` phải tự đoán
-mốc gần nhất với giờ hiện tại. Khi máy ngủ qua nhiều mốc, Windows cho nhiều lịch chạy bù
+Người trực (`nguoi_truc.py`) gọi `report.py` theo cách này, kèm `--slot N` của mốc nó vừa tới.
+
+**Vì sao cần:** trước 28/09/2026, lịch Windows không truyền mốc giờ, nên `report.py` phải tự
+đoán mốc gần nhất với giờ hiện tại. Khi máy ngủ qua nhiều mốc, Windows cho nhiều lịch chạy bù
 **cùng lúc** — tất cả cùng đoán ra một mốc và gửi ra nhiều báo cáo giống hệt nhau.
 Đã xảy ra thật: sáng 28/09/2026 lúc 08:26 gửi 4 tin trùng + 4 file HTML.
 
-**Lưu ý:** cơ chế chống trùng cũ (`logs/da_gui.json`) vẫn còn, nhưng chỉ là lưới an toàn —
-nó kiểm tra rồi mới ghi, nên khi nhiều tiến trình chạy đồng thời thì cả loạt đều lọt qua.
-`--slot` chặn được những tin **giống hệt nhau** (do mọi lịch đoán ra cùng một mốc).
-
-**Còn sót lại:** vào buổi sáng chạy bù, `determine_period()` cho mốc 12h và 17h cùng ra
-`(hôm nay, hôm nay)`, nên hai lịch này có thể báo **cùng một khoảng** và trông như trùng
-nhau — số tin trùng giảm từ 4 xuống 3, chứ không về 0. Việc này được chữa dứt điểm ở
-Giai đoạn 2 (tiến trình thường trú).
+**Cơ chế chống trùng cũ (`logs/da_gui.json`) vẫn còn, nhưng chỉ là lưới an toàn** — nó kiểm
+tra rồi mới ghi, nên khi nhiều tiến trình chạy đồng thời thì cả loạt đều lọt qua. Thứ chặn
+được gửi trùng thật là **Người trực biết rõ lịch của chính nó**: mỗi mốc chỉ gửi một lần,
+và khi khởi động lại chỉ gửi bù **một** báo cáo cho mốc gần nhất bị lỡ.
 
 **Không có `--slot`** (chạy tay): script vẫn đoán mốc gần nhất như cũ, để tương thích ngược.
 
-### Kiểm chứng `--slot` đã vào lịch chưa
+### Kiểm chứng mốc giờ đã vào lịch chưa
 
-Dòng `[OK]` khi tạo lịch **không** chứng minh tham số đã đúng — nó chỉ nói `schtasks` không
-báo lỗi. Kiểm riêng bằng PowerShell (`schtasks.exe` có thể bị chính sách công ty chặn):
+Dòng `[OK]` khi tạo lịch **không** chứng minh tham số đã đúng — nó chỉ nói lệnh không báo lỗi.
+Kiểm riêng bằng PowerShell (`schtasks.exe` có thể bị chính sách công ty chặn):
 
 ```powershell
-foreach ($n in @('BaoCaoMetaAds_08','BaoCaoMetaAds_12','BaoCaoMetaAds_17')) {
-  $t = Get-ScheduledTask -TaskName $n -ErrorAction SilentlyContinue
-  if (-not $t) { Write-Host "$n : KHONG TIM THAY"; continue }
-  foreach ($a in $t.Actions) { Write-Host ($n + " Args=" + $a.Arguments) }
+$t = Get-ScheduledTask -TaskName 'NguoiTruc' -ErrorAction SilentlyContinue
+if (-not $t) { Write-Host "KHONG TIM THAY lich NguoiTruc" } else {
+  foreach ($a in $t.Actions) {
+    Write-Host ("Execute  = " + $a.Execute)
+    Write-Host ("Args     = " + $a.Arguments)
+    Write-Host ("WorkDir  = " + $a.WorkingDirectory)
+  }
 }
 ```
 
-**Điều kiện đạt:** `Args` của `BaoCaoMetaAds_08` phải chứa `--slot 08`, của `BaoCaoMetaAds_12`
-phải chứa `--slot 12`, của `BaoCaoMetaAds_17` phải chứa `--slot 17`.
+**Điều kiện đạt:**
+- `Execute` trỏ tới `python.exe`
+- `Args` **kết thúc bằng `nguoi_truc.py"`** — có dấu nháy đóng ở cuối. Thiếu dấu nháy đó thì
+  đường dẫn có khoảng trắng bị Windows cắt làm hai và lịch không chạy được.
+- `WorkDir` là thư mục dự án (`D:\Buddy Work AI\2026-09-14-07-50-57\`)
+
+> Muốn kiểm lịch của **cách cũ** (ba lịch `BaoCaoMetaAds_*`), thay `'NguoiTruc'` bằng
+> `'BaoCaoMetaAds_08'` — khi đó `Args` phải chứa `--slot 08`.

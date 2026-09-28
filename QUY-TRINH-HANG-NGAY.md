@@ -44,11 +44,13 @@ Mở `.env` bằng Notepad, điền:
 - `TELEGRAM_CHAT_ID` = chat id của bạn
 - `META_ADS_ACCESS_TOKEN` = **copy từ máy nhà** (mang qua USB)
 
-**Bước 4 — Tạo lịch tự động:** bấm đúp file `cai-dat-lich.bat`.
+**Bước 4 — Bật Người trực:** bấm đúp file `cai-dat-nguoi-truc.bat`.
 
-**Bước 5 — Bật chạy bù:** chuột phải `bat-chay-bu.bat` → **Run as administrator**.
+File này tạo **một** lịch Windows duy nhất (`NguoiTruc`) và xoá ba lịch cũ. Từ đó hệ thống
+chạy suốt khi máy bật, tự gửi báo cáo đúng 3 mốc (8h, 12h, 17h), và nghe được tin nhắn
+Telegram. Không cần bấm `bat-chay-bu.bat` nữa.
 
-**Bước 6 — Thử chạy:** `python report.py`
+**Bước 5 — Thử chạy:** `python report.py`
 
 → **Xong. Từ đây hệ thống tự chạy, Đại đi uống cà phê ☕.**
 
@@ -56,7 +58,10 @@ Mở `.env` bằng Notepad, điền:
 
 ## 🔄 HÀNG NGÀY SAU KHI ĐÃ SETUP
 
-**Không cần làm gì.** Máy bật là báo cáo tự chạy.
+**Không cần làm gì.** Máy bật **và đã đăng nhập Windows** là báo cáo tự chạy.
+
+Muốn biết hệ thống còn sống hay không: nhắn cho bot Telegram câu `còn sống không?` — bot trả
+lời kèm tình trạng (đã chạy bao lâu, hôm nay đã gửi mốc nào).
 
 Chỉ `git pull` KHI:
 - AI báo *"có bản cập nhật, chạy git pull"*, hoặc

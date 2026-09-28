@@ -1,6 +1,7 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 14/09/2026, 19:45 (giờ Việt Nam)
+**Cập nhật lần cuối:** 28/09/2026 — Giai đoạn 2 (Người trực) đã thi công xong, **chờ Đại bấm
+`cai-dat-nguoi-truc.bat`** để chữa hai lỗi đang chạy trên máy thật.
 
 ---
 
@@ -29,7 +30,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | # | Hạng mục | Chi tiết |
 |---|---|---|
 | 1 | Token Meta 60 ngày | Hết hạn **10/11/2026** |
-| 2 | 3 lịch tự động | Tên `BaoCaoMetaAds_08/12/17` |
+| 2 | Người trực (từ 28/09/2026) | Một lịch `NguoiTruc` chạy `nguoi_truc.py` khi đăng nhập. Ba lịch `BaoCaoMetaAds_08/12/17` đã bị bỏ |
 | 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 3 lịch |
 | 4 | Dashboard HTML | Tự tạo lại mỗi lần chạy |
 | 5 | Đẩy code lên GitHub | 4 bản ghi, nhánh `main`, kho riêng tư |
@@ -64,10 +65,14 @@ Tóm tắt nhanh:
 2. git clone https://github.com/quangdaiai2-wq/meta-ads-report.git
 3. copy .env.example .env
 4. Điền token bot Telegram MỚI + copy token Meta từ máy nhà
-5. Bấm cai-dat-lich.bat
-6. Bấm bat-chay-bu.bat (chuột phải → Run as administrator)
-7. Chạy python report.py để kiểm tra
+   → nhớ sửa dòng REPORT_SLOTS trong .env cho đúng máy này
+5. Bấm cai-dat-nguoi-truc.bat (chuột phải → Run as administrator nếu bị chặn quyền)
+6. Chạy python report.py để kiểm tra
+7. Nhắn "còn sống không?" cho bot Telegram để kiểm tra Người trực
 ```
+
+> ⏳ **Lưu ý:** từ 28/09/2026 quy trình cài đổi — không còn bước `bat-chay-bu.bat`.
+> File `HUONG-DAN-MAY-CONG-TY.md` đã được cập nhật theo.
 
 ---
 
@@ -144,7 +149,8 @@ File `.gitignore` đã chặn sẵn. **Đừng tự ý bỏ chặn.**
 
 ### 5. Máy công ty cần Python
 
-File `cai-dat-lich.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ báo lỗi và hướng dẫn cách cài.
+File `cai-dat-nguoi-truc.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ báo lỗi và hướng dẫn cách cài.
+(File `cai-dat-lich.bat` cũ cũng tự dò, nhưng chỉ dùng khi quay lại cách cũ.)
 
 ---
 
@@ -156,9 +162,12 @@ File `cai-dat-lich.bat` **tự dò Python**. Nếu không tìm thấy, nó sẽ 
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
 | `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
-| `cai-dat-lich.bat` | Bật 3 lịch tự động |
-| `go-lich.bat` | Tắt 3 lịch |
-| `bat-chay-bu.bat` | Bật chạy bù khi lỡ giờ (cần quyền Admin) |
+| `nguoi_truc.py` | **Tiến trình thường trú** — canh mốc giờ, gọi `report.py`, nghe Telegram |
+| `cai-dat-nguoi-truc.bat` | Bật Người trực (tạo lịch `NguoiTruc`, xoá 3 lịch cũ) |
+| `go-nguoi-truc.bat` | Tắt Người trực |
+| `cai-dat-lich.bat` | Cách cũ: bật 3 lịch rời rạc — đường lùi |
+| `go-lich.bat` | Tắt 3 lịch cũ |
+| `bat-chay-bu.bat` | Bật chạy bù khi lỡ giờ (cần quyền Admin) — chỉ dùng cho cách cũ |
 | `.env` | 🔐 **BÍ MẬT** — chứa token. Không đẩy lên GitHub |
 | `.env.example` | File mẫu (an toàn để đẩy lên) |
 | `logs/baocao.log` | **Nhật ký chạy** — xem đầu tiên khi có sự cố |
@@ -181,7 +190,7 @@ python report.py --mock 12  # giả lập mốc 12h, không gửi
 ### Thông số
 - **Python thuần** — không cần thư viện ngoài (`urllib`, `json`, `argparse`)
 - **Meta Graph API v21.0**
-- Lịch Windows: `BaoCaoMetaAds_08`, `_12`, `_17`
+- Lịch Windows: `NguoiTruc` (một lịch duy nhất, chạy khi đăng nhập). Cách cũ: `BaoCaoMetaAds_08`, `_12`, `_17`
 
 ### BẢN SỬA NGÀY 14/09/2026 — `report.py` gọi Meta API 1 lần thay vì 2
 
@@ -264,6 +273,52 @@ Nếu chạy mà không có quyền Admin, nó in cảnh báo rõ ràng thay vì
 - Kiểm chứng nhanh bằng `Get-ScheduledTask` (đọc `StartWhenAvailable`, `WakeToRun`,
   `DisallowStartIfOnBatteries`, và `Args` phải chứa `--slot`).
 
+### BẢN SỬA NGÀY 28/09/2026 (tiếp) — NGƯỜI TRỰC THAY BA LỊCH
+
+**Vấn đề gốc còn lại:** ba lịch Windows rời rạc không biết gì về nhau. `--slot` (Giai đoạn 1)
+đã chữa được phần lớn, nhưng khi máy thức dậy buổi sáng, cả ba lịch vẫn chạy bù cùng lúc và
+`determine_period()` ánh xạ mốc 12, 17, 22 đều thành "hôm nay" ⇒ hai tin có **số giống hệt
+nhau**, chỉ khác dòng tiêu đề. Đếm trong nhật ký: 4 tin trùng giảm còn 3, chưa hết.
+
+**Đã sửa:** thay ba lịch bằng **một** tiến trình thường trú `nguoi_truc.py`, chạy qua lịch
+Windows duy nhất `NguoiTruc`. Nó biết rõ lịch của chính nó nên **không đoán mốc**, và khi
+khởi động chỉ gửi **một** báo cáo bù cho mốc gần nhất bị lỡ.
+
+**Bốn quyết định kỹ thuật, kèm lý do:**
+
+1. **`nguoi_truc.py` gọi `report.py` bằng tiến trình riêng** (`subprocess`), kèm `--slot N`.
+   Không tách phần gửi của `report.py` thành hàm như bản thiết kế mục 5.4 nói. Lý do: lỗi
+   trong `report.py` không giết Người trực; và không phải đụng vào phần tính tiền.
+2. **Lịch `NguoiTruc` tạo bằng PowerShell `Register-ScheduledTask`**, không dùng
+   `schtasks /Create`. Lý do: `schtasks` không đặt được "Restart on failure" và "không giới
+   hạn thời gian chạy"; thêm nữa đường dẫn truyền qua **biến môi trường** nên tránh hẳn bẫy
+   dấu nháy của `/TR` đã tốn một vòng sửa ngày 28/09.
+3. **Mốc giờ chuyển vào `.env`** (khoá `REPORT_SLOTS`). `determine_period()` không còn viết
+   cứng `if slot_hour == 8`; nó nhận `moc_sang_bao_cao` với mặc định 8, và `main()` truyền
+   `moc_sang(danh_sach_moc)` = mốc nhỏ nhất.
+4. **`cai-dat-nguoi-truc.bat` tự xoá ba lịch cũ.** Bản thiết kế mục 10 ghi hai bước riêng,
+   nhưng để hai lịch cùng sống là hai nguồn gửi báo cáo, mà cơ chế chống trùng cũ đọc-rồi-ghi
+   **không có khoá** nên hai tiến trình chạy sát nhau vẫn lọt.
+
+**Nhịp tim ghi mỗi 30 phút, không phải mỗi vòng.** Bản thiết kế mục 5.1 nói "mỗi vòng"; mỗi
+vòng là 30 giây ⇒ ~2.880 dòng/ngày, làm ngập `logs/baocao.log` — chính file mở đầu tiên khi
+có sự cố. Phép thử sức khoẻ thật là lệnh "còn sống không?" qua Telegram.
+
+**Đã kiểm chứng (bằng kiểm thử tự động, không phải chạy tay):** thực dậy lúc 12h05 khi chưa
+gửi gì ⇒ gửi **đúng một** báo cáo mốc 12h, mốc 8h ghi nhật ký bỏ qua. Đây là bài kiểm thử
+quan trọng nhất của giai đoạn.
+
+**Giới hạn đã biết, cố ý không sửa ở giai đoạn này:**
+
+- **Mốc 8h bị bỏ qua khi khởi động muộn.** Máy bật lúc 13h mà chưa gửi gì thì chỉ gửi báo cáo
+  mốc 12h; mốc 8h (báo cáo đầy đủ cả ngày hôm trước) bị bỏ. Hệ quả: `logs/lich-su.json` có
+  thể thiếu bản ghi **đầy đủ** của ngày hôm trước, chỉ còn bản **một phần** (mốc 17h của ngày
+  đó). Giai đoạn 3 cần biết điều này khi so sánh với kỳ trước.
+- **Một mốc chỉ được thử tối đa 3 lần trong ngày, cách nhau 5 phút.** Token Meta chết hẳn thì
+  Đại nhận tối đa 3 tin cảnh báo cho mỗi mốc. Đây là chủ ý: bản thiết kế mục 7 (tự xử lý lỗi,
+  tự gia hạn token) thuộc Giai đoạn 5.
+- **`report.py --dry` vẫn ghi vào `logs/lich-su.json`** — hành vi có từ Giai đoạn 1, không đổi.
+
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
 Meta trả về **NHIỀU TÊN cho CÙNG một hành động**: `omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase` đều phản ánh **cùng một số**.
@@ -284,9 +339,13 @@ Tên đã kiểm chứng (nằm trong `report.py`):
 ### Chẩn đoán lỗi — thứ tự ưu tiên
 
 1. Mở `logs/baocao.log` xem có dòng nào không
-2. **File trống hoàn toàn** → lịch chưa được cài → bấm `cai-dat-lich.bat`
-3. **Có dòng "THAT BAI"** → đọc lý do; nếu ghi `Session has expired` → token Meta hết hạn
-4. Telegram không nhận được → kiểm tra token Telegram + đã bấm Start với bot chưa
+2. **File trống hoàn toàn** → chưa cài gì → bấm `cai-dat-nguoi-truc.bat`
+3. **Có dòng nhịp tim `NGUOI TRUC: nhip tim` nhưng không có báo cáo** → Người trực sống,
+   nhưng việc gửi thất bại → tìm dòng `NGUOI TRUC: gui moc ... THAT BAI`
+4. **Có dòng "THAT BAI"** → đọc lý do; nếu ghi `Session has expired` → token Meta hết hạn
+5. Telegram không nhận được → kiểm tra token Telegram + đã bấm Start với bot chưa
+6. **Nhắn bot không trả lời** → mở Task Manager, tìm `python.exe` chạy `nguoi_truc.py`.
+   Không có → bấm `cai-dat-nguoi-truc.bat` lại
 
 ---
 

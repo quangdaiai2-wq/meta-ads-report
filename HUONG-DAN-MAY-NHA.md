@@ -1,4 +1,4 @@
-# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 14/09/2026
+# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 28/09/2026 (Giai đoạn 2: Người trực)
 
 **Dành cho:** Đại (người không cần biết code) **và** trợ lý AI trên máy nhà.
 
@@ -12,30 +12,34 @@
 
 ## ⚠️ CẬP NHẬT NGÀY 28/09/2026 — ĐỌC PHẦN NÀY TRƯỚC
 
-Bản 28/09 sửa hai lỗi đang chạy thật. **Lần này máy nhà PHẢI chạy lại `cai-dat-lich.bat`** —
-khác hẳn bản 14/09. Lý do: bản này đổi cả cách lịch Windows gọi script, không chỉ đổi code.
+Bản 28/09 sửa hai lỗi đang chạy thật. Bản 28/09 (Giai đoạn 2) thay **cách hệ thống chạy**:
+không còn ba lịch Windows rời rạc mà là **một tiến trình thường trú**. Vì vậy máy nhà **PHẢI
+chạy lại `cai-dat-nguoi-truc.bat`**.
 
 **Ba bước, theo đúng thứ tự:**
 
 1. **`git pull`** tại thư mục dự án → nhận code mới.
-2. **Chuột phải `cai-dat-lich.bat` → Run as administrator.** Bắt buộc có quyền Admin.
-   Phải chạy bước này, vì lịch trên máy nhà **chưa truyền `--slot`** — không chạy thì máy nhà
-   vẫn giữ nguyên hai lỗi cũ (báo cáo trùng, và mốc 8h chạy bù sai).
-3. **Kiểm tra kết quả.** File in ra ba dòng, cả ba phải ghi `True`:
+2. **Bấm đúp `cai-dat-nguoi-truc.bat`.** Nếu báo lỗi quyền thì chuột phải → Run as administrator.
+   File này tạo **một** lịch duy nhất tên `NguoiTruc` và **xoá ba lịch cũ**. Phải chạy bước này,
+   vì lịch cũ không biết gì về nhau nên vẫn còn hai lỗi: báo cáo trùng, và mốc 8h chạy bù sai.
+3. **Kiểm tra kết quả.** File in ra phần đọc lại lịch:
 
    ```
-   BaoCaoMetaAds_08 : chay bu=True  tu thuc=True
-   BaoCaoMetaAds_12 : chay bu=True  tu thuc=True
-   BaoCaoMetaAds_17 : chay bu=True  tu thuc=True
+   Ten lich    : NguoiTruc
+   Trang thai  : Ready
+   Tham so     : "D:\...\nguoi_truc.py"
    ```
+
+   Dòng phải nhìn là `Tham so` — phải **kết thúc bằng `nguoi_truc.py"`** (có dấu nháy đóng).
+   Thiếu dấu nháy đó thì đường dẫn có khoảng trắng bị Windows cắt làm hai, lịch không chạy được.
 
 **Một điều cần biết trước khi bấm bước 2:**
 
-- **Mốc 22h trên máy nhà sẽ bị bỏ — đây là điều Đại ĐÃ ĐỒNG Ý ngày 28/09/2026.** Cả hai máy dùng
-  chung ba mốc 08:00, 12:00, 17:00. Không cần làm gì thêm, cứ chạy bước 2 bình thường.
-- **Không mất tính năng chạy bù.** Bản mới của `cai-dat-lich.bat` tự đặt lại cả ba thiết lập
-  (chạy bù khi lỡ giờ, tự thức máy, cho phép chạy khi dùng pin) ngay sau khi tạo lịch.
-  Đây là lý do dòng kiểm tra ở bước 3 phải hiện `True`.
+- **Máy nhà GIỮ mốc 22h, máy công ty thì không.** Mốc giờ là cấu hình của từng máy, nằm ở
+  khoá `REPORT_SLOTS` trong `.env`. Máy nhà để `REPORT_SLOTS=8,12,17,22`; máy công ty để
+  `REPORT_SLOTS=8,12,17`. **Không copy `.env` giữa hai máy mà quên sửa dòng này.**
+- **Không cần tính năng "tự thức máy" nữa.** Người trực chạy suốt khi máy bật; máy tắt thì
+  không có báo cáo, nhưng khi bật lại nó gửi bù đúng **một** báo cáo cho mốc gần nhất bị lỡ.
 
 ---
 
@@ -52,11 +56,9 @@ git pull
 **Kết quả mong đợi:** thấy danh sách file thay đổi, trong đó có `report.py` và `kiem-tra-token.py`.
 
 > ⚠️ **Câu dưới đây đúng cho bản 14/09, KHÔNG đúng cho bản 28/09.**
-> Bản 28/09 đổi cách lịch gọi script, nên máy nhà **phải** chạy lại `cai-dat-lich.bat` —
-> xem mục "CẬP NHẬT NGÀY 28/09/2026" ở đầu file.
->
-> ~~Không cần chạy lại `cai-dat-lich.bat`. 4 lịch trên máy nhà vẫn còn nguyên, không bị ảnh hưởng.~~
-> ~~`git pull` chỉ thay file code, không đụng tới lịch Windows.~~
+> Bản 28/09 (Giai đoạn 2) đổi **cách hệ thống chạy**, nên máy nhà **phải** bấm
+> `cai-dat-nguoi-truc.bat`. Chỉ `git pull` là **chưa đủ** — xem mục "CẬP NHẬT NGÀY 28/09/2026"
+> ở đầu file.
 
 ### Bước 2: Kiểm tra token của máy nhà
 
@@ -160,13 +162,13 @@ Hệ thống sẽ **tự nhắn cảnh báo trước 7 ngày** — bạn không 
 
 ```
 MÁY NHÀ — BẢN 28/09 (mới nhất, làm theo mục đầu file)
-├── git pull                                  ← nhận code mới
-├── cai-dat-lich.bat (Run as administrator)   ← PHẢI chạy: tạo lại lịch có --slot
-└── nhìn dòng kiểm tra: cả ba phải là True
+├── git pull                                        ← nhận code mới
+├── cai-dat-nguoi-truc.bat (Run as administrator)   ← PHẢI chạy: tạo Người trực, xoá 3 lịch cũ
+└── nhìn dòng "Tham so": phải kết thúc bằng nguoi_truc.py"
 
-LƯU Ý: bước 2 sẽ bỏ mốc 22h trên máy nhà — Đại đã đồng ý ngày 28/09/2026.
-KHÔNG cần: sửa file .env (token máy nhà không đổi)
-KHÔNG cần: bat-danh-thuc-may.bat (thiết lập nguồn điện vẫn còn nguyên)
+LƯU Ý: máy nhà GIỮ mốc 22h — kiểm dòng REPORT_SLOTS=8,12,17,22 trong .env
+KHÔNG cần: sửa file .env nếu đã có dòng REPORT_SLOTS (token máy nhà không đổi)
+KHÔNG cần: bat-chay-bu.bat, bat-danh-thuc-may.bat (Người trực chạy suốt, không cần đánh thức máy)
 ```
 
 **Chỉ 2 lệnh. Xong.**
