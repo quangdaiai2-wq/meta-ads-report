@@ -20,6 +20,7 @@ cache/
 
 # --- THƯ MỤC CÔNG CỤ (không cần đồng bộ) ---
 .workbuddy-ai/
+.superpowers/
 .vscode/
 .idea/
 venv/
