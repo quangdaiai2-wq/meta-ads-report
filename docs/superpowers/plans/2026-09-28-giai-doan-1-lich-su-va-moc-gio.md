@@ -569,10 +569,14 @@ bằng:
     else:
         slot = chon_moc(args.slot, now.hour, REPORT_SLOTS)
         if args.slot is not None:
-            print(f"Moc gio do lich truyen vao: {slot}h")
+            print(f"Mốc giờ do lịch truyền vào: {slot}h")
         else:
             print(f"Moc gio hien tai: {slot}h (gio may: {now.hour}h)")
 ```
+
+> **Ghi chú (sửa 28/09):** dòng in khi có `--slot` phải **có dấu** vì nó hiện ra màn hình —
+> đúng theo ràng buộc toàn cục. Bản đầu của kế hoạch ghi không dấu, mâu thuẫn với chính ràng buộc.
+> Dòng `Moc gio hien tai:` giữ nguyên không dấu vì đó là chuỗi cũ, đổi sẽ phá tính tương thích.
 
 - [ ] **Step 6: Chạy kiểm thử lại**
 
@@ -588,7 +592,7 @@ Kết quả mong đợi: `OK`.
 "C:/Users/nguye/.workbuddy-ai/binaries/python/versions/3.13.12/python.exe" report.py --slot 12 --dry
 ```
 
-Kết quả mong đợi: dòng `Moc gio do lich truyen vao: 12h`, rồi báo cáo in ra màn hình,
+Kết quả mong đợi: dòng `Mốc giờ do lịch truyền vào: 12h`, rồi báo cáo in ra màn hình,
 kết thúc bằng `[Khong gui Telegram - che do thu]`.
 
 - [ ] **Step 8: Kiểm tra mốc giờ sai bị chặn**
@@ -697,7 +701,7 @@ class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
     def test_good_va_bad_van_nhu_cu(self):
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
         self.assertEqual(len(stats["good"]), 1)
-        self.assertEqual(len(stats["bad"]), 1)
+        self.assertEqual(len(stats["bad"]), 2)
 
 
 class TestLuuLichSu(unittest.TestCase):
@@ -739,6 +743,19 @@ class TestLuuLichSu(unittest.TestCase):
 
 Kết quả mong đợi: `AttributeError: module 'report' has no attribute 'luu_lich_su'`
 và `AssertionError: 'all' not found in {...}`
+
+> **Ghi chú (sửa 28/09):** bản đầu của kế hoạch ghi `len(stats["bad"]) == 1` — **sai, đã kiểm chứng**.
+> Chạy thật `compute_stats()` với chính dữ liệu giả trên cho ra `bad` có **2** phần tử
+> (`dainq B` rồi `dainq A`).
+>
+> Lý do: `compute_stats()` xếp `bad` = (camp không có lượt mua, chi tiêu giảm dần) **nối tiếp**
+> (camp có lượt mua nhưng thấp, tăng dần), rồi cắt top N. Dữ liệu giả chỉ có 2 camp đủ điều kiện
+> nên cả hai đều vào `bad`.
+>
+> ⚠️ **Hệ quả cần biết, không sửa trong kế hoạch này:** `bad` **không loại trừ** `good`.
+> Camp `dainq A` nằm ở **cả hai** danh sách. Đây là hành vi **có sẵn** của `compute_stats()`,
+> không phải thứ Task này tạo ra — nhưng nghĩa là khi tài khoản có ít camp, báo cáo Telegram có thể
+> liệt kê cùng một camp ở cả mục "Camp hiệu quả" lẫn "Camp kém hiệu quả". Cần Đại quyết ở giai đoạn sau.
 
 - [ ] **Step 3: Thêm khoá `"all"` vào `compute_stats()`**
 
