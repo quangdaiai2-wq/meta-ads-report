@@ -912,18 +912,33 @@ schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%
 Thay bằng:
 
 ```bat
-schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
+schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%" /SC DAILY /ST %MOC%:00 /F >nul 2>&1
 ```
 
 Và dòng 133 (nhánh in lỗi chi tiết) cũng phải sửa y hệt:
 
 ```bat
-    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%\" /SC DAILY /ST %MOC%:00 /F
+    schtasks /Create /TN "BaoCaoMetaAds_%MOC%" /TR "\"%PYTHON_EXE%\" \"%SCRIPT_PATH%\" --slot %MOC%" /SC DAILY /ST %MOC%:00 /F
 ```
 
 Dùng luôn `%MOC%` (đang ở dạng hai chữ số `08`, `12`, `17`) chứ không cần biến mới.
 `argparse` với `type=int` đọc `"08"` thành `8` bình thường, nên `--slot 08` hợp lệ.
 Giữ nguyên dạng hai chữ số còn giúp bước kiểm chứng ở Step 7 rõ ràng, không nhầm `8` với `17`.
+
+> ⚠️ **BẪY DẤU NHÁY — đọc kỹ (sửa 28/09, đã kiểm chứng bằng thực nghiệm).**
+> Dòng lệnh phải kết thúc bằng `--slot %MOC%"` với dấu nháy **ĐÓNG THẬT**, **KHÔNG** phải `--slot %MOC%\"`.
+>
+> Bản đầu của kế hoạch này viết `\"`. Đó là dấu nháy **đã escape**, không phải dấu nháy đóng — nên
+> chuỗi của `/TR` không bao giờ được đóng lại và nuốt luôn `/SC DAILY /ST ... /F`.
+>
+> Đã kiểm chứng bằng cách chạy thật một file `.bat` với chương trình in `sys.argv` thay cho `schtasks`
+> (cùng quy tắc tách đối số của Windows):
+> - **Sai:** `['"...report.py" --slot 08" /SC DAILY /ST 08:00 /F']` — một đối số duy nhất, mất sạch cờ.
+> - **Đúng:** `['"...report.py" --slot 08', '/SC', 'DAILY', '/ST', '08:00', '/F']`.
+>
+> Hậu quả nếu dùng bản sai: `schtasks` không nhận `/SC` nên **không tạo được lịch nào cả** — bản vá
+> còn tệ hơn trước khi sửa. Vì dòng đầu có `>nul 2>&1` che lỗi, dấu hiệu duy nhất là các dòng `[LOI]`
+> in ra từ nhánh thứ hai.
 
 - [ ] **Step 2: Bỏ mốc 22h khỏi danh sách tạo lịch**
 
