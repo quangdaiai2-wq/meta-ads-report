@@ -39,7 +39,14 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 
 ### Bước 1: Kiểm tra file `.env` đã điền token chưa
 
-Mở file `.env`, đảm bảo 4 dòng này đã có giá trị:
+**Mở file `.env`:** bấm đúp vào **`mo-file-env.bat`** — Notepad mở đúng file cần sửa.
+(Khỏi phải đi tìm: trong thư mục có 4 file tên gần giống nhau, dễ sửa nhầm.)
+
+> ⚠️ File cần sửa tên đúng là **`.env`**. Ba file còn lại **không phải** file thật:
+> `.env.example` (bản mẫu) · `.env.bak` và `.env.bak-truoc-gd2` (bản sao lưu cũ).
+> Sửa xong bấm **Ctrl + S**. Đừng đổi tên, đừng lưu thành `.env.txt`.
+
+Đảm bảo 4 dòng này đã có giá trị:
 
 ```
 TELEGRAM_BOT_TOKEN=...
@@ -314,6 +321,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 kiem-tra-token.py         ← Kiểm tra CẢ 2 nhóm token + token Meta còn sống bao lâu
 ├── 📄 cai-dat-nguoi-truc.bat     ← Bấm để BẬT (tạo Người trực, xoá 3 lịch cũ)
 ├── 📄 go-nguoi-truc.bat          ← Bấm để TẮT (xoá lịch, dừng tiến trình)
+├── 📄 mo-file-env.bat            ← Bấm để mở file bí mật .env bằng Notepad (khỏi phải tìm)
 ├── 📄 cai-dat-lich.bat           ← Cách cũ (3 lịch rời rạc) — đường lùi nếu Người trực có sự cố
 ├── 📄 go-lich.bat                ← Xoá 3 lịch cũ
 ├── 📄 bat-chay-bu.bat            ← Chỉ còn dùng cho cách cũ (cần Admin)
