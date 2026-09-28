@@ -29,11 +29,10 @@ khác hẳn bản 14/09. Lý do: bản này đổi cả cách lịch Windows g�
    BaoCaoMetaAds_17 : chay bu=True  tu thuc=True
    ```
 
-**Hai điều cần biết trước khi bấm bước 2:**
+**Một điều cần biết trước khi bấm bước 2:**
 
-- **Mốc 22h trên máy nhà sẽ bị bỏ.** `cai-dat-lich.bat` hiện tạo đúng ba mốc 08/12/17 và xoá mốc 22h.
-  Nếu Đại muốn **giữ** mốc 22h ở máy nhà thì **đừng chạy bước 2**, và nhắn cho trợ lý AI biết —
-  cần chỉnh riêng cho máy nhà.
+- **Mốc 22h trên máy nhà sẽ bị bỏ — đây là điều Đại ĐÃ ĐỒNG Ý ngày 28/09/2026.** Cả hai máy dùng
+  chung ba mốc 08:00, 12:00, 17:00. Không cần làm gì thêm, cứ chạy bước 2 bình thường.
 - **Không mất tính năng chạy bù.** Bản mới của `cai-dat-lich.bat` tự đặt lại cả ba thiết lập
   (chạy bù khi lỡ giờ, tự thức máy, cho phép chạy khi dùng pin) ngay sau khi tạo lịch.
   Đây là lý do dòng kiểm tra ở bước 3 phải hiện `True`.
@@ -165,7 +164,7 @@ MÁY NHÀ — BẢN 28/09 (mới nhất, làm theo mục đầu file)
 ├── cai-dat-lich.bat (Run as administrator)   ← PHẢI chạy: tạo lại lịch có --slot
 └── nhìn dòng kiểm tra: cả ba phải là True
 
-LƯU Ý: bước 2 sẽ bỏ mốc 22h trên máy nhà.
+LƯU Ý: bước 2 sẽ bỏ mốc 22h trên máy nhà — Đại đã đồng ý ngày 28/09/2026.
 KHÔNG cần: sửa file .env (token máy nhà không đổi)
 KHÔNG cần: bat-danh-thuc-may.bat (thiết lập nguồn điện vẫn còn nguyên)
 ```
