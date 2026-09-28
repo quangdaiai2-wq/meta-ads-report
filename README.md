@@ -50,12 +50,15 @@ META_AD_ACCOUNT_ID=...
 
 ### Bước 2: Bấm đúp `cai-dat-nguoi-truc.bat`
 
-File này làm **ba** việc, chỉ cần bấm một lần:
+File này làm **bốn** việc, chỉ cần bấm một lần:
 
 1. Tạo **một** lịch Windows duy nhất tên `NguoiTruc`, tự chạy khi Đại đăng nhập máy.
 2. **Xoá ba lịch cũ** (`BaoCaoMetaAds_08/12/17`) — để hai lịch cùng sống là có hai nguồn
    gửi báo cáo, sẽ bị trùng.
-3. Đọc lại lịch vừa tạo và in ra để kiểm tra.
+3. **Khởi động Người trực ngay**, không đợi lần đăng nhập sau. Lịch chỉ kích hoạt khi đăng
+   nhập, nên nếu chỉ tạo lịch thì từ lúc bấm file đến lần đăng nhập sau sẽ **không có gì
+   gửi báo cáo**.
+4. Đọc lại lịch vừa tạo và in ra để kiểm tra.
 
 Nếu báo lỗi quyền: chuột phải vào file → **Run as administrator** → bấm lại.
 
@@ -70,17 +73,24 @@ Kết quả mong đợi:
   [XOA] Da xoa lich cu BaoCaoMetaAds_17
   [--]  Lich cu BaoCaoMetaAds_22 khong ton tai
   [OK]  Da tao lich NguoiTruc
+  [OK]  Da khoi dong Nguoi truc
 
   Ten lich    : NguoiTruc
-  Trang thai  : Ready
+  Trang thai  : Running
   Chuong trinh: C:\...\python.exe
   Tham so     : "D:\Buddy Work AI\2026-09-14-07-50-57\nguoi_truc.py"
+  Chay khi dung pin: True
+  Chay bu khi lo gio: True
+  Gioi han thoi gian: PT0S
+  Tien trinh   : dang chay (PID ...)
 ```
 
+**Hai dòng phải đúng:**
+- **`Tham so`** phải **kết thúc bằng `nguoi_truc.py"`** — có dấu nháy đóng ở cuối. Thiếu dấu
+  nháy đó thì đường dẫn có khoảng trắng bị Windows cắt làm hai và lịch không chạy được.
+- **`Trang thai`** phải là **`Running`** và có dòng **`Tien trinh: dang chay`**.
+
 > ⚠️ **Đừng tin dòng `[OK]`.** Nó chỉ nói Windows không báo lỗi, không nói tham số đã đúng.
-> Điều phải nhìn là dòng **`Tham so`**: nó phải **kết thúc bằng `nguoi_truc.py"`** — có dấu
-> nháy đóng ở cuối. Thiếu dấu nháy đó thì đường dẫn có khoảng trắng bị cắt làm hai và lịch
-> không chạy được.
 
 ### Bước 3: Nhắn thử bot
 
@@ -92,6 +102,11 @@ còn sống không?
 
 Bot trả lời kèm tình trạng: đã chạy bao lâu, mốc giờ của máy này, hôm nay đã gửi mốc nào.
 Đây là cách kiểm tra nhanh nhất khi nghi ngờ hệ thống có vấn đề.
+
+> ⚠️ **Phải nhắn SAU khi Người trực đã chạy.** Lúc vừa khởi động, Người trực **bỏ qua toàn bộ
+> tin nhắn đến trước đó** — đây là chủ ý, để nó không trả lời một loạt tin cũ. Nếu Đại nhắn
+> trước khi bấm file, hoặc nhắn đúng lúc nó đang khởi động, thì tin đó bị bỏ qua và **không có
+> phản hồi**. Không phải lỗi — **nhắn lại là được**.
 
 ---
 
@@ -199,6 +214,7 @@ do `nguoi_truc.py` đảm nhiệm. Nó:
 | Canh mốc giờ | Kiểm tra đồng hồ mỗi 30 giây. Tới mốc và mốc đó chưa gửi hôm nay → gọi `report.py` kèm `--slot` |
 | Gửi bù khi lỡ | Lúc khởi động, đối chiếu sổ đã gửi. Chỉ gửi **MỘT** báo cáo cho mốc gần nhất bị lỡ; các mốc cũ hơn ghi nhật ký là bỏ qua |
 | Nghe Telegram | Chỉ trả lời tin từ `TELEGRAM_CHAT_ID` của Đại. Tin từ người lạ bị bỏ qua và ghi nhật ký |
+| Bỏ qua tin cũ | Lúc vừa khởi động, **bỏ qua toàn bộ tin nhắn đến trước đó** (chủ ý — để không trả lời một loạt tin cũ). Nhắn trước khi nó chạy thì tin đó mất, phải nhắn lại |
 | Nhịp tim | Ghi một dòng nhật ký mỗi 30 phút để biết còn sống |
 
 **Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
@@ -333,7 +349,8 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Không nhận được báo cáo | Kiểm tra máy có bật không; mở `logs/baocao.log` xem có dòng nào không |
 | `logs/baocao.log` trống hoàn toàn | Chưa cài gì → bấm `cai-dat-nguoi-truc.bat` |
 | Không thấy báo cáo nhưng nhật ký vẫn có dòng nhịp tim | Người trực sống, nhưng việc gửi thất bại → tìm dòng `NGUOI TRUC: gui moc ... THAT BAI` và đọc lý do |
-| Nhắn bot không trả lời | Mở Task Manager (Ctrl+Shift+Esc), tìm `python.exe` chạy `nguoi_truc.py`. Không có → bấm `cai-dat-nguoi-truc.bat` lại |
+| Nhắn bot không trả lời **ngay sau khi vừa cài** | Bình thường — Người trực bỏ qua tin đến trước lúc nó khởi động. **Nhắn lại.** |
+| Nhắn bot không trả lời, nhắn lại vẫn im | Mở Task Manager (Ctrl+Shift+Esc), tìm `python.exe` chạy `nguoi_truc.py`. Không có → bấm `cai-dat-nguoi-truc.bat` lại (file này khởi động Người trực ngay), hoặc đăng xuất rồi đăng nhập lại Windows |
 | Telegram báo "Token Meta đã HẾT HẠN" | Làm theo `HUONG-DAN-DIEN-TOKEN.md` → mục `META_ADS_ACCESS_TOKEN` |
 | Báo cáo ghi "LOI lay du lieu Meta" | Token Meta hết hạn → lấy token mới |
 | Báo cáo ghi "LOI GUI TELEGRAM" | Kiểm tra token Telegram và Chat ID |

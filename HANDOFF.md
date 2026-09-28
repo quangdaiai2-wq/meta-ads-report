@@ -321,6 +321,17 @@ quan trọng nhất của giai đoạn.
   tự gia hạn token) thuộc Giai đoạn 5.
 - **`report.py --dry` vẫn ghi vào `logs/lich-su.json`** — hành vi có từ Giai đoạn 1, không đổi.
 
+**Lỗ hổng phát hiện khi cài thật (28/09, ~14:26): `cai-dat-nguoi-truc.bat` phải khởi động luôn.**
+Lịch `NguoiTruc` kích hoạt **khi đăng nhập**, nên sau khi bấm file, hệ thống KHÔNG chạy ngay.
+Mà file đó lại **xoá ba lịch cũ** ⇒ từ lúc bấm đến lần đăng nhập sau là **khoảng trống không có
+gì gửi báo cáo**. Đã xảy ra thật: Đại bấm file lúc ~14:20, lịch `State=Ready` nhưng
+`LastRunTime=11/30/1999` (chưa từng chạy), không có tiến trình nào ⇒ nhắn bot lúc 14:25 không
+ai trả lời. **Đã sửa:** `.bat` giờ gọi `Start-ScheduledTask` ngay sau khi tạo lịch, và phần
+kiểm tra in thêm `Trang thai` + dòng `Tien trinh: dang chay (PID ...)`.
+
+> Ghi chú kèm: Người trực **bỏ qua mọi tin nhắn đến trước lúc nó khởi động** (xả tồn đọng bằng
+> `offset=-1`). Nên nhắn thử bot phải làm **sau** khi nó chạy; nhắn trước là mất tin, không phải lỗi.
+
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
 Meta trả về **NHIỀU TÊN cho CÙNG một hành động**: `omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase` đều phản ánh **cùng một số**.

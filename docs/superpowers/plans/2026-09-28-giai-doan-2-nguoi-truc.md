@@ -28,6 +28,16 @@
    (`-not DisallowStartIfOnBatteries`), `Khong tat khi sang pin` (`-not StopIfGoingOnBatteries`)
    và `Chay bu khi lo gio` (`StartWhenAvailable`). Chỉ ảnh hưởng phần in ra, không ảnh hưởng
    việc tạo lịch.
+3. **`cai-dat-nguoi-truc.bat` khởi động Người trực ngay** (`Start-ScheduledTask`), không đợi
+   lần đăng nhập sau. **Đây là lỗ hổng thật, phát hiện khi Đại cài lần đầu (28/09 ~14:26).**
+   Kế hoạch chỉ tạo lịch với trigger `-AtLogOn`. Mà chính file đó lại **xoá ba lịch cũ** ⇒ từ
+   lúc bấm file đến lần đăng nhập sau là khoảng trống **không có gì gửi báo cáo**. Đã xảy ra:
+   lịch `State=Ready` nhưng `LastRunTime=11/30/1999`, không có tiến trình, Đại nhắn bot lúc
+   14:25 không ai trả lời. Phần kiểm tra cũng in thêm `Trang thai` và dòng `Tien trinh: dang chay`.
+
+> **Rút ra:** với mọi `.bat` vừa *xoá* cơ chế cũ vừa *tạo* cơ chế mới, phải bảo đảm cơ chế mới
+> **chạy được ngay trong cùng lượt bấm** — không được để nó chờ một sự kiện hệ thống (đăng nhập,
+> khởi động lại) mới hoạt động.
 
 ---
 
