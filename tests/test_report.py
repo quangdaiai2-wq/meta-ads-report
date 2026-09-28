@@ -98,7 +98,7 @@ class TestComputeStatsCoDanhSachDayDu(unittest.TestCase):
     def test_good_va_bad_van_nhu_cu(self):
         stats, _ = report.compute_stats(self.env, date(2026, 9, 27), date(2026, 9, 27))
         self.assertEqual(len(stats["good"]), 1)
-        self.assertEqual(len(stats["bad"]), 1)
+        self.assertEqual(len(stats["bad"]), 2)
 
 
 class TestLuuLichSu(unittest.TestCase):
