@@ -22,6 +22,37 @@ from dashboard import save_dashboard
 import ai
 import lich_su
 
+
+def _ep_stdout_utf8():
+    """Bat buoc stdout/stderr dung UTF-8. Duoc goi ngay khi nap mo-dun.
+
+    VI SAO CAN: khi Windows Task Scheduler khoi dong Nguoi truc, tien trinh
+    con (report.py) khong co console nen Python lay bang ma theo locale cua
+    Windows - o may nay la cp1252. Bao cao co dau tieng Viet ("So tien...")
+    khong ma hoa duoc => print() nem UnicodeEncodeError => report.py thoat
+    voi ma 1 => BAO CAO KHONG DUOC GUI.
+
+    Da xay ra THAT: bao cao ngung gui tu 17h ngay 28/09/2026, va ca ba lan
+    thu cua moc 8h ngay 29/09/2026 deu that bai. Tai hien duoc bang cach dat
+    PYTHONIOENCODING=cp1252.
+
+    errors="replace": ky tu nao khong ma hoa duoc thi thay bang '?', tuyet doi
+    khong lam chet ca bao cao.
+    """
+    for ten in ("stdout", "stderr"):
+        luong = getattr(sys, ten, None)
+        if luong is None:
+            continue
+        try:
+            luong.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            # Mot so loai luong (bi thay bang doi tuong gia, da bi dong...)
+            # khong doi duoc bang ma. Khong duoc phep lam chet chuong trinh.
+            pass
+
+
+_ep_stdout_utf8()
+
 API_VERSION = "v21.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 

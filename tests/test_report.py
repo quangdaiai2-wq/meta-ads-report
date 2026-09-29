@@ -1,4 +1,5 @@
 """Kiem thu phan chon moc gio cua report.py."""
+import sys
 import tempfile
 import unittest
 from datetime import date
@@ -271,6 +272,62 @@ class TestXepHangTheoChiPhiMoiDon(unittest.TestCase):
         stats = self._chay(rows)
         self.assertNotIn("dat", self._id(stats["good"]))
         self.assertIn("bo_sot", self._id(stats["good"]))
+
+
+class TestEpStdoutUtf8(unittest.TestCase):
+    """Bao cao PHAI in duoc tieng Viet co dau du chay qua duong ong.
+
+    Loi THAT ngay 28/09/2026: Windows Task Scheduler khoi dong Nguoi truc,
+    Python lay bang ma theo locale cua Windows (may nay la cp1252), nen
+    print() bao cao co dau lam report.py CHET voi UnicodeEncodeError va
+    bao cao KHONG duoc gui. Da tai hien duoc bang cach dat
+    PYTHONIOENCODING=cp1252.
+    """
+
+    def _voi_luong(self, luong_out, luong_err):
+        goc_out, goc_err = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = luong_out, luong_err
+        try:
+            report._ep_stdout_utf8()
+        finally:
+            sys.stdout, sys.stderr = goc_out, goc_err
+
+    def test_dat_lai_ca_hai_luong_thanh_utf8(self):
+        goi = []
+
+        class LuongGia:
+            def reconfigure(self, **kw):
+                goi.append(kw)
+
+        self._voi_luong(LuongGia(), LuongGia())
+        self.assertEqual(len(goi), 2)
+        for kw in goi:
+            self.assertEqual(kw.get("encoding"), "utf-8")
+            self.assertEqual(kw.get("errors"), "replace")
+
+    def test_khong_no_khi_luong_khong_co_reconfigure(self):
+        self._voi_luong(object(), object())
+
+    def test_khong_no_khi_luong_la_None(self):
+        self._voi_luong(None, None)
+
+    def test_reconfigure_loi_thi_khong_no(self):
+        class LuongHong:
+            def reconfigure(self, **kw):
+                raise ValueError("khong doi duoc bang ma")
+
+        self._voi_luong(LuongHong(), LuongHong())
+
+    def test_goi_duoc_nhieu_lan_lien_tiep(self):
+        goi = []
+
+        class LuongGia:
+            def reconfigure(self, **kw):
+                goi.append(kw)
+
+        self._voi_luong(LuongGia(), LuongGia())
+        self._voi_luong(LuongGia(), LuongGia())
+        self.assertEqual(len(goi), 4)
 
 
 class TestLuuLichSu(unittest.TestCase):

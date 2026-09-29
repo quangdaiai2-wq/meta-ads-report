@@ -483,6 +483,64 @@ rồi mới nói được camp nào thật sự có lãi.
 Kiểm thử: `175/175` đạt (thêm 10 bài). Kiểm chứng trên dữ liệu thật 28/09: camp 775.150 đ/đơn
 không còn trong bảng "hiệu quả"; hai camp 3 đơn rẻ hơn (405.671 và 408.493) được đưa vào.
 
+### 🚨 BẢN SỬA NGÀY 29/09/2026 — BÁO CÁO NGỪNG GỬI VÌ LỖI BẢNG MÃ TIẾNG VIỆT
+
+**Đây là lỗi nặng nhất từ trước tới nay: báo cáo NGỪNG GỬI hoàn toàn.**
+
+**Triệu chứng trong `logs/baocao.log`:**
+
+```
+NGUOI TRUC: report.py moc 17h thoat voi ma 1: 3.12\Lib\encodings\cp1252.py", line 19, in encode
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ed1' in position 1
+```
+
+`\u1ed1` là chữ **ố** trong "**Số** tiền đã chi tiêu". `report.py` thoát với mã 1 ⇒ **không gửi
+Telegram**. Vì `print(report)` nằm **TRƯỚC** `send_telegram()` nên chết là chết trước khi gửi.
+
+**Thiệt hại thật:** báo cáo ngừng gửi từ **17h ngày 28/09/2026**. Cụ thể:
+
+| Mốc | Kết quả |
+|---|---|
+| 28/09 8h, 12h | Đã gửi (trước khi lỗi xuất hiện) |
+| **28/09 17h** | ❌ **KHÔNG BAO GIỜ GỬI** — thử 6 lần, cả 6 thất bại |
+| 29/09 8h | ❌ thất bại 2 lần đầu, ✅ **gửi được sau khi sửa** (08:10:36) |
+
+**Nguyên nhân gốc:** `nguoi_truc.py` gọi `report.py` bằng `subprocess.run(capture_output=True)`.
+Từ Giai đoạn 2, tiến trình con **không còn console** và stdout là **đường ống**, nên Python lấy
+bảng mã theo **locale của Windows** — máy này là **cp1252** (bảng mã Tây Âu, không có chữ có dấu
+tiếng Việt). `print()` báo cáo ⇒ nổ.
+
+**Vì sao trước đây không bị:** ba lịch cũ chạy `report.py` trực tiếp, **không có console và không
+có đường ống** ⇒ `sys.stdout` là `None` ⇒ `print()` **im lặng không làm gì** ⇒ không lỗi.
+Chính `capture_output=True` của Giai đoạn 2 đã **đưa bảng mã vào cuộc**. Đây là lỗi **do GĐ2 gây
+ra nhưng chỉ lộ ra khi Người trực gửi báo cáo thật lần đầu** (17h ngày 28/09).
+
+**Đã sửa hai lớp (cố ý làm cả hai, để một lớp hỏng thì lớp kia vẫn cứu):**
+
+1. `report.py` — thêm `_ep_stdout_utf8()`, **tự chạy ngay khi nạp mô-đun**: đổi `stdout`/`stderr`
+   sang UTF-8 với `errors="replace"`. Lớp này đủ để cứu, và **cứu được cả tiến trình Người trực
+   cũ đang chạy** vì `report.py` được nạp mới ở mỗi lần gọi.
+2. `nguoi_truc.py` — `gui_bao_cao()` nay truyền `encoding="utf-8"`, `errors="replace"` và
+   `env` có `PYTHONIOENCODING=utf-8`. Lớp này để nhật ký đọc được, không bị chữ rác.
+
+**Kiểm chứng (tái hiện được):** đặt `PYTHONIOENCODING=cp1252` rồi chạy `report.py --slot 8 --dry`
+trong tiến trình con có `capture_output=True`:
+
+| | Mã thoát |
+|---|---|
+| Trước khi sửa | **1** — `UnicodeEncodeError`, đúng ký tự `\u1ed1`, đúng vị trí 1 |
+| Sau khi sửa | **0** — báo cáo in ra đủ, tiếng Việt có dấu còn nguyên |
+
+Kiểm thử: `185/185` đạt (thêm 10 bài, gồm 5 bài cho `_ep_stdout_utf8` và 5 bài khoá việc truyền
+`encoding="utf-8"` trong `nguoi_truc.py`).
+
+> ⚠️ **BÀI HỌC PHẢI NHỚ:** mọi chỗ **in chữ có dấu ra ngoài** trong tiến trình chạy qua
+> `subprocess`/Task Scheduler **phải ép UTF-8 tường minh**. Đừng bao giờ tin vào bảng mã mặc định
+> của Windows — nó là cp1252, không có chữ Việt có dấu.
+>
+> 🔎 **Cách nhận ra nhanh lỗi này về sau:** nhật ký có `UnicodeEncodeError` + `charmap` + `cp1252`,
+> và `report.py ... thoat voi ma 1`. Khi đó **báo cáo không gửi được**, không phải lỗi Meta/Telegram.
+
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
 Meta trả về **NHIỀU TÊN cho CÙNG một hành động**: `omni_purchase`, `onsite_web_purchase`, `onsite_app_purchase`, `onsite_conversion.purchase` đều phản ánh **cùng một số**.

@@ -420,6 +420,7 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Không nhận được báo cáo | Kiểm tra máy có bật không; mở `logs/baocao.log` xem có dòng nào không |
 | `logs/baocao.log` trống hoàn toàn | Chưa cài gì → bấm `cai-dat-nguoi-truc.bat` |
 | Không thấy báo cáo nhưng nhật ký vẫn có dòng nhịp tim | Người trực sống, nhưng việc gửi thất bại → tìm dòng `NGUOI TRUC: gui moc ... THAT BAI` và đọc lý do |
+| Nhật ký ghi `UnicodeEncodeError` + `charmap` + `cp1252` | **Lỗi bảng mã tiếng Việt** — báo cáo KHÔNG gửi được (đã gặp thật 28/09/2026). Xem `HANDOFF.md`, mục "BÁO CÁO NGỪNG GỬI VÌ LỖI BẢNG MÃ TIẾNG VIỆT" |
 | Nhắn bot không trả lời **ngay sau khi vừa cài** | Bình thường — Người trực bỏ qua tin đến trước lúc nó khởi động. **Nhắn lại.** |
 | Nhắn bot không trả lời, nhắn lại vẫn im | Mở Task Manager (Ctrl+Shift+Esc), tìm `python.exe` chạy `nguoi_truc.py`. Không có → bấm `cai-dat-nguoi-truc.bat` lại (file này khởi động Người trực ngay), hoặc đăng xuất rồi đăng nhập lại Windows |
 | Telegram báo "Token Meta đã HẾT HẠN" | Làm theo `HUONG-DAN-DIEN-TOKEN.md` → mục `META_ADS_ACCESS_TOKEN` |

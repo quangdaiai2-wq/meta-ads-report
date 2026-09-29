@@ -374,5 +374,59 @@ class TestMotVong(unittest.TestCase):
         self.assertEqual(tg.truc.so_vong, nguoi_truc.NHIP_TIM_MOI_VONG)
 
 
+class TestGuiBaoCaoBangMaUtf8(unittest.TestCase):
+    """report.py phai duoc goi voi bang ma UTF-8.
+
+    Loi THAT 28/09/2026: khi Windows Task Scheduler khoi dong Nguoi truc,
+    tien trinh con (report.py) lay bang ma theo locale cua Windows (cp1252),
+    nen in bao cao co dau tieng Viet lam no CHET va bao cao KHONG duoc gui.
+    """
+
+    class KetQuaGia:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def _chay_voi_ket_qua(self, ket_qua):
+        da_goi = {}
+
+        def chay_gia(lenh, **kw):
+            da_goi["lenh"] = lenh
+            da_goi["kw"] = kw
+            return ket_qua
+
+        goc = nguoi_truc.subprocess.run
+        nguoi_truc.subprocess.run = chay_gia
+        try:
+            ket_qua_tra_ve = nguoi_truc.gui_bao_cao(8)
+        finally:
+            nguoi_truc.subprocess.run = goc
+        return ket_qua_tra_ve, da_goi
+
+    def test_truyen_encoding_utf8(self):
+        _, da_goi = self._chay_voi_ket_qua(self.KetQuaGia())
+        self.assertEqual(da_goi["kw"].get("encoding"), "utf-8")
+
+    def test_truyen_errors_replace(self):
+        # Ky tu nao khong ma hoa duoc thi thay bang '?', KHONG lam chet bao cao.
+        _, da_goi = self._chay_voi_ket_qua(self.KetQuaGia())
+        self.assertEqual(da_goi["kw"].get("errors"), "replace")
+
+    def test_dat_PYTHONIOENCODING_cho_tien_trinh_con(self):
+        _, da_goi = self._chay_voi_ket_qua(self.KetQuaGia())
+        moi_truong = da_goi["kw"].get("env") or {}
+        self.assertEqual(moi_truong.get("PYTHONIOENCODING"), "utf-8")
+
+    def test_van_giu_bien_moi_truong_cu(self):
+        # Dat them bien chu KHONG duoc xoa sach moi truong cua tien trinh cha.
+        _, da_goi = self._chay_voi_ket_qua(self.KetQuaGia())
+        moi_truong = da_goi["kw"].get("env") or {}
+        self.assertIn("PATH", moi_truong)
+
+    def test_van_tra_ve_True_khi_thanh_cong(self):
+        ok, _ = self._chay_voi_ket_qua(self.KetQuaGia())
+        self.assertTrue(ok)
+
+
 if __name__ == "__main__":
     unittest.main()

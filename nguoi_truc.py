@@ -19,6 +19,7 @@ Cach dung:
 """
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -144,12 +145,22 @@ def gui_bao_cao(moc, che_do_thu=False):
     lenh = [sys.executable, str(GOC / "report.py"), "--slot", str(moc)]
     if che_do_thu:
         lenh.append("--dry")
+
+    # BAT BUOC chi dinh UTF-8. Khong co bon thiet lap nay thi tien trinh con
+    # khong co console se lay bang ma theo locale cua Windows (cp1252), va bao
+    # cao co dau tieng Viet lam no CHET voi UnicodeEncodeError => bao cao
+    # khong duoc gui. Da xay ra that tu 17h ngay 28/09/2026.
+    moi_truong = dict(os.environ)
+    moi_truong["PYTHONIOENCODING"] = "utf-8"
     try:
         kq = subprocess.run(
             lenh,
             cwd=str(GOC),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=moi_truong,
             timeout=CHO_REPORT_TOI_DA,
         )
     except subprocess.TimeoutExpired:
