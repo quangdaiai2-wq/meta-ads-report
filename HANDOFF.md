@@ -59,6 +59,13 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 
 ### Chưa làm
 
+- 🆕 **Bản định nghĩa AI Agent — ĐANG CHỜ ĐẠI DUYỆT** (viết 29/09/2026, chiều).
+  Đại yêu cầu "xây dựng đúng định nghĩa AI Agent cho Facebook" và chốt đích là **tự hành có trần**.
+  Bản đầy đủ ở `docs/superpowers/specs/2026-09-29-dinh-nghia-ai-agent-facebook-design.md`
+  (+ bản `.html` đọc cho dễ). Commit local `bf4918b`, **chưa push**.
+  Nội dung chính: thang **4 nấc tự hành** (nấc 0 = hiện tại), **ba rào cản đã kiểm chứng**,
+  kiến trúc agent tách riêng, và danh sách câu hỏi cần Đại chốt.
+  ⚠️ **Đọc mục §3.3 và §7 trước khi làm gì tiếp** — có hai câu chặn đường (lãi mỗi đơn, token).
 - ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)**,
   **GĐ4 (trả lời câu hỏi)** và **GĐ5 (tự xử lý lỗi)**, rồi thêm `GEMINI_API_KEY` vào `.env`
   (`.env` không đi theo `git pull`).
