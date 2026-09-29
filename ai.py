@@ -60,6 +60,18 @@ MODEL_HOI_DAP_MAC_DINH = "gemini-3.8-flash"
 # gemini-3.5-flash cung DA THU THAT ngay 29/09/2026: goi duoc cong cu.
 MODEL_HOI_DAP_DU_PHONG_MAC_DINH = "gemini-3.5-flash"
 
+# Model DU PHONG cho phan NHAN DINH trong bao cao.
+#
+# Vi sao can: ngay 29/09/2026, model bao cao `gemini-3.6-flash` tra HTTP 503
+# (qua tai) BA LAN LIEN TIEP trong buoi chieu (12:00, 15:48, 15:49) — moi lan
+# da thu lai 3 luot theo SO_LAN_THU_LAI ma van hong. Trong khi do do tung model
+# mot thi `gemini-3.5-flash` VAN CHAY TOT. Khong co du phong thi bao cao mat
+# phan nhan dinh suot nhieu gio, ma Dai khong biet vi sao.
+#
+# Tran mien phi tinh RIENG cho tung model (20 luot/ngay/model), nen dung du
+# phong KHONG an vao luot cua model chinh.
+MODEL_BAO_CAO_DU_PHONG_MAC_DINH = "gemini-3.5-flash"
+
 # So luot AI duoc phep xin goi cong cu truoc khi bi buoc phai tra loi.
 #
 # Vi sao 3: phep thu that ngay 29/09/2026 cho thay AI can DUNG 3 luot cong cu
@@ -356,13 +368,45 @@ def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None, model=None):
     return text, None
 
 
+def chon_model_bao_cao(env):
+    """Danh sach model se thu cho phan NHAN DINH, theo thu tu. Chinh truoc, du phong sau."""
+    env = env or {}
+    chinh = str(env.get("GEMINI_MODEL", "")).strip() or MODEL_MAC_DINH
+    du_phong = (str(env.get("GEMINI_MODEL_BAO_CAO_DU_PHONG", "")).strip()
+                or MODEL_BAO_CAO_DU_PHONG_MAC_DINH)
+    ds = [chinh]
+    if du_phong and du_phong != chinh:
+        ds.append(du_phong)
+    return ds
+
+
 def viet_nhan_dinh(stats, ky_truoc=None, boi_canh="", env=None, goi_mang_fn=None):
-    """Viet 3-5 cau nhan dinh. Tra ve (chu, loi). Khong bao gio nem loi."""
+    """Viet 3-5 cau nhan dinh. Tra ve (chu, loi). Khong bao gio nem loi.
+
+    Thu LAN LUOT model chinh roi model du phong. Ly do co du phong: da gap that
+    ngay 29/09/2026 - model bao cao tra 503 ba lan lien tiep trong buoi chieu,
+    trong khi model khac van chay tot. Khong co du phong thi bao cao mat phan
+    nhan dinh suot nhieu gio.
+
+    Du phong nam o DAY chu khong nam trong goi_gemini(): goi_gemini() la ham
+    dung chung, nhet vong lap model vao do se lam moi loi goi deu ton gap doi
+    va lam hong cac bai kiem thu dem so lan goi.
+    """
     try:
         prompt = soan_prompt(stats, ky_truoc, boi_canh)
     except Exception as e:
         return None, f"khong soan duoc cau lenh cho AI: {e}"
-    return goi_gemini(env, prompt, goi_mang_fn=goi_mang_fn)
+
+    loi_da_gap = []
+    for model in chon_model_bao_cao(env):
+        chu, loi = goi_gemini(env, prompt, goi_mang_fn=goi_mang_fn, model=model)
+        if chu:
+            return chu, None
+        loi_da_gap.append(f"{model}: {loi}")
+
+    if not loi_da_gap:
+        return None, "chua goi duoc AI"
+    return None, " | ".join(loi_da_gap)
 
 
 # ============================================================================

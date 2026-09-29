@@ -1,12 +1,13 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 29/09/2026 — **Giai đoạn 5 xong**: hệ thống tự xử lý lỗi
-(tự chờ rồi thử lại khi Meta chặn tạm, cảnh báo khi số liệu trông bất thường, không làm phiền
-Đại bằng tin lặp lại). `392/392` kiểm thử đạt. **Kết luận quan trọng: token Meta KHÔNG tự gia hạn
-được** — đã thử thật, xem mục "Token Meta — điều đã kiểm chứng".
+**Cập nhật lần cuối:** 29/09/2026 — **Đổi mẫu báo cáo**: tin nhắn Telegram nay chỉ còn
+**tiêu đề + tài khoản + TÓM TẮT**; phần NHẬN ĐỊNH và hai bảng xếp hạng camp chuyển vào **file HTML**;
+file HTML **làm lại giao diện** (nền tối, có nút đổi sang nền sáng). `435/435` kiểm thử đạt.
+Trước đó cùng ngày: **Giai đoạn 5 xong** (tự xử lý lỗi) và kết luận **token Meta KHÔNG tự gia hạn
+được**.
 
-> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5, rồi thêm
-> `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và
+> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo, rồi
+> thêm `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và
 > `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
 
 ---
@@ -211,10 +212,10 @@ File `cai-dat-nguoi-truc.bat` **tự dò Python**. Nếu không tìm thấy, nó
 | `ai.py` | **Lớp AI** — viết 3–5 câu nhận định (GĐ3) **và** trả lời câu hỏi có vòng lặp công cụ (GĐ4). Không tính số, không gọi Meta, không gửi tin |
 | `cong_cu.py` | **Bốn công cụ cho AI** — `lay_mot_ngay` · `lay_khoang` · `xep_hang_camp` · `so_sanh`. Thuần đọc `logs/lich-su.json`, **không chạm mạng**. Kèm `moc_thoi_gian()` tính phạm vi ngày |
 | `bat_thuong.py` | **Phát hiện số liệu bất thường** (GĐ5) — ba điều kiện của bản thiết kế mục 7.3. Thuần đọc `logs/lich-su.json`, không chạm mạng. **Không bao giờ chặn báo cáo**, chỉ thêm một dòng cảnh báo ⚠️ ở đầu |
-| `tests/` | Kiểm thử tự động (392 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
-| `chay-kiem-thu.bat` | Bấm đúp là chạy 392 bài kiểm thử — **không tốn lượt AI** |
+| `tests/` | Kiểm thử tự động (435 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
+| `chay-kiem-thu.bat` | Bấm đúp là chạy 435 bài kiểm thử — **không tốn lượt AI** |
 | `HUONG-DAN-LAY-CHIA-KHOA-AI.md` | Hướng dẫn lấy chìa khoá Gemini + giải thích **hai model, hai trần riêng** |
-| `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
+| `dashboard.py` | Tạo file `dashboard.html` xem báo cáo. **Có phần NHẬN ĐỊNH của AI** và hai bảng xếp hạng camp (chuyển vào đây từ tin nhắn Telegram ngày 29/09/2026) |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
 | `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
 | `nguoi_truc.py` | **Tiến trình thường trú** — canh mốc giờ, gọi `report.py`, nghe Telegram. Trả lời thêm lệnh nhanh `token` (GĐ5) |
@@ -249,8 +250,10 @@ python report.py --mock 12  # giả lập mốc 12h, không gửi
 - **Python thuần** — không cần thư viện ngoài (`urllib`, `json`, `argparse`)
 - **Meta Graph API v21.0**
 - Lịch Windows: `NguoiTruc` (một lịch duy nhất, chạy khi đăng nhập). Cách cũ: `BaoCaoMetaAds_08`, `_12`, `_17`
-- **Gemini — hai model, hai trần riêng (20 lượt/ngày MỖI model):**
+- **Gemini — trần miễn phí 20 lượt/ngày MỖI model, nên tách model ra cho khỏi tranh nhau:**
   - `GEMINI_MODEL` = `gemini-3.6-flash` → viết phần nhận định trong báo cáo
+  - `GEMINI_MODEL_BAO_CAO_DU_PHONG` = `gemini-3.5-flash` → dùng khi model trên trả 503/404
+    (thêm 29/09/2026, xem mục "ĐỔI MẪU TIN NHẮN" bên dưới)
   - `GEMINI_MODEL_HOI_DAP` = `gemini-3.8-flash` → trả lời câu hỏi của Đại
   - `GEMINI_MODEL_HOI_DAP_DU_PHONG` = `gemini-3.5-flash` → dùng khi model trên trả 503/404
   - `gemini-2.5-flash` **không dùng được nữa** (`404: no longer available to new users`)
@@ -496,6 +499,10 @@ thật 28/09: 13 camp vẫn ra đủ 5+5 dòng, không trùng.
 ### BẢN SỬA NGÀY 29/09/2026 — HAI BẢNG XẾP HẠNG ĐỔI TIÊU CHÍ + HIỆN CHI PHÍ MỖI ĐƠN
 
 **1. Tin nhắn Telegram nay hiện "Mỗi đơn: X VND"** cho từng camp ở cả hai bảng.
+
+> ⚠️ **ĐÃ ĐỔI TIẾP trong cùng ngày 29/09/2026 (chiều):** hai bảng camp **không còn trong tin nhắn
+> Telegram** nữa — đã chuyển vào file HTML. Xem mục "ĐỔI MẪU TIN NHẮN + LÀM LẠI GIAO DIỆN FILE HTML"
+> ở dưới. `report.mo_ta_moi_don()` đã bị xoá.
 Trước đây con số này **chỉ có trong `dashboard.html`** (cột `CPR`) — tin nhắn Telegram không có,
 nên muốn biết camp nào đắt/rẻ thì phải tự chia nhẩm.
 Thêm `report.chi_phi_moi_don(r)` và `report.mo_ta_moi_don(r)`. Camp 0 đơn **không** in "Mỗi đơn"
@@ -782,6 +789,73 @@ không kết luận bất thường, và chống lặp cảnh báo theo từng l
 > 📌 **BÀI HỌC DÙNG ĐƯỢC CHO MỌI DỰ ÁN:** một hàm "phát hiện bất thường" đọc dữ liệu **thiếu** sẽ
 > luôn kết luận có bất thường, vì mọi giá trị vắng mặt đều đọc ra 0. Phải kiểm **"có đủ dữ liệu để
 > kết luận không"** TRƯỚC khi kiểm nội dung.
+
+### BẢN SỬA NGÀY 29/09/2026 (tiếp) — ĐỔI MẪU TIN NHẮN + LÀM LẠI GIAO DIỆN FILE HTML
+
+Kế hoạch đầy đủ: `docs/superpowers/plans/2026-09-29-doi-mau-bao-cao-va-giao-dien.md`
+
+**Đại yêu cầu:** tin nhắn Telegram ngắn lại theo mẫu Đại đưa, file HTML đổi giao diện, và phần nhận
+định chuyển vào file HTML.
+
+**Tin nhắn Telegram nay chỉ còn 11 dòng** (`report.build_report`):
+
+```
+🔴 BÁO CÁO META ADS — 29/09/2026 (00:00 - 12:00)
+Tài khoản: 
+🔵 TÓM TẮT
+Có 16 campaign đủ điều kiện.
+- Số tiền đã chi tiêu: 8.198.223 VND
+- Lượt bắt đầu cuộc trò chuyện qua tin nhắn: 59
+- Người liên hệ nhắn tin mới: 55
+- Đơn đặt hàng đã tạo: 19
+- Lượt mua: 19
+- Lượt thanh toán: 21
+- Bình luận về bài viết: 1
+```
+
+Ba thứ **chuyển sang file HTML**: mục BỘ LỌC, phần NHẬN ĐỊNH, và hai bảng xếp hạng camp.
+**Hai thứ CỐ Ý GIỮ LẠI trong tin nhắn** (Đại không nhắc, nhưng bỏ là bỏ tính an toàn): cảnh báo token
+sắp hết hạn 🟡 và cảnh báo số liệu bất thường ⚠️. Chúng nằm trong `main()`, gắn lên đầu tin nhắn —
+nên `build_report` không nhận chúng và **đổi mẫu không thể làm mất cảnh báo**.
+
+**File HTML làm lại giao diện:** nền **tối** mặc định, có **nút đổi sang nền sáng** ở góc phải trên
+(nhớ lựa chọn bằng `localStorage`). Bố cục mới: ba số lớn → **khung Nhận định** → 5 chỉ số phụ →
+hai bảng camp (kèm dòng ghi rõ tiêu chí xếp hạng) → bộ lọc ở chân trang.
+
+**Việc phát sinh, Đại không yêu cầu nhưng không làm thì yêu cầu của Đại không thành:** thêm
+**model dự phòng cho phần nhận định**. Khi thi công, thử thật lúc 15:50 ngày 29/09:
+
+| Model | Kết quả |
+|---|---|
+| `gemini-3.6-flash` (model báo cáo) | ❌ HTTP 503 |
+| `gemini-3.8-flash` (model hỏi đáp) | ❌ HTTP 503 |
+| `gemini-3.5-flash` | ✅ chạy tốt |
+
+Và `logs/baocao.log` cùng chiều ghi model báo cáo hỏng **3 lần liên tiếp** (`12:00:39`, `15:48:21`,
+`15:49:17`) — mỗi lần đã thử lại 3 lượt mà vẫn hỏng. ⇒ Không có dự phòng thì phần nhận định **thiếu
+suốt nhiều giờ**. Nay `ai.viet_nhan_dinh()` thử lần lượt model chính rồi
+`GEMINI_MODEL_BAO_CAO_DU_PHONG`. Chạy lại thật → nhật ký ghi **`AI da viet xong phan nhan dinh`**.
+
+⚠️ **Dự phòng đặt ở `viet_nhan_dinh()`, KHÔNG đặt trong `goi_gemini()`.** `goi_gemini()` là hàm dùng
+chung; nhét vòng lặp model vào đó sẽ làm **mọi** lỗi gọi tốn gấp đôi và làm hỏng các bài kiểm thử đếm
+số lần gọi. Đã kiểm: 8 bài cũ gọi `goi_gemini()` trực tiếp vẫn nguyên vẹn.
+
+**`tests/test_dashboard.py` là FILE MỚI.** Trước 29/09/2026, `dashboard.py` **không có bài kiểm thử
+nào** dù đây là thứ Đại mở ra đọc. Nay có 33 bài, trong đó khoá việc **escape chữ do AI viết**
+(nhét `<script>alert(1)</script>` và khẳng định nó không chạy được).
+
+**Xoá `report.mo_ta_moi_don()`** — không còn ai gọi sau khi bỏ bảng camp khỏi tin nhắn.
+`chi_phi_moi_don()` **giữ lại** (hàm tính thuần, còn bài kiểm thử cho quy tắc "chia cho 0 đơn là vô nghĩa").
+
+**Kiểm thử:** `392` → **`435/435`** đạt. Có bài `test_khop_CHINH_XAC_vi_du_cua_Dai` **khoá nguyên văn**
+mẫu tin nhắn — sửa mẫu mà không sửa bài đó thì bài sẽ đỏ ngay.
+
+**Kiểm chứng trên máy thật:** `report.py --mock 12` → tin nhắn đúng mẫu với số thật
+(12.549.830 VND · 16 campaign · 26 lượt mua); file HTML 14.803 ký tự có nhận định thật của AI.
+
+> 📌 **BÀI HỌC:** khi rút gọn một thông báo đã ổn định, phải **kiểm riêng từng phần bị bỏ** xem nó có
+> mang tính an toàn không. Ở đây hai cảnh báo (token, số bất thường) trông như "phần trình bày" và rất
+> dễ bị bỏ theo — nhưng chúng là **lời cảnh báo**, không phải dữ liệu.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 

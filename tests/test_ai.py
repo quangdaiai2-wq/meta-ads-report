@@ -329,6 +329,101 @@ class TestVietNhanDinh(unittest.TestCase):
         self.assertIsNone(loi)
 
 
+class TestModelDuPhongChoNhanDinh(unittest.TestCase):
+    """Model bao cao hong thi phai thu model du phong.
+
+    Loi THAT ngay 29/09/2026: `gemini-3.6-flash` tra HTTP 503 BA LAN LIEN TIEP
+    trong buoi chieu (12:00, 15:48, 15:49). Moi lan da thu lai 3 luot theo
+    SO_LAN_THU_LAI ma van hong. Do tung model mot thi thay `gemini-3.5-flash`
+    VAN CHAY TOT. Khong co du phong thi bao cao mat phan nhan dinh suot nhieu gio.
+    """
+
+    def _gia_theo_model(self, model_hong, so_lan_hong=None):
+        """Ham goi mang gia: hong voi `model_hong`, thanh cong voi model khac.
+
+        Tra ve (ham_gia, danh_sach_model_da_goi).
+        """
+        da_goi = []
+
+        def gia(url, payload, timeout):
+            for m in ("gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.8-flash"):
+                if f"/{m}:" in url:
+                    da_goi.append(m)
+                    if m == model_hong:
+                        raise urllib.error.HTTPError(url, 503, "qua tai", {}, None)
+                    return {"candidates": [{"content": {"parts": [{"text": "Nhan dinh du phong."}]}}]}
+            raise AssertionError(f"URL khong nhan ra model nao: {url}")
+
+        return gia, da_goi
+
+    def test_503_o_model_chinh_thi_dung_model_du_phong(self):
+        gia, da_goi = self._gia_theo_model("gemini-3.6-flash")
+        text, loi = ai.viet_nhan_dinh(
+            STATS, None, "x", env={"GEMINI_API_KEY": "k"}, goi_mang_fn=gia)
+        self.assertEqual(text, "Nhan dinh du phong.")
+        self.assertIsNone(loi)
+        self.assertIn("gemini-3.5-flash", da_goi)
+
+    def test_ca_hai_model_deu_hong_thi_loi_ghi_ro_CA_HAI(self):
+        """Dai doc phai biet da thu nhung model nao, khong chi model cuoi."""
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 503, "qua tai", {}, None)
+
+        text, loi = ai.viet_nhan_dinh(
+            STATS, None, "x", env={"GEMINI_API_KEY": "k"}, goi_mang_fn=gia)
+        self.assertIsNone(text)
+        self.assertIn(ai.MODEL_MAC_DINH, loi)
+        self.assertIn(ai.MODEL_BAO_CAO_DU_PHONG_MAC_DINH, loi)
+
+    def test_mac_dinh_la_model_chinh_roi_model_du_phong(self):
+        self.assertEqual(
+            ai.chon_model_bao_cao({}),
+            [ai.MODEL_MAC_DINH, ai.MODEL_BAO_CAO_DU_PHONG_MAC_DINH])
+
+    def test_doi_duoc_model_chinh_bang_env(self):
+        ds = ai.chon_model_bao_cao({"GEMINI_MODEL": "model-rieng"})
+        self.assertEqual(ds[0], "model-rieng")
+
+    def test_doi_duoc_model_du_phong_bang_env(self):
+        ds = ai.chon_model_bao_cao(
+            {"GEMINI_MODEL": "a", "GEMINI_MODEL_BAO_CAO_DU_PHONG": "b"})
+        self.assertEqual(ds, ["a", "b"])
+
+    def test_du_phong_TRUNG_model_chinh_thi_bo_qua(self):
+        """Khong duoc goi cung mot model hai lan."""
+        ds = ai.chon_model_bao_cao(
+            {"GEMINI_MODEL": "x", "GEMINI_MODEL_BAO_CAO_DU_PHONG": "x"})
+        self.assertEqual(ds, ["x"])
+
+    def test_du_phong_rong_thi_chi_dung_model_chinh(self):
+        ds = ai.chon_model_bao_cao(
+            {"GEMINI_MODEL": "x", "GEMINI_MODEL_BAO_CAO_DU_PHONG": ""})
+        # Rong thi lay mac dinh trong code, khong phai bo du phong
+        self.assertEqual(ds, ["x", ai.MODEL_BAO_CAO_DU_PHONG_MAC_DINH])
+
+    def test_thanh_cong_ngay_lan_dau_thi_KHONG_goi_du_phong(self):
+        """Du phong khong duoc goi khi model chinh da chay duoc."""
+        gia, da_goi = self._gia_theo_model("khong-model-nao-hong")
+        ai.viet_nhan_dinh(STATS, None, "x",
+                          env={"GEMINI_API_KEY": "k"}, goi_mang_fn=gia)
+        self.assertEqual(da_goi, [ai.MODEL_MAC_DINH])
+
+    def test_goi_gemini_KHONG_bi_doi_hanh_vi(self):
+        """Du phong nam o viet_nhan_dinh, KHONG nam trong goi_gemini.
+
+        Neu nhet vao goi_gemini thi moi loi goi deu ton gap doi va cac bai kiem
+        thu dem so lan goi se hong.
+        """
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            return {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}
+
+        ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertEqual(dem["n"], 1)
+
+
 # ============================================================================
 # GIAI DOAN 4 - PHAN HOI DAP
 # ============================================================================

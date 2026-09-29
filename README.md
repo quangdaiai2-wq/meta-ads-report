@@ -33,16 +33,49 @@ Mỗi ngày, tự động lấy số liệu quảng cáo Meta Ads và gửi báo
 > ngày 12/09 ở phần "Ba điều cần biết"), nhưng từ 28/09 Đại chốt dùng chung ba mốc 8h, 12h, 17h
 > cho cả hai máy. Muốn lấy lại thì xem mục "Người trực là gì" bên dưới.
 
-### 🆕 Mục `🔵 NHẬN ĐỊNH` nay do AI viết (từ 28/09/2026)
+### 🆕 Tin nhắn Telegram nay NGẮN GỌN (từ 29/09/2026)
 
-Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm ngay dưới dòng `🔵 NHẬN ĐỊNH`.
+Tin nhắn gửi vào Telegram chỉ còn **tiêu đề + tài khoản + TÓM TẮT**. Đúng mẫu này:
+
+```
+🔴 BÁO CÁO META ADS — 29/09/2026 (00:00 - 12:00)
+Tài khoản:
+🔵 TÓM TẮT
+Có 16 campaign đủ điều kiện.
+- Số tiền đã chi tiêu: 8.198.223 VND
+- Lượt bắt đầu cuộc trò chuyện qua tin nhắn: 59
+- Người liên hệ nhắn tin mới: 55
+- Đơn đặt hàng đã tạo: 19
+- Lượt mua: 19
+- Lượt thanh toán: 21
+- Bình luận về bài viết: 1
+```
+
+Ngay dưới tin nhắn đó là **file HTML đính kèm** — bản đầy đủ.
+
+**Ba thứ đã chuyển từ tin nhắn SANG FILE HTML** (vì Đại đọc trên điện thoại, tin nhắn dài phải cuộn nhiều):
+
+| Chuyển đi đâu | Nội dung |
+|---|---|
+| ➡️ Vào file HTML | Mục **BỘ LỌC** (tên chứa / loại trừ / điều kiện) |
+| ➡️ Vào file HTML | Phần **NHẬN ĐỊNH** do AI viết |
+| ➡️ Vào file HTML | Hai **bảng xếp hạng camp** (hiệu quả / kém hiệu quả) |
+
+⚠️ **Hai thứ vẫn nằm trong tin nhắn Telegram** vì Đại phải thấy ngay, không nên phải mở file mới biết:
+- 🟡 Cảnh báo token Meta sắp hết hạn
+- ⚠️ Cảnh báo số liệu trông bất thường
+
+### 🆕 Phần NHẬN ĐỊNH do AI viết — nay nằm trong file HTML
+
+Mỗi báo cáo có **3–5 câu nhận xét** do AI viết, nằm trong khung **Nhận định** của file HTML
+(ngay dưới ba số lớn). Trước 29/09/2026 nó nằm trong tin nhắn Telegram.
 
 **Ba điều cần biết về phần này:**
 
 1. **AI chỉ viết chữ, không tính số.** Toàn bộ con số — kể cả cột chênh lệch so với kỳ trước —
    đều do code tính sẵn rồi đưa cho AI. AI chỉ được chép lại, không được tự tính.
-2. **AI lỗi thì báo cáo VẪN GỬI đầy đủ.** Mất mạng, sai chìa khoá, hết hạn mức… thì mục
-   NHẬN ĐỊNH hiện một dòng ghi chú, còn số liệu và hai bảng xếp hạng vẫn nguyên vẹn.
+2. **AI lỗi thì báo cáo VẪN GỬI đầy đủ.** Mất mạng, sai chìa khoá, hết hạn mức… thì khung Nhận định
+   hiện một dòng ghi chú nói rõ lý do, còn số liệu và hai bảng xếp hạng vẫn nguyên vẹn.
    **Không bao giờ mất báo cáo vì AI.**
 3. **Khoảng 7 ngày đầu chưa so sánh được.** Sổ lịch sử chỉ mới bắt đầu ghi từ 12h ngày
    28/09/2026. Khi chưa đủ số kỳ trước, AI chỉ **mô tả** số hôm nay chứ không so sánh —
@@ -51,6 +84,10 @@ Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm n
 > 📌 **Chỉ mốc 8h mới so sánh với kỳ trước.** Mốc 8h là báo cáo **trọn ngày hôm qua** nên so
 > được. Mốc 12h và 17h là báo cáo **một phần** của ngày hôm nay — đem nửa ngày so với ngày
 > đầy đủ là sai, nên hệ thống chủ động **không** cho AI so ở hai mốc này.
+
+> 🛟 **Từ 29/09/2026 có model dự phòng.** Ngày 29/09, model báo cáo trả lỗi quá tải (503)
+> **ba lần liên tiếp** trong buổi chiều, nên phần nhận định bị thiếu suốt mấy tiếng. Nay hệ thống
+> tự chuyển sang model khác khi model chính quá tải, nên phần nhận định có lại bình thường.
 
 Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
 
@@ -307,11 +344,16 @@ Kết quả sẽ được gửi vào Telegram ngay lập tức.
 
 Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và **gửi kèm vào Telegram** dưới dạng file đính kèm (tên dạng `baocao_12h_13-09-2026.html`).
 
+> 🆕 **Giao diện làm lại từ 29/09/2026.** Nền **tối** là mặc định, có **nút đổi sang nền sáng** ở
+> góc phải trên (bấm một lần, lần sau mở lại vẫn nhớ). Phần **Nhận định** của AI nay nằm trong file
+> này. Bố cục: ba số lớn (chi tiêu · lượt mua · chi phí mỗi đơn) → khung Nhận định → các chỉ số phụ
+> → hai bảng xếp hạng camp → bộ lọc ở chân trang.
+
 **Cách xem — 2 cách:**
 
 **Cách A — Trên Telegram (mới):**
 1. Mở Telegram, vào chat với bot báo cáo.
-2. Thấy tin nhắn chữ (số liệu) → ngay dưới là **file HTML đính kèm**.
+2. Thấy tin nhắn chữ (tóm tắt) → ngay dưới là **file HTML đính kèm**.
 3. Bấm vào file → tải về → mở bằng trình duyệt (Chrome, Edge...).
 
 **Cách B — Trên máy (cũ):**
@@ -321,12 +363,14 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 
 **Có gì trong đó:**
 
-- 8 ô số liệu lớn: Chi tiêu, Lượt mua, CPR, Lượt thanh toán, Trò chuyện, Liên hệ mới, Đơn hàng, Bình luận.
-- Khung bộ lọc đang áp dụng.
-- 2 bảng xếp hạng: 🟢 Camp hiệu quả (top 5) và 🔴 Camp kém hiệu quả (top 5).
+- **Ba số lớn**: Số tiền đã chi tiêu · Lượt mua · Chi phí mỗi đơn.
+- **Khung Nhận định** do AI viết (3–5 câu). Nếu AI lỗi thì khung này ghi rõ lý do.
+- **5 chỉ số phụ**: Bắt đầu trò chuyện, Người liên hệ mới, Đơn đặt hàng, Lượt thanh toán, Bình luận.
+- **2 bảng xếp hạng**: 🟢 Camp hiệu quả (top 5) và 🔴 Camp kém hiệu quả (top 5).
   **Một camp chỉ xuất hiện ở MỘT trong hai bảng** (sửa 28/09/2026). Nên nếu tài khoản ít camp,
   bảng "kém hiệu quả" sẽ **ngắn hơn 5 dòng hoặc trống** — đó là đúng, không phải lỗi: khi mọi
   camp đều ra đơn thì thật sự không có camp nào kém.
+- **Khung bộ lọc** đang áp dụng (ở chân trang).
 
 **Tiêu chí xếp hạng (đổi ngày 29/09/2026):**
 
@@ -539,8 +583,9 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Nhật ký ghi `loi VINH VIEN` | Hệ thống **cố ý không thử lại** (token chết / thiếu quyền). Sửa token xong thì **mốc sau gửi bình thường**, không phải bấm gì |
 | Chỉ nhận **một** tin cảnh báo dù lỗi lặp nhiều lần | **Đúng như thiết kế.** Cùng một loại lỗi chỉ báo một lần trong 12 giờ — trước đây là 9 tin giống nhau mỗi ngày |
 | Muốn biết token còn sống bao lâu | Nhắn đúng một chữ `token` cho bot — **không tốn lượt AI** |
-| Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | **Đọc lý do trong ngoặc** ngay sau đó — hệ thống ghi rõ bằng tiếng Việt (hết hạn mức / tên model sai / chìa khoá sai / mất mạng). **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
+| Khung Nhận định trong file HTML ghi "Phần nhận định do AI viết tạm không có" | **Đọc lý do trong ngoặc** ngay sau đó — hệ thống ghi rõ bằng tiếng Việt (hết hạn mức / tên model sai / chìa khoá sai / quá tải / mất mạng). **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
 | Phần nhận định chỉ mô tả, không so sánh | Bình thường trong ~7 ngày đầu: sổ lịch sử chưa đủ số kỳ trước. Xem mục "NHẬN ĐỊNH nay do AI viết" ở đầu file |
+| Tin nhắn Telegram chỉ có TÓM TẮT, không thấy hai bảng camp | **Đúng như thiết kế từ 29/09/2026.** Hai bảng và phần nhận định nằm trong **file HTML đính kèm** ngay dưới tin nhắn |
 | Ghi chú AI báo `het han muc goi AI` | Bản miễn phí cho **20 lượt/ngày**; chạy thử `report.py` nhiều lần cũng tốn lượt. Hôm sau tự có lại. Muốn thử code thì bấm đúp **`chay-kiem-thu.bat`** (không tốn lượt) |
 
 ---
@@ -654,6 +699,28 @@ dòng ⚠️ ở đầu — **không bao giờ tự chặn**.
 `logs/canh_bao.json` nhớ lần cuối gửi cảnh báo theo **từng loại lỗi** (phân loại + mã lỗi). Cùng một
 loại thì trong **12 giờ** không gửi lại. **Lỗi đầu tiên của mỗi loại luôn được gửi.** Lỗi khác loại
 không chặn nhau. Trước đây token chết gây **9 tin giống hệt nhau mỗi ngày** (3 mốc × 3 lần thử).
+
+### Mẫu tin nhắn Telegram — `report.build_report()` (đổi 29/09/2026)
+
+Chữ ký: `build_report(env, stats, period_text)` → **11 dòng**, không dòng trống. Mục BỘ LỌC, phần
+NHẬN ĐỊNH và hai bảng camp **không còn** ở đây (đã chuyển sang `dashboard.py`).
+
+⚠️ **Đừng thêm dòng trống vào giữa** — mẫu này đã chốt với Đại, và có bài kiểm thử
+`test_khop_CHINH_XAC_vi_du_cua_Dai` khoá nguyên văn. Sửa mẫu thì phải sửa bài đó.
+
+### Model dự phòng cho phần nhận định (thêm 29/09/2026)
+
+`ai.viet_nhan_dinh()` thử **lần lượt** `GEMINI_MODEL` rồi `GEMINI_MODEL_BAO_CAO_DU_PHONG`
+(mặc định `gemini-3.5-flash`). Xem `ai.chon_model_bao_cao()`.
+
+**Vì sao có:** ngày 29/09/2026, `gemini-3.6-flash` trả HTTP **503 ba lần liên tiếp** trong buổi chiều
+(12:00, 15:48, 15:49) — mỗi lần đã thử lại 3 lượt theo `SO_LAN_THU_LAI` mà vẫn hỏng. Thử từng model
+một thì thấy `gemini-3.5-flash` **vẫn chạy tốt**. Không có dự phòng thì báo cáo mất phần nhận định
+suốt nhiều giờ.
+
+⚠️ **Dự phòng nằm ở `viet_nhan_dinh()`, KHÔNG nằm trong `goi_gemini()`.** `goi_gemini()` là hàm dùng
+chung; nhét vòng lặp model vào đó sẽ làm mọi lỗi gọi tốn gấp đôi và làm hỏng các bài kiểm thử đếm số
+lần gọi.
 
 ### ⚠️ Lưu ý quan trọng khi sửa script
 

@@ -645,14 +645,6 @@ def chi_phi_moi_don(r):
         return None
 
 
-def mo_ta_moi_don(r):
-    """Manh chu de noi vao cuoi dong mo ta camp. Rong neu chua co don nao."""
-    cpr = chi_phi_moi_don(r)
-    if cpr is None:
-        return ""
-    return f"; Mỗi đơn: {fmt_money(cpr)} VND"
-
-
 def get_action_value(actions, action_type):
     """Lay gia tri cua MOT loai action. action_type co the la str hoac list."""
     if not actions:
@@ -852,94 +844,38 @@ def compute_stats(env, since, until):
     }, None
 
 
-def build_report(env, stats, period_text, nhan_dinh=None, loi_ai=None):
-    """Tao noi dung bao cao dang text tu so lieu DA TINH SAN.
+def build_report(env, stats, period_text):
+    """Soan tin nhan Telegram NGAN theo mau Dai chot ngay 29/09/2026.
+
+    Chi con: tieu de, tai khoan, va muc TOM TAT. Ba thu da chuyen sang file HTML
+    (dashboard.py): muc BO LOC, phan NHAN DINH do AI viet, va hai bang xep hang
+    camp. Ly do: Dai doc tren dien thoai, tin nhan dai thi phai cuon nhieu.
 
     KHONG goi lai Meta API o day. So lieu duoc tinh dung 1 lan trong main()
-    roi dung chung cho ca bao cao text lan dashboard HTML.
+    roi dung chung cho ca tin nhan lan bao cao HTML.
 
-    nhan_dinh: chu do AI viet (main() goi AI roi truyen vao). None thi giu
-    nguyen hanh vi cu - tuong thich nguoc tuyet doi.
-    loi_ai: ly do AI khong viet duoc. In mot dong ghi chu thay cho phan nhan
-    dinh, de nguoi doc biet vi sao thieu chu khong tuong bao cao bi loi.
+    Cac CANH BAO (token sap het han, so lieu bat thuong) KHONG nam trong ham nay.
+    main() gan chung len DAU tin nhan, nen doi mau bao cao khong lam mat canh bao.
+
+    KHONG them dong trong vao giua cac dong: mau nay da chot, Telegram hien
+    lien mach va gon.
     """
-    include_kw = env.get("FILTER_INCLUDE", "")
     account_name = env.get("REPORT_ACCOUNT_NAME", "")
-
     totals = stats["totals"]
-    good = stats["good"]
-    bad = stats["bad"]
 
-    # --- Soan bao cao ---
-    lines = []
-    lines.append(f"🔴 BÁO CÁO META ADS — {period_text}")
-    lines.append(f"Tài khoản: {account_name}")
-    lines.append("")
-
-    lines.append("🔵 BỘ LỌC")
-    lines.append(f"- Campaign có tên chứa: {include_kw}")
-    lines.append(f"- Loại trừ campaign chứa: {env.get('FILTER_EXCLUDE', '')}")
-    lines.append("- Chỉ lấy mục có chi tiêu > 0")
-    lines.append("")
-
-    lines.append("🔵 TÓM TẮT")
-    lines.append(f"Có {stats['total_campaigns']} campaign đủ điều kiện.")
-    lines.append(f"- Số tiền đã chi tiêu: {fmt_money(totals['spend'])} VND")
-    lines.append(f"- Lượt bắt đầu cuộc trò chuyện qua tin nhắn: {totals['msg']}")
-    lines.append(f"- Người liên hệ nhắn tin mới: {totals['contact']}")
-    lines.append(f"- Đơn đặt hàng đã tạo: {totals['order']}")
-    lines.append(f"- Lượt mua: {totals['purchase']}")
-    lines.append(f"- Lượt thanh toán: {totals['payment']}")
-    lines.append(f"- Bình luận về bài viết: {totals['comment']}")
-    lines.append("")
-
-    lines.append("🔵 NHẬN ĐỊNH")
-    if nhan_dinh:
-        lines.append(nhan_dinh.strip())
-        lines.append("")
-    elif loi_ai:
-        lines.append(
-            "⚠️ Phần nhận định do AI viết tạm không có "
-            f"(lý do: {loi_ai})."
-        )
-        lines.append(
-            "Số liệu ở trên vẫn đầy đủ — báo cáo không bị ảnh hưởng."
-        )
-        lines.append("")
-    lines.append(f"Camp hiệu quả (top {len(good)}):")
-    lines.append("(xếp theo chi phí mỗi đơn, rẻ nhất trước — không phải theo số đơn)")
-    if good:
-        for r in good:
-            lines.append(f"- ID chiến dịch: {r['id']}")
-            lines.append(
-                f"  Lượt mua: {r['purchase']}; "
-                f"Số tiền đã chi tiêu: {fmt_money(r['spend'])} VND"
-                f"{mo_ta_moi_don(r)}"
-            )
-    else:
-        lines.append("- Không có camp nào tạo ra lượt mua.")
-    lines.append("")
-
-    lines.append(f"Camp kém hiệu quả (top {len(bad)}):")
-    if bad:
-        for r in bad:
-            lines.append(f"- ID chiến dịch: {r['id']}")
-            if r["purchase"] == 0:
-                lines.append(
-                    f"  Không tạo ra kết quả nào; "
-                    f"Đã chi tiêu: {fmt_money(r['spend'])} VND"
-                )
-            else:
-                lines.append(
-                    f"  Số tiền đã chi tiêu: {fmt_money(r['spend'])} VND; "
-                    f"Kết quả tin nhắn mới: {r['msg']}; "
-                    f"Lượt mua: {r['purchase']}"
-                    f"{mo_ta_moi_don(r)}"
-                )
-    else:
-        lines.append("- Không có camp nào kém hiệu quả.")
-    lines.append("")
-
+    lines = [
+        f"🔴 BÁO CÁO META ADS — {period_text}",
+        f"Tài khoản: {account_name}",
+        "🔵 TÓM TẮT",
+        f"Có {stats['total_campaigns']} campaign đủ điều kiện.",
+        f"- Số tiền đã chi tiêu: {fmt_money(totals['spend'])} VND",
+        f"- Lượt bắt đầu cuộc trò chuyện qua tin nhắn: {totals['msg']}",
+        f"- Người liên hệ nhắn tin mới: {totals['contact']}",
+        f"- Đơn đặt hàng đã tạo: {totals['order']}",
+        f"- Lượt mua: {totals['purchase']}",
+        f"- Lượt thanh toán: {totals['payment']}",
+        f"- Bình luận về bài viết: {totals['comment']}",
+    ]
     return "\n".join(lines)
 
 
@@ -1169,7 +1105,7 @@ def main():
     if ly_do_bt:
         log(f"CANH BAO so bat thuong: {'; '.join(ly_do_bt)}")
 
-    report = build_report(env, stats, period_text, nhan_dinh, loi_ai)
+    report = build_report(env, stats, period_text)
 
     # --- Canh bao SOM neu token Meta sap het han ---
     # Dat LEN DAU bao cao de de thay, khong bi lan vao cuoi tin nhan.
@@ -1189,7 +1125,10 @@ def main():
     # --- Tao dashboard HTML (dung lai chinh so lieu vua tinh, khong goi API lan 2) ---
     dashboard_path = None
     try:
-        dashboard_path = save_dashboard(stats, since, until, period_text)
+        dashboard_path = save_dashboard(
+            stats, since, until, period_text,
+            nhan_dinh=nhan_dinh, loi_ai=loi_ai,
+        )
         print()
         print(f"DA TAO DASHBOARD: {dashboard_path}")
     except Exception as e:
@@ -1215,8 +1154,8 @@ def main():
     if dashboard_path:
         fname = f"baocao_{slot}h_{now.strftime('%d-%m-%Y')}.html"
         caption = (
-            f"📊 BÁO CÁO META ADS — {period_text}\n"
-            "Bản đầy đủ dạng HTML. Tải về và mở bằng trình duyệt để xem."
+            f"📊 Bản đầy đủ (HTML) — {period_text}\n"
+            "Tải về, mở bằng trình duyệt: có phần nhận định và hai bảng xếp hạng camp."
         )
         dok, derr = send_telegram_document(env, dashboard_path, fname, caption)
         if dok:

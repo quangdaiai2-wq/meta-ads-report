@@ -448,97 +448,115 @@ class TestDeterminePeriodTheoMocSang(unittest.TestCase):
         self.assertEqual(since, date(2026, 9, 28))
 
 
-class TestBuildReportCoNhanDinhAI(unittest.TestCase):
-    """Kiem thu phan nhan dinh do AI viet, chen vao bao cao."""
+class TestBuildReportMauNgan(unittest.TestCase):
+    """Tin nhan Telegram theo mau Dai chot ngay 29/09/2026.
+
+    Chi con: tieu de + tai khoan + muc TOM TAT. Muc BO LOC, phan NHAN DINH do AI
+    viet, va hai bang xep hang camp da chuyen sang file HTML — xem
+    tests/test_dashboard.py.
+
+    Bai quan trong nhat la `test_khop_CHINH_XAC_vi_du_cua_Dai`: no khoa nguyen
+    van mau tin nhan. Sua mau ma khong sua bai nay thi bai se do ngay.
+    """
 
     def setUp(self):
+        # So lieu lay DUNG theo vi du Dai gui ngay 29/09/2026.
         self.env = {
             "FILTER_INCLUDE": "dainq",
             "FILTER_EXCLUDE": "thuonghieu",
-            "REPORT_ACCOUNT_NAME": "Test",
+            "REPORT_ACCOUNT_NAME": "",
         }
+        self.period = "29/09/2026 (00:00 - 12:00)"
         self.stats = {
-            "total_campaigns": 2,
-            "totals": {"spend": 1000.0, "msg": 1, "contact": 1, "order": 1,
-                       "purchase": 2, "payment": 1, "comment": 0},
+            "total_campaigns": 16,
+            "totals": {"spend": 8198223.0, "msg": 59, "contact": 55, "order": 19,
+                       "purchase": 19, "payment": 21, "comment": 1},
             "good": [{"rank": 1, "id": "1", "name": "a", "spend": 500.0,
                       "purchase": 2, "payment": 1, "msg": 1, "cpr": 250.0}],
-            "bad": [
-                {"rank": 1, "id": "2", "name": "b", "spend": 500.0,
-                 "purchase": 0, "payment": 0, "msg": 0, "cpr": None},
-                {"rank": 2, "id": "3", "name": "c", "spend": 900.0,
-                 "purchase": 3, "payment": 1, "msg": 2, "cpr": 300.0},
-            ],
+            "bad": [{"rank": 1, "id": "2", "name": "b", "spend": 500.0,
+                     "purchase": 0, "payment": 0, "msg": 0, "cpr": None}],
             "all": [],
             "include_kw": "dainq",
             "exclude_kw": "thuonghieu",
-            "account_name": "Test",
+            "account_name": "",
         }
 
-    def test_khong_co_nhan_dinh_thi_giu_nguyen_hanh_vi_cu(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026")
-        self.assertIn("🔵 NHẬN ĐỊNH", text)
-        self.assertNotIn("AI", text.split("🔵 NHẬN ĐỊNH")[1][:200])
+    def _text(self):
+        return report.build_report(self.env, self.stats, self.period)
 
-    def test_co_nhan_dinh_thi_chen_vao(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026",
-                                   nhan_dinh="Hom nay chi tieu tang 20 phan tram.")
-        self.assertIn("Hom nay chi tieu tang 20 phan tram.", text)
+    def test_khop_CHINH_XAC_vi_du_cua_Dai(self):
+        """Khoa nguyen van mau. Day la bai khoa chat nhat cua phan nay."""
+        self.assertEqual(self._text(), "\n".join([
+            "🔴 BÁO CÁO META ADS — 29/09/2026 (00:00 - 12:00)",
+            "Tài khoản: ",
+            "🔵 TÓM TẮT",
+            "Có 16 campaign đủ điều kiện.",
+            "- Số tiền đã chi tiêu: 8.198.223 VND",
+            "- Lượt bắt đầu cuộc trò chuyện qua tin nhắn: 59",
+            "- Người liên hệ nhắn tin mới: 55",
+            "- Đơn đặt hàng đã tạo: 19",
+            "- Lượt mua: 19",
+            "- Lượt thanh toán: 21",
+            "- Bình luận về bài viết: 1",
+        ]))
 
-    def test_nhan_dinh_nam_TRONG_muc_nhan_dinh(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026",
-                                   nhan_dinh="CAU_KIEM_THU")
-        phan = text.split("🔵 NHẬN ĐỊNH")[1]
-        self.assertIn("CAU_KIEM_THU", phan)
+    def test_dung_11_dong(self):
+        self.assertEqual(len(self._text().splitlines()), 11)
 
-    def test_co_loi_ai_thi_ghi_chu_ro_va_bao_cao_van_day_du(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026",
-                                   loi_ai="HTTP 429")
-        self.assertIn("HTTP 429", text)
-        self.assertIn("Camp hiệu quả", text)
-        self.assertIn("Camp kém hiệu quả", text)
+    def test_khong_co_dong_trong(self):
+        """Dai doc tren dien thoai: tin nhan phai lien mach, khong phai cuon."""
+        for dong in self._text().splitlines():
+            self.assertNotEqual(dong.strip(), "")
 
-    def test_co_loi_ai_thi_noi_ro_bao_cao_van_day_du(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026",
-                                   loi_ai="het han muc")
-        self.assertIn("vẫn đầy đủ", text)
+    def test_so_tien_co_dau_cham_ngan_nghin(self):
+        self.assertIn("8.198.223 VND", self._text())
 
-    def test_co_ca_nhan_dinh_lan_loi_thi_uutien_nhan_dinh(self):
-        text = report.build_report(self.env, self.stats, "27/09/2026",
-                                   nhan_dinh="CAU_KIEM_THU", loi_ai="HTTP 429")
-        self.assertIn("CAU_KIEM_THU", text)
-        self.assertNotIn("HTTP 429", text)
+    def test_KHONG_con_muc_bo_loc(self):
+        text = self._text()
+        self.assertNotIn("BỘ LỌC", text)
+        self.assertNotIn("Loại trừ campaign chứa", text)
 
-    def test_bang_hieu_qua_ghi_ro_xep_theo_chi_phi_moi_don(self):
-        # Dai doc bang phai biet vi sao camp 10 don khong dung dau.
-        text = report.build_report(self.env, self.stats, "27/09/2026")
-        self.assertIn("xếp theo chi phí mỗi đơn", text)
+    def test_KHONG_con_muc_nhan_dinh(self):
+        """Nhan dinh da chuyen sang file HTML."""
+        self.assertNotIn("NHẬN ĐỊNH", self._text())
 
-    def test_bang_hieu_qua_ghi_ro_moi_don_bao_nhieu(self):
-        # 500.000 d / 2 don = 250.000 d moi don
-        text = report.build_report(self.env, self.stats, "27/09/2026")
-        self.assertIn("Mỗi đơn: 250 VND", text)
+    def test_KHONG_con_hai_bang_xep_hang(self):
+        """Hai bang camp da chuyen sang file HTML."""
+        text = self._text()
+        self.assertNotIn("Camp hiệu quả", text)
+        self.assertNotIn("Camp kém hiệu quả", text)
+        self.assertNotIn("ID chiến dịch", text)
 
-    def test_bang_kem_camp_CO_don_cung_ghi_moi_don(self):
-        # 900.000 d / 3 don = 300.000 d moi don
-        text = report.build_report(self.env, self.stats, "27/09/2026")
-        self.assertIn("Mỗi đơn: 300 VND", text)
+    def test_KHONG_con_dong_moi_don(self):
+        """'Mỗi đơn' cua tung camp da chuyen sang bang trong file HTML."""
+        self.assertNotIn("Mỗi đơn", self._text())
 
-    def test_camp_0_don_thi_KHONG_ghi_moi_don(self):
-        # Chia cho 0 don la vo nghia -> khong duoc in "Mỗi đơn".
-        text = report.build_report(self.env, self.stats, "27/09/2026")
-        khoi = text.split("- ID chiến dịch: 2")[1].split("- ID chiến dịch")[0]
-        self.assertNotIn("Mỗi đơn", khoi)
+    def test_khong_nhan_them_tham_so(self):
+        """Chu ky ham phai gon: build_report(env, stats, period_text)."""
+        import inspect
+        tham_so = list(inspect.signature(report.build_report).parameters)
+        self.assertEqual(tham_so, ["env", "stats", "period_text"])
 
-    def test_chi_phi_moi_don_tra_ve_None_khi_0_don(self):
-        self.assertIsNone(report.chi_phi_moi_don({"spend": 500.0, "purchase": 0}))
+    def test_tai_khoan_lay_tu_env(self):
+        env = dict(self.env, REPORT_ACCOUNT_NAME="May Khac")
+        text = report.build_report(env, self.stats, self.period)
+        self.assertIn("Tài khoản: May Khac", text)
 
-    def test_chi_phi_moi_don_tinh_dung(self):
-        self.assertEqual(report.chi_phi_moi_don({"spend": 900.0, "purchase": 3}), 300.0)
+    def test_chi_so_bang_0_van_hien_du(self):
+        stats = dict(self.stats)
+        stats["totals"] = dict(self.stats["totals"], comment=0)
+        text = report.build_report(self.env, stats, self.period)
+        self.assertIn("- Bình luận về bài viết: 0", text)
 
-    def test_chi_phi_moi_don_khong_no_khi_thieu_du_lieu(self):
-        self.assertIsNone(report.chi_phi_moi_don({}))
-        self.assertIsNone(report.chi_phi_moi_don({"spend": "abc", "purchase": "xyz"}))
+    def test_chi_tieu_bang_0_khong_no(self):
+        stats = dict(self.stats)
+        stats["totals"] = dict(self.stats["totals"], spend=0)
+        text = report.build_report(self.env, stats, self.period)
+        self.assertIn("- Số tiền đã chi tiêu: 0 VND", text)
+
+    def test_moc_8h_hien_dung_ky_bao_cao(self):
+        text = report.build_report(self.env, self.stats, "28/09/2026")
+        self.assertIn("🔴 BÁO CÁO META ADS — 28/09/2026", text)
 
 
 class TestQuyetDinhKySoSanh(unittest.TestCase):
