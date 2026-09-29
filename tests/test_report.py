@@ -198,6 +198,81 @@ class TestKhongLapGiuaHaiBang(unittest.TestCase):
         self.assertLessEqual(len(stats["bad"]), 5)
 
 
+class TestXepHangTheoChiPhiMoiDon(unittest.TestCase):
+    """Bang "hieu qua" phai xep theo CHI PHI MOI DON, khong phai so don.
+
+    Xep theo so don la do QUY MO, khong phai do HIEU QUA - trai voi chinh ten
+    bang. Do tren 7 ngay that (22-28/09/2026): 6/7 ngay hai cach chon ra hai
+    danh sach camp KHAC NHAU, khong chi khac thu tu.
+    """
+
+    def _chay(self, rows):
+        goc = report.fetch_insights
+        report.fetch_insights = lambda env, since, until: (rows, None)
+        try:
+            env = {
+                "FILTER_INCLUDE": "dainq",
+                "FILTER_EXCLUDE": "",
+                "TOP_CAMPAIGN_COUNT": "5",
+                "REPORT_ACCOUNT_NAME": "Test",
+            }
+            stats, err = report.compute_stats(env, date(2026, 9, 27), date(2026, 9, 27))
+            self.assertIsNone(err)
+            return stats
+        finally:
+            report.fetch_insights = goc
+
+    def _id(self, ds):
+        return [c["id"] for c in ds]
+
+    def test_camp_re_hon_xep_truoc(self):
+        rows = [
+            _hang_camp("a", "dainq A", 2000, 4),
+            _hang_camp("b", "dainq B", 1000, 4),
+        ]
+        stats = self._chay(rows)
+        self.assertEqual(self._id(stats["good"]), ["b", "a"])
+
+    def test_camp_dat_tien_bi_day_ra_khoi_bang_hieu_qua(self):
+        rows = [_hang_camp(f"r{i}", f"dainq R{i}", 1000, 4) for i in range(1, 6)]
+        rows.append(_hang_camp("dat", "dainq DAT", 9000, 6))
+        stats = self._chay(rows)
+        self.assertNotIn("dat", self._id(stats["good"]))
+
+    def test_camp_1_don_bi_xep_sau_camp_2_don(self):
+        # Camp 1 don re hon nhung chua du chin => phai xep sau.
+        rows = [
+            _hang_camp("mot", "dainq MOT", 100, 1),
+            _hang_camp("hai", "dainq HAI", 1000, 2),
+        ]
+        stats = self._chay(rows)
+        self.assertEqual(self._id(stats["good"]), ["hai", "mot"])
+
+    def test_camp_0_don_van_khong_vao_bang_hieu_qua(self):
+        rows = [
+            _hang_camp("a", "dainq A", 1000, 3),
+            _hang_camp("z", "dainq Z", 50, 0),
+        ]
+        stats = self._chay(rows)
+        self.assertNotIn("z", self._id(stats["good"]))
+
+    def test_du_lieu_that_28_09_camp_dat_bi_loai(self):
+        # Dung so that ngay 28/09/2026: mot camp 3 don chi 2.325.449 d
+        # (775.150 d/don) tung nam trong bang hieu qua, trong khi mot camp
+        # 3 don chi 1.217.013 d (405.671 d/don) bi bo sot.
+        rows = [
+            _hang_camp("tot1", "dainq T1", 2745366, 10),
+            _hang_camp("tot2", "dainq T2", 2437319, 8),
+            _hang_camp("tot3", "dainq T3", 1070484, 4),
+            _hang_camp("tot4", "dainq T4", 1731168, 4),
+            _hang_camp("dat", "dainq DAT", 2325449, 3),
+            _hang_camp("bo_sot", "dainq BS", 1217013, 3),
+        ]
+        stats = self._chay(rows)
+        self.assertNotIn("dat", self._id(stats["good"]))
+        self.assertIn("bo_sot", self._id(stats["good"]))
+
+
 class TestLuuLichSu(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -331,8 +406,12 @@ class TestBuildReportCoNhanDinhAI(unittest.TestCase):
                        "purchase": 2, "payment": 1, "comment": 0},
             "good": [{"rank": 1, "id": "1", "name": "a", "spend": 500.0,
                       "purchase": 2, "payment": 1, "msg": 1, "cpr": 250.0}],
-            "bad": [{"rank": 1, "id": "2", "name": "b", "spend": 500.0,
-                     "purchase": 0, "payment": 0, "msg": 0, "cpr": None}],
+            "bad": [
+                {"rank": 1, "id": "2", "name": "b", "spend": 500.0,
+                 "purchase": 0, "payment": 0, "msg": 0, "cpr": None},
+                {"rank": 2, "id": "3", "name": "c", "spend": 900.0,
+                 "purchase": 3, "payment": 1, "msg": 2, "cpr": 300.0},
+            ],
             "all": [],
             "include_kw": "dainq",
             "exclude_kw": "thuonghieu",
@@ -372,6 +451,37 @@ class TestBuildReportCoNhanDinhAI(unittest.TestCase):
                                    nhan_dinh="CAU_KIEM_THU", loi_ai="HTTP 429")
         self.assertIn("CAU_KIEM_THU", text)
         self.assertNotIn("HTTP 429", text)
+
+    def test_bang_hieu_qua_ghi_ro_xep_theo_chi_phi_moi_don(self):
+        # Dai doc bang phai biet vi sao camp 10 don khong dung dau.
+        text = report.build_report(self.env, self.stats, "27/09/2026")
+        self.assertIn("xếp theo chi phí mỗi đơn", text)
+
+    def test_bang_hieu_qua_ghi_ro_moi_don_bao_nhieu(self):
+        # 500.000 d / 2 don = 250.000 d moi don
+        text = report.build_report(self.env, self.stats, "27/09/2026")
+        self.assertIn("Mỗi đơn: 250 VND", text)
+
+    def test_bang_kem_camp_CO_don_cung_ghi_moi_don(self):
+        # 900.000 d / 3 don = 300.000 d moi don
+        text = report.build_report(self.env, self.stats, "27/09/2026")
+        self.assertIn("Mỗi đơn: 300 VND", text)
+
+    def test_camp_0_don_thi_KHONG_ghi_moi_don(self):
+        # Chia cho 0 don la vo nghia -> khong duoc in "Mỗi đơn".
+        text = report.build_report(self.env, self.stats, "27/09/2026")
+        khoi = text.split("- ID chiến dịch: 2")[1].split("- ID chiến dịch")[0]
+        self.assertNotIn("Mỗi đơn", khoi)
+
+    def test_chi_phi_moi_don_tra_ve_None_khi_0_don(self):
+        self.assertIsNone(report.chi_phi_moi_don({"spend": 500.0, "purchase": 0}))
+
+    def test_chi_phi_moi_don_tinh_dung(self):
+        self.assertEqual(report.chi_phi_moi_don({"spend": 900.0, "purchase": 3}), 300.0)
+
+    def test_chi_phi_moi_don_khong_no_khi_thieu_du_lieu(self):
+        self.assertIsNone(report.chi_phi_moi_don({}))
+        self.assertIsNone(report.chi_phi_moi_don({"spend": "abc", "purchase": "xyz"}))
 
 
 class TestQuyetDinhKySoSanh(unittest.TestCase):

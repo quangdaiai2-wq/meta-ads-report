@@ -1,8 +1,8 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 28/09/2026 — **Giai đoạn 3 (phần nhận định do AI viết) đã thi công xong,
-đã kiểm chứng thật, và ĐÃ ĐẨY LÊN GITHUB** (`37d927a`). Lỗi hai bảng xếp hạng trùng nhau cũng đã
-sửa xong. Giai đoạn 2 (Người trực) đã chạy trên máy công ty.
+**Cập nhật lần cuối:** 29/09/2026 — hai bảng xếp hạng **đổi tiêu chí**: bảng "hiệu quả" nay xếp
+theo **chi phí mỗi đơn** (trước đây xếp theo số đơn), và tin nhắn Telegram nay **hiện luôn số tiền
+mỗi đơn**. Giai đoạn 3 (phần nhận định do AI viết) đã xong và đã lên GitHub.
 
 > ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3, rồi thêm `GEMINI_API_KEY` vào `.env`
 > (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
@@ -437,9 +437,51 @@ thật 28/09: 13 camp vẫn ra đủ 5+5 dòng, không trùng.
 > `test_bang_kem_khong_lap_bang_hieu_qua` và khẳng định đúng hành vi mới. Nếu thấy bài cũ ở đâu
 > khác thì đừng khôi phục.
 
-**Việc còn lại, KHÔNG gấp (cân nhắc cho Giai đoạn 4):** bảng "hiệu quả" xếp theo **số lượt mua**,
-không theo **CPR** (chi phí mỗi lượt mua). Nên camp đốt 10 triệu được 9 đơn vẫn xếp trên camp chi
-500 nghìn được 4 đơn. Đổi sang xếp theo CPR là **đổi ý nghĩa báo cáo** — cần Đại xác nhận trước.
+### BẢN SỬA NGÀY 29/09/2026 — HAI BẢNG XẾP HẠNG ĐỔI TIÊU CHÍ + HIỆN CHI PHÍ MỖI ĐƠN
+
+**1. Tin nhắn Telegram nay hiện "Mỗi đơn: X VND"** cho từng camp ở cả hai bảng.
+Trước đây con số này **chỉ có trong `dashboard.html`** (cột `CPR`) — tin nhắn Telegram không có,
+nên muốn biết camp nào đắt/rẻ thì phải tự chia nhẩm.
+Thêm `report.chi_phi_moi_don(r)` và `report.mo_ta_moi_don(r)`. Camp 0 đơn **không** in "Mỗi đơn"
+(chia cho 0 là vô nghĩa; in "0 đồng mỗi đơn" sẽ khiến camp tệ nhất trông như rẻ nhất).
+Prompt gửi AI cũng có thêm cột `chi phi moi don` — AI **đã dùng ngay** ở lần chạy đầu
+("chi phí mỗi đơn là 274.537 d").
+
+**2. Bảng "Camp hiệu quả" đổi từ xếp theo SỐ ĐƠN sang xếp theo CHI PHÍ MỖI ĐƠN.**
+Lý do: xếp theo số đơn là đo **quy mô**, không phải **hiệu quả** — trái với chính tên bảng.
+
+**Bằng chứng đo được (đây là lý do thay đổi, không phải cảm tính):** lấy 7 ngày thật
+22–28/09/2026, so hai cách xếp:
+
+| | Số ngày |
+|---|---|
+| Hai cách chọn ra **danh sách camp KHÁC NHAU** | **6/7 ngày** |
+| Hai cách chỉ khác **thứ tự** | 1/7 ngày |
+
+Ví dụ ngày 28/09: cách cũ đưa vào bảng một camp **775.150 đ/đơn** và bỏ sót một camp
+**405.671 đ/đơn**. Cách mới đưa đúng camp rẻ hơn vào.
+
+**Quy tắc xếp hạng mới** (`report.khoa_xep_hang`): sắp theo chi phí mỗi đơn tăng dần, **nhưng camp
+chỉ có 1 đơn bị đẩy xuống sau** những camp đã có từ 2 đơn trở lên.
+Lý do có cái chốt 1 đơn: nếu xếp thuần theo chi phí mỗi đơn thì ngày 28/09 một camp
+**1 đơn, 63.451 đ/đơn** nhảy lên **đứng đầu bảng** — rẻ nhất ngày, nhưng chỉ là **một đơn may mắn**.
+
+**Hai điều phải nhớ:**
+
+- **Bảng nay có thể xếp một camp 3 đơn LÊN TRÊN một camp 10 đơn** (vì đơn của nó rẻ hơn). Đây là
+  **chủ ý**, không phải lỗi. Báo cáo đã in rõ tiêu chí ngay dưới dòng tiêu đề bảng:
+  *"(xếp theo chi phí mỗi đơn, rẻ nhất trước — không phải theo số đơn)"*.
+  **Đừng xoá dòng đó** — thiếu nó thì Đại sẽ tưởng báo cáo sai.
+- **Muốn quay lại cách cũ:** sửa `khoa_xep_hang` thành `key=purchase_count, reverse=True` và bỏ
+  `chỉ 1 đơn`. Chỉ một chỗ trong `report.py`.
+
+**Điều chưa biết, đã ghi cả vào `README.md`:** báo cáo chỉ có **số đơn**, không có **giá trị mỗi
+đơn**. Nên "chi phí mỗi đơn" chưa phải "hiệu quả" đầy đủ — nếu biên lợi nhuận mỗi đơn của Đại cao
+thì camp đắt vẫn đáng chạy. **Việc còn lại cho Giai đoạn 4:** hỏi Đại lợi nhuận mỗi đơn bao nhiêu,
+rồi mới nói được camp nào thật sự có lãi.
+
+Kiểm thử: `175/175` đạt (thêm 10 bài). Kiểm chứng trên dữ liệu thật 28/09: camp 775.150 đ/đơn
+không còn trong bảng "hiệu quả"; hai camp 3 đơn rẻ hơn (405.671 và 408.493) được đưa vào.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 

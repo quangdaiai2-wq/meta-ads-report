@@ -19,8 +19,12 @@ STATS = {
         "comment": 0,
     },
     "all": [
-        {"id": "111", "name": "dainq - camp A", "spend": 3000000.0, "purchase": 9},
-        {"id": "222", "name": "dainq - camp B", "spend": 4034942.0, "purchase": 6},
+        {"id": "111", "name": "dainq - camp A", "spend": 3000000.0, "purchase": 9,
+         "cpr": 333333.33},
+        {"id": "222", "name": "dainq - camp B", "spend": 4034942.0, "purchase": 6,
+         "cpr": 672490.33},
+        {"id": "333", "name": "dainq - camp C", "spend": 500000.0, "purchase": 0,
+         "cpr": None},
     ],
     "good": [{"id": "111", "name": "dainq - camp A", "spend": 3000000.0, "purchase": 9}],
     "bad": [{"id": "222", "name": "dainq - camp B", "spend": 4034942.0, "purchase": 6}],
@@ -84,6 +88,16 @@ class TestSoanPrompt(unittest.TestCase):
     def test_co_ten_camp(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
         self.assertIn("dainq - camp A", p)
+
+    def test_prompt_co_chi_phi_moi_don(self):
+        # AI phai duoc CHO SAN chi phi moi don, khong duoc tu chia.
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("chi phi moi don", p)
+        self.assertIn("333.333", p)
+
+    def test_camp_0_don_thi_ghi_ro_chua_co_don(self):
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("chua co don", p)
 
     def test_co_boi_canh(self):
         p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "bao cao ngay 27/09/2026")

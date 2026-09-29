@@ -232,6 +232,23 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
   **Một camp chỉ xuất hiện ở MỘT trong hai bảng** (sửa 28/09/2026). Nên nếu tài khoản ít camp,
   bảng "kém hiệu quả" sẽ **ngắn hơn 5 dòng hoặc trống** — đó là đúng, không phải lỗi: khi mọi
   camp đều ra đơn thì thật sự không có camp nào kém.
+
+**Tiêu chí xếp hạng (đổi ngày 29/09/2026):**
+
+| Bảng | Xếp theo | Ghi chú |
+|---|---|---|
+| 🟢 **Camp hiệu quả** | **Chi phí mỗi đơn, rẻ nhất trước** | Camp chỉ có **1 đơn** bị xếp xuống sau những camp đã có từ 2 đơn trở lên — một đơn may mắn chưa nói lên điều gì |
+| 🔴 **Camp kém hiệu quả** | Trước hết là camp **chi tiền mà 0 đơn** (chi nhiều nhất trước) | Nếu chưa đủ 5 dòng thì lấy thêm camp ít đơn nhất, **nhưng loại những camp đã nằm ở bảng trên** |
+
+> 📌 **Trước 29/09/2026, bảng "hiệu quả" xếp theo SỐ ĐƠN.** Đó là đo quy mô, không phải đo hiệu
+> quả — trái với chính tên bảng. Đo trên 7 ngày thật: **6/7 ngày hai cách chọn ra hai danh sách
+> camp KHÁC NHAU**, không chỉ khác thứ tự. Ví dụ ngày 28/09, cách cũ đưa vào bảng một camp
+> **775.150 đ/đơn** trong khi bỏ sót một camp chỉ **405.671 đ/đơn**. Muốn quay lại cách cũ: sửa
+> hàm `khoa_xep_hang` trong `report.py`.
+>
+> ⚠️ **Điều chưa biết:** báo cáo chỉ có **số đơn**, không có **giá trị mỗi đơn**. Nên "chi phí mỗi
+> đơn" chưa phải "hiệu quả" đầy đủ — một đơn 5 triệu khác một đơn 200 nghìn. Nếu biên lợi nhuận
+> mỗi đơn của Đại cao thì camp đắt vẫn đáng chạy.
 - Cột **CPR** tự đổi màu: 🟢 xanh = rẻ hơn mức trung bình, 🔴 đỏ = đắt hơn.
 
 **Lưu ý:** Số liệu được **ghi sẵn** vào file lúc tạo — file này là **ảnh chụp (snapshot)**, không tự cập nhật. Muốn số mới, chạy lại script.

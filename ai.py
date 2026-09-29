@@ -142,11 +142,17 @@ def soan_prompt(stats, ky_truoc, boi_canh):
     camps = stats.get("all") or []
     if camps:
         lines.append("")
-        lines.append("--- TUNG CAMPAIGN (ten | chi tieu | luot mua) ---")
+        lines.append(
+            "--- TUNG CAMPAIGN (ten | chi tieu | luot mua | chi phi moi don) ---"
+        )
         for c in camps[:20]:
+            cpr = c.get("cpr")
+            # Chi phi moi don duoc code tinh san (report.pack). Chua co don thi
+            # ghi ro "chua co don" - KHONG ghi 0, vi 0 trong nhu re nhat.
+            gia = f"{fmt_tien(cpr)} d" if cpr else "chua co don"
             lines.append(
                 f"- {c.get('name', '?')} | {fmt_tien(c.get('spend', 0))} d "
-                f"| {c.get('purchase', 0)}"
+                f"| {c.get('purchase', 0)} don | chi phi moi don: {gia}"
             )
     return "\n".join(lines)
 

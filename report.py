@@ -380,6 +380,34 @@ def fmt_money(value):
         return "0"
 
 
+def chi_phi_moi_don(r):
+    """Chi phi cho MOT luot mua. Tra ve None neu camp chua ra don nao.
+
+    Con so nay quyet dinh "hieu qua" theo nghia thuc su: cung mot so tien,
+    camp nao ra nhieu don hon thi re hon. Bang xep hang hien tai xep theo SO
+    LUOT MUA (quy mo), khong theo chi phi moi don (hieu qua) - nen in them con
+    so nay de Dai tu thay ca hai mat.
+
+    Tra ve None chu KHONG tra ve 0 khi chua co don: chia cho 0 la vo nghia, va
+    in ra "0 d moi don" se khien camp te nhat trong nhu re nhat.
+    """
+    try:
+        so_don = int(r.get("purchase") or 0)
+        if so_don <= 0:
+            return None
+        return float(r.get("spend", 0) or 0) / so_don
+    except (ValueError, TypeError, ZeroDivisionError):
+        return None
+
+
+def mo_ta_moi_don(r):
+    """Manh chu de noi vao cuoi dong mo ta camp. Rong neu chua co don nao."""
+    cpr = chi_phi_moi_don(r)
+    if cpr is None:
+        return ""
+    return f"; Mỗi đơn: {fmt_money(cpr)} VND"
+
+
 def get_action_value(actions, action_type):
     """Lay gia tri cua MOT loai action. action_type co the la str hoac list."""
     if not actions:
@@ -511,9 +539,25 @@ def compute_stats(env, since, until):
         "comment": sum(get_action_value(r.get("actions"), ACT_COMMENT) for r in filtered),
     }
 
-    # Camp tot: sap theo luot mua giam dan
-    good = sorted(filtered, key=purchase_count, reverse=True)[:top_n]
-    good = [r for r in good if purchase_count(r) > 0]
+    # Camp tot: xep theo CHI PHI MOI DON, re nhat len dau.
+    #
+    # Truoc 29/09/2026 cho nay xep theo SO LUOT MUA. Do la do QUY MO, khong
+    # phai do HIEU QUA - trai voi chinh ten bang "hieu qua". Do tren 7 ngay
+    # that (22-28/09/2026): 6/7 ngay hai cach chon ra hai DANH SACH KHAC NHAU,
+    # khong chi khac thu tu. Vi du ngay 28/09: cach cu dua vao bang mot camp
+    # 775.150 d/don trong khi bo sot mot camp 405.671 d/don.
+    #
+    # Camp moi co 1 don bi day xuong sau: 1 don chua du de noi len dieu gi,
+    # mot don may man cung du de dung dau bang (da gap that: 1 don, 63.451 d -
+    # re nhat ngay, nhung chi la mot don).
+    def khoa_xep_hang(r):
+        so_don = purchase_count(r)
+        chua_du_chin = 0 if so_don >= 2 else 1
+        return (chua_du_chin, spend_of(r) / so_don)
+
+    good = sorted(
+        (r for r in filtered if purchase_count(r) > 0), key=khoa_xep_hang
+    )[:top_n]
     good_ids = {str(r.get("campaign_id", "")) for r in good}
 
     # Camp kem: uu tien chi tieu > 0 ma 0 don.
@@ -618,12 +662,14 @@ def build_report(env, stats, period_text, nhan_dinh=None, loi_ai=None):
         )
         lines.append("")
     lines.append(f"Camp hiệu quả (top {len(good)}):")
+    lines.append("(xếp theo chi phí mỗi đơn, rẻ nhất trước — không phải theo số đơn)")
     if good:
         for r in good:
             lines.append(f"- ID chiến dịch: {r['id']}")
             lines.append(
                 f"  Lượt mua: {r['purchase']}; "
                 f"Số tiền đã chi tiêu: {fmt_money(r['spend'])} VND"
+                f"{mo_ta_moi_don(r)}"
             )
     else:
         lines.append("- Không có camp nào tạo ra lượt mua.")
@@ -643,6 +689,7 @@ def build_report(env, stats, period_text, nhan_dinh=None, loi_ai=None):
                     f"  Số tiền đã chi tiêu: {fmt_money(r['spend'])} VND; "
                     f"Kết quả tin nhắn mới: {r['msg']}; "
                     f"Lượt mua: {r['purchase']}"
+                    f"{mo_ta_moi_don(r)}"
                 )
     else:
         lines.append("- Không có camp nào kém hiệu quả.")
