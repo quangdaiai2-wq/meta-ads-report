@@ -54,10 +54,43 @@ Mỗi báo cáo giờ có thêm **3–5 câu nhận xét** do AI viết, nằm n
 
 Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
 
-> 💰 **Trần miễn phí: 20 lượt/ngày** (đo thật 28/09/2026). Dùng thật chỉ 3 lượt/ngày.
+> 💰 **Trần miễn phí: 20 lượt/ngày cho MỖI model** (đo thật 28–29/09/2026). Dùng thật chỉ 3 lượt/ngày.
 > Nhưng **chạy thử `report.py` cũng tốn lượt** — muốn thử code thì bấm đúp **`chay-kiem-thu.bat`**
 > (không gọi mạng, không tốn lượt). Hết trần thì báo cáo vẫn gửi, chỉ thiếu phần nhận định,
 > hôm sau tự có lại.
+
+### 🆕 Nhắn tin hỏi bot (từ 29/09/2026)
+
+Ngoài việc tự gửi báo cáo, bot còn **trả lời khi bạn nhắn hỏi**. Hỏi bằng tiếng Việt bình thường:
+
+```
+chi tiêu ngày 28/09 là bao nhiêu?
+camp nào tệ nhất tuần này?
+tuần này so với tuần trước thế nào?
+```
+
+**Ba điều cần biết:**
+
+1. **Số do code tính, AI chỉ đọc lên.** AI được phép "xin" hệ thống lấy số, qua bốn công cụ:
+   xem một ngày · xem một khoảng ngày · xếp hạng chiến dịch · so sánh hai kỳ.
+   Mọi phép tính — chênh lệch, phần trăm, chi phí mỗi đơn, thứ hạng — đều do code làm sẵn.
+   AI **không được tự tính và không được bịa số**.
+2. **Hỏi đáp dùng model AI riêng, không tranh lượt với báo cáo.** Hạn mức miễn phí tính riêng cho
+   từng model, nên hỏi nhiều cũng không làm báo cáo mất phần nhận định.
+3. **Khoảng 7 ngày đầu chưa so sánh được.** Sổ lịch sử mới có số từ 28/09/2026. Hỏi kiểu
+   "tuần này so với tuần trước" thì bot sẽ nói thật là **chưa đủ số**, chứ không bịa ra con số.
+   Đủ 7 ngày là so sánh được.
+
+**Khi nào bot chưa trả lời được:** hết hạn mức AI trong ngày, hoặc máy mất mạng. Lúc đó bot nhắn
+lại **kèm lý do** chứ không im lặng. Riêng câu hỏi thăm máy (`còn sống không?`) thì **luôn** trả
+lời được, vì không cần gọi AI.
+
+> 💡 Hỏi câu **cần số hôm nay** (ví dụ "hôm nay chi bao nhiêu?") trong khi báo cáo chưa tới mốc
+> giờ: bot tự lấy số trực tiếp từ Meta. Việc này mất khoảng 15–30 giây, và bot sẽ **nói rõ đây
+> là số tích luỹ đến lúc hỏi, chưa phải cả ngày**.
+
+> ⚠️ **Cách viết số tiền:** bot luôn ghi `20.319.895` (có dấu chấm ngăn nghìn), giống hệt báo cáo.
+> Dấu chấm là do hệ thống đặt sẵn, không phải AI tự thêm — nên không có chuyện AI làm sai con số.
 
 ---
 
@@ -141,6 +174,15 @@ còn sống không?
 
 Bot trả lời kèm tình trạng: đã chạy bao lâu, mốc giờ của máy này, hôm nay đã gửi mốc nào.
 Đây là cách kiểm tra nhanh nhất khi nghi ngờ hệ thống có vấn đề.
+
+Nhắn tiếp một câu **hỏi số liệu** để thử phần AI:
+
+```
+chi tiêu ngày hôm qua là bao nhiêu?
+```
+
+Bot trả lời bằng một đoạn văn có số thật, lấy từ sổ lịch sử. Xem mục
+**"Nhắn tin hỏi bot"** ở trên để biết bot trả lời được những gì.
 
 > ⚠️ **Phải nhắn SAU khi Người trực đã chạy.** Lúc vừa khởi động, Người trực **bỏ qua toàn bộ
 > tin nhắn đến trước đó** — đây là chủ ý, để nó không trả lời một loạt tin cũ. Nếu Đại nhắn

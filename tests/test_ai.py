@@ -309,5 +309,339 @@ class TestVietNhanDinh(unittest.TestCase):
         self.assertIsNone(loi)
 
 
+# ============================================================================
+# GIAI DOAN 4 - PHAN HOI DAP
+# ============================================================================
+
+
+def _content_chu(text):
+    return {"parts": [{"text": text}], "role": "model"}
+
+
+def _content_goi_cong_cu(ten, args):
+    return {"parts": [{"functionCall": {"name": ten, "args": args}}],
+            "role": "model"}
+
+
+def _kq_gemini(content):
+    return {"candidates": [{"content": content}]}
+
+
+class BoCongCuGia:
+    """Bo cong cu gia: ghi lai moi lan duoc goi, tra ket qua tu dinh san."""
+
+    def __init__(self, ket_qua=None, loi=None):
+        self.ket_qua = ket_qua or {}
+        self.loi = loi
+        self.da_goi = []
+
+    def khai_bao(self):
+        return [{"functionDeclarations": [
+            {"name": "lay_khoang", "description": "x",
+             "parameters": {"properties": {}}}]}]
+
+    def thuc_thi(self, ten, args):
+        self.da_goi.append((ten, args))
+        if self.loi:
+            raise self.loi
+        return self.ket_qua.get(ten, {"ok": True})
+
+
+class TestBocContent(unittest.TestCase):
+    def test_boc_duoc_chu(self):
+        chu, goi = ai.boc_content(_content_chu("Xin chao"))
+        self.assertEqual(chu, "Xin chao")
+        self.assertIsNone(goi)
+
+    def test_boc_duoc_function_call(self):
+        chu, goi = ai.boc_content(_content_goi_cong_cu("lay_khoang", {"tu": "a"}))
+        self.assertEqual(chu, "")
+        self.assertEqual(goi["name"], "lay_khoang")
+        self.assertEqual(goi["args"], {"tu": "a"})
+
+    def test_content_rong_tra_ve_rong(self):
+        self.assertEqual(ai.boc_content({}), ("", None))
+        self.assertEqual(ai.boc_content(None), ("", None))
+
+    def test_uu_tien_chu_khi_co_ca_hai(self):
+        c = {"parts": [{"text": "Day la cau tra loi"},
+                       {"functionCall": {"name": "x", "args": {}}}]}
+        chu, goi = ai.boc_content(c)
+        self.assertEqual(chu, "Day la cau tra loi")
+        self.assertIsNotNone(goi)
+
+
+class TestSoanPromptHoiDap(unittest.TestCase):
+    def test_prompt_co_cau_hoi(self):
+        self.assertIn("camp nao te nhat?", ai.soan_prompt_hoi_dap("camp nao te nhat?"))
+
+    def test_prompt_co_moc_thoi_gian(self):
+        p = ai.soan_prompt_hoi_dap("x", "Hôm nay: 29/09/2026")
+        self.assertIn("29/09/2026", p)
+
+    def test_prompt_bat_buoc_viet_co_dau(self):
+        self.assertIn("CÓ DẤU", ai.soan_prompt_hoi_dap("x"))
+
+    def test_prompt_cam_markdown(self):
+        self.assertIn("KHÔNG dùng dấu sao", ai.soan_prompt_hoi_dap("x"))
+
+    def test_prompt_khong_nhan_env(self):
+        import inspect
+        tham_so = inspect.signature(ai.soan_prompt_hoi_dap).parameters
+        self.assertNotIn("env", tham_so)
+
+
+class TestChonModelHoiDap(unittest.TestCase):
+    def test_mac_dinh_dung_model_da_kiem_chung(self):
+        self.assertEqual(ai._chon_model_hoi_dap({}),
+                         ["gemini-3.8-flash", "gemini-3.5-flash"])
+
+    def test_doc_duoc_tu_env(self):
+        ds = ai._chon_model_hoi_dap({"GEMINI_MODEL_HOI_DAP": "model-a"})
+        self.assertEqual(ds[0], "model-a")
+
+    def test_model_du_phong_khac_model_chinh_thi_them_vao(self):
+        ds = ai._chon_model_hoi_dap({"GEMINI_MODEL_HOI_DAP": "a",
+                                     "GEMINI_MODEL_HOI_DAP_DU_PHONG": "b"})
+        self.assertEqual(ds, ["a", "b"])
+
+    def test_du_phong_trung_chinh_thi_khong_them(self):
+        ds = ai._chon_model_hoi_dap({"GEMINI_MODEL_HOI_DAP": "a",
+                                     "GEMINI_MODEL_HOI_DAP_DU_PHONG": "a"})
+        self.assertEqual(ds, ["a"])
+
+
+class TestGoiGeminiCongCu(unittest.TestCase):
+    def setUp(self):
+        # Tat cho giua hai lan thu de kiem thu khong phai ngoi cho.
+        cu = ai.CHO_GIUA_HAI_LAN
+        ai.CHO_GIUA_HAI_LAN = 0
+        self.addCleanup(lambda: setattr(ai, "CHO_GIUA_HAI_LAN", cu))
+
+    def _goi(self, khai_bao=None, goi_mang_fn=None, env=None):
+        return ai.goi_gemini_cong_cu(
+            env or {"GEMINI_API_KEY": "k"},
+            [{"role": "user", "parts": [{"text": "x"}]}],
+            khai_bao_cong_cu=khai_bao, goi_mang_fn=goi_mang_fn)
+
+    def test_gui_kem_tools_khi_co_khai_bao(self):
+        thay = {}
+
+        def gia(url, payload, timeout):
+            thay.update(payload)
+            return _kq_gemini(_content_chu("ok"))
+
+        self._goi(khai_bao=[{"functionDeclarations": []}], goi_mang_fn=gia)
+        self.assertIn("tools", thay)
+
+    def test_khong_gui_tools_khi_khong_khai_bao(self):
+        thay = {}
+
+        def gia(url, payload, timeout):
+            thay.update(payload)
+            return _kq_gemini(_content_chu("ok"))
+
+        self._goi(goi_mang_fn=gia)
+        self.assertNotIn("tools", thay)
+
+    def test_co_maxOutputTokens(self):
+        thay = {}
+
+        def gia(url, payload, timeout):
+            thay.update(payload)
+            return _kq_gemini(_content_chu("ok"))
+
+        self._goi(goi_mang_fn=gia)
+        self.assertEqual(thay["generationConfig"]["maxOutputTokens"],
+                         ai.TOI_DA_TOKEN_TRA_LOI)
+
+    def test_dung_model_hoi_dap_khong_dung_model_bao_cao(self):
+        thay = {"url": None}
+
+        def gia(url, payload, timeout):
+            thay["url"] = url
+            return _kq_gemini(_content_chu("ok"))
+
+        ai.goi_gemini_cong_cu(
+            {"GEMINI_API_KEY": "k", "GEMINI_MODEL": "model-bao-cao"},
+            [{"role": "user", "parts": [{"text": "x"}]}], goi_mang_fn=gia)
+        self.assertIn("gemini-3.8-flash", thay["url"])
+        self.assertNotIn("model-bao-cao", thay["url"])
+
+    def test_503_thi_thu_model_du_phong(self):
+        dem = {"n": 0}
+        nguong = ai.SO_LAN_THU_LAI + 1
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] <= nguong:
+                raise urllib.error.HTTPError(url, 503, "qua tai", {}, io.BytesIO(b"{}"))
+            return _kq_gemini(_content_chu("ok"))
+
+        content, loi = self._goi(goi_mang_fn=gia)
+        self.assertIsNone(loi)
+        self.assertIsNotNone(content)
+        self.assertEqual(dem["n"], nguong + 1)
+
+    def test_ca_hai_model_deu_loi_thi_tra_loi(self):
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 404, "khong co model", {},
+                                         io.BytesIO(b"{}"))
+
+        content, loi = self._goi(goi_mang_fn=gia)
+        self.assertIsNone(content)
+        self.assertIn("404", loi)
+
+    def test_sai_cau_truc_thi_tra_loi(self):
+        def gia(url, payload, timeout):
+            return {"khong_co_candidates": True}
+
+        content, loi = self._goi(goi_mang_fn=gia)
+        self.assertIsNone(content)
+        self.assertIn("sai cau truc", loi)
+
+
+class TestTraLoi(unittest.TestCase):
+    def setUp(self):
+        cu = ai.CHO_GIUA_HAI_LAN
+        ai.CHO_GIUA_HAI_LAN = 0
+        self.addCleanup(lambda: setattr(ai, "CHO_GIUA_HAI_LAN", cu))
+
+    def _env(self, **kw):
+        e = {"GEMINI_API_KEY": "k"}
+        e.update(kw)
+        return e
+
+    def test_ai_tra_loi_ngay_khong_goi_cong_cu(self):
+        bo = BoCongCuGia()
+
+        def gia(url, payload, timeout):
+            return _kq_gemini(_content_chu("Chi tieu hom qua la 7.034.942 dong."))
+
+        chu, loi = ai.tra_loi("hom qua the nao?", bo, env=self._env(),
+                              goi_mang_fn=gia)
+        self.assertIn("7.034.942", chu)
+        self.assertIsNone(loi)
+        self.assertEqual(bo.da_goi, [])
+
+    def test_ai_xin_cong_cu_roi_tra_loi(self):
+        bo = BoCongCuGia({"lay_khoang": {"tong": {"spend": 100}}})
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] == 1:
+                return _kq_gemini(_content_goi_cong_cu(
+                    "lay_khoang", {"tu": "2026-09-27", "den": "2026-09-28"}))
+            return _kq_gemini(_content_chu("Tong chi tieu la 100 dong."))
+
+        chu, loi = ai.tra_loi("tuan nay?", bo, env=self._env(), goi_mang_fn=gia)
+        self.assertIn("100", chu)
+        self.assertEqual(len(bo.da_goi), 1)
+        self.assertEqual(bo.da_goi[0][0], "lay_khoang")
+        self.assertEqual(bo.da_goi[0][1],
+                         {"tu": "2026-09-27", "den": "2026-09-28"})
+
+    def test_ket_qua_cong_cu_duoc_gui_lai_cho_ai(self):
+        bo = BoCongCuGia({"lay_khoang": {"tong": {"spend": 987654}}})
+        thay = {"payload": None}
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] == 1:
+                return _kq_gemini(_content_goi_cong_cu(
+                    "lay_khoang", {"tu": "a", "den": "b"}))
+            thay["payload"] = payload
+            return _kq_gemini(_content_chu("xong"))
+
+        ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia)
+        chuoi = json.dumps(thay["payload"], ensure_ascii=False)
+        self.assertIn("functionResponse", chuoi)
+        self.assertIn("987654", chuoi)
+
+    def test_het_luot_thi_luot_cuoi_khong_kem_tools(self):
+        bo = BoCongCuGia()
+        ds_tools = []
+
+        def gia(url, payload, timeout):
+            ds_tools.append("tools" in payload)
+            return _kq_gemini(_content_goi_cong_cu("lay_khoang", {"tu": "a"}))
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia)
+        self.assertIsNone(chu)
+        self.assertEqual(len(ds_tools), ai.TOI_DA_LUOT_CONG_CU + 1)
+        self.assertTrue(all(ds_tools[:-1]))
+        self.assertFalse(ds_tools[-1])
+
+    def test_het_luot_van_khong_tra_loi_thi_bao_loi(self):
+        bo = BoCongCuGia()
+
+        def gia(url, payload, timeout):
+            return _kq_gemini(_content_goi_cong_cu("lay_khoang", {}))
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia)
+        self.assertIsNone(chu)
+        self.assertIn("qua nhieu luot", loi)
+
+    def test_cong_cu_loi_khong_lam_chet_vong_lap(self):
+        bo = BoCongCuGia(loi=RuntimeError("no ra"))
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] == 1:
+                return _kq_gemini(_content_goi_cong_cu("lay_khoang", {}))
+            return _kq_gemini(_content_chu("Xin loi, khong lay duoc so."))
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia)
+        self.assertIn("Xin loi", chu)
+
+    def test_ai_loi_mang_tra_ve_loi(self):
+        bo = BoCongCuGia()
+
+        def gia(url, payload, timeout):
+            raise OSError("mat mang")
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia)
+        self.assertIsNone(chu)
+        self.assertIn("mat mang", loi)
+
+    def test_bo_cong_cu_hong_thi_tra_loi_chu_khong_nem(self):
+        class BoHong:
+            def khai_bao(self):
+                raise RuntimeError("khai bao hong")
+
+        chu, loi = ai.tra_loi("?", BoHong(), env=self._env(),
+                              goi_mang_fn=lambda *a: None)
+        self.assertIsNone(chu)
+        self.assertIn("khai bao", loi)
+
+    def test_thieu_chia_khoa_tra_ve_loi(self):
+        chu, loi = ai.tra_loi("?", BoCongCuGia(), env={})
+        self.assertIsNone(chu)
+        self.assertIn("GEMINI_API_KEY", loi)
+
+    def test_khong_co_cong_cu_van_tra_loi_duoc(self):
+        def gia(url, payload, timeout):
+            return _kq_gemini(_content_chu("Tra loi khong can cong cu."))
+
+        chu, loi = ai.tra_loi("?", None, env=self._env(), goi_mang_fn=gia)
+        self.assertIn("khong can cong cu", chu)
+
+    def test_khong_gui_token_cho_ai(self):
+        bo = BoCongCuGia()
+        thay = {"payload": None}
+
+        def gia(url, payload, timeout):
+            thay["payload"] = payload
+            return _kq_gemini(_content_chu("ok"))
+
+        ai.tra_loi("hoi gi do", bo, env=self._env(GEMINI_API_KEY="BIMAT123"),
+                   moc_tg="Hom nay 29/09/2026", goi_mang_fn=gia)
+        self.assertNotIn("BIMAT123",
+                         json.dumps(thay["payload"], ensure_ascii=False))
+
+
 if __name__ == "__main__":
     unittest.main()

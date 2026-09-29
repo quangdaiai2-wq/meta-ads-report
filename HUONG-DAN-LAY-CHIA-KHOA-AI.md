@@ -2,15 +2,19 @@
 
 Dành cho Đại — người không cần biết code.
 
-**Để làm gì:** báo cáo Telegram có mục `🔵 NHẬN ĐỊNH`. Không có chìa khoá này thì mục đó chỉ
-hiện một dòng ghi chú, không có 3–5 câu nhận xét do AI viết.
+**Để làm gì:** một chìa khoá này dùng cho **hai việc**:
+
+1. Báo cáo Telegram có mục `🔵 NHẬN ĐỊNH`. Không có chìa khoá thì mục đó chỉ hiện một dòng ghi chú,
+   không có 3–5 câu nhận xét do AI viết.
+2. Bot **trả lời khi Đại nhắn hỏi** về số liệu (từ 29/09/2026).
 
 > ✅ **Tin tốt:** chìa khoá này **miễn phí** và lấy mất khoảng **5 phút**.
-> Hệ thống chỉ gọi AI **3 lần mỗi ngày** (mỗi báo cáo một lần). Chi phí thực tế: **0 đồng**.
+> Hệ thống chỉ gọi AI **3 lần mỗi ngày** cho báo cáo. Chi phí thực tế: **0 đồng**.
 >
-> 📌 **Trần miễn phí đã đo được thật (28/09/2026): 20 lượt/ngày** cho model `gemini-3.6-flash`.
-> Dùng thật chỉ 3 lượt/ngày nên **thoải mái**. Nhưng chạy thử nhiều lần trong ngày có thể hết
-> trần — xem mục "Hết hạn mức cũng không sao" bên dưới.
+> 📌 **Trần miễn phí đã đo được thật: 20 lượt/ngày cho MỖI model** (đo 28–29/09/2026).
+> Điểm quan trọng: trần tính **riêng cho từng model**, nên hệ thống dùng **hai model khác nhau** —
+> một cho báo cáo, một cho hỏi đáp — để hai việc không tranh lượt của nhau. Xem mục
+> "Hai model, hai trần riêng" bên dưới.
 
 ---
 
@@ -102,7 +106,7 @@ Chìa khoá sai, hết hạn mức, hoặc máy mất mạng.
 
 ---
 
-## Ba điều phải nhớ
+## Bốn điều phải nhớ
 
 ### 1. 🔐 Chìa khoá này là mật khẩu
 
@@ -112,7 +116,7 @@ Chìa khoá sai, hết hạn mức, hoặc máy mất mạng.
 
 ### 2. 💰 Hết hạn mức cũng không sao
 
-Bản miễn phí cho **20 lượt gọi mỗi ngày** (đo thật ngày 28/09/2026). Dùng thật chỉ **3 lượt/ngày**
+Bản miễn phí cho **20 lượt gọi mỗi ngày cho mỗi model**. Dùng thật chỉ **3 lượt/ngày** cho báo cáo
 nên rất khó chạm trần.
 
 ⚠️ **Nhưng coi chừng: chạy thử cũng tốn lượt.** Mỗi lần chạy `python report.py` hoặc
@@ -125,7 +129,33 @@ không gửi tin nhắn nào, không đụng tới số liệu.
 **Nếu có chạm trần thật:** báo cáo **vẫn gửi bình thường**, chỉ thiếu phần nhận định. Dòng ghi
 chú sẽ ghi rõ `het han muc goi AI`. Hôm sau tự có lại, không cần làm gì.
 
-### 3. 🖥️ Mỗi máy một chìa khoá
+> 📌 **Đã xảy ra thật ngày 29/09/2026:** log ghi `HTTP 429 - het han muc` lúc 08:10 vì chạy thử
+> nhiều lần buổi sáng. Báo cáo 8h **vẫn gửi đầy đủ** lúc 08:10:36, chỉ thiếu phần nhận định.
+> Đúng như thiết kế.
+
+### 3. 🔀 Hai model, hai trần riêng
+
+Hệ thống dùng **hai model khác nhau** cho hai việc:
+
+| Việc | Khoá trong `.env` | Model mặc định |
+|---|---|---|
+| Viết phần nhận định trong báo cáo | `GEMINI_MODEL` | `gemini-3.6-flash` |
+| Trả lời khi Đại nhắn hỏi | `GEMINI_MODEL_HOI_DAP` | `gemini-3.8-flash` |
+| (dự phòng khi model trên quá tải) | `GEMINI_MODEL_HOI_DAP_DU_PHONG` | `gemini-3.5-flash` |
+
+**Vì sao tách:** trần miễn phí tính **riêng cho từng model**. Nếu dùng chung một model thì mỗi câu
+hỏi của Đại sẽ ăn vào lượt của báo cáo, làm báo cáo mất phần nhận định. Tách ra thì hai việc
+không giành nhau.
+
+**Muốn đổi model:** mở `.env` bằng `mo-file-env.bat`, sửa tên ở dòng tương ứng.
+
+- Gặp **`HTTP 404`** ⇒ tên model **sai hoặc đã bị Google khoá**. Xem cách dò tên đúng ở mục trên.
+- Gặp **`HTTP 503`** ⇒ model đang quá tải, hệ thống **tự thử lại** và **tự chuyển sang model dự
+  phòng**. Không cần Đại làm gì.
+- `gemini-2.5-flash` **không dùng được nữa** với tài khoản mới (Google trả `404: no longer
+  available to new users`). Đừng điền tên này vào `.env`.
+
+### 4. 🖥️ Mỗi máy một chìa khoá
 
 Máy nhà và máy công ty **dùng chung một chìa khoá cũng được** — không giới hạn số máy.
 Nhưng nếu muốn tách riêng cho dễ theo dõi thì cứ lấy hai chìa khoá khác nhau.

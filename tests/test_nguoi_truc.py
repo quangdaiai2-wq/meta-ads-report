@@ -139,7 +139,7 @@ class TrucGia:
     """
 
     def __init__(self, now, da_gui=None, che_do_thu=False, ket_qua_gui=True,
-                 tin_cho_san=None):
+                 tin_cho_san=None, tra_loi_ai_fn=None):
         self.now = now
         self.da_gui = set(da_gui or ())
         self.gui_roi = []
@@ -157,6 +157,7 @@ class TrucGia:
             dong_ho=lambda: self.now,
             xa_tin_fn=lambda env: (None, None),
             lay_tin_fn=self._lay_tin,
+            tra_loi_ai_fn=tra_loi_ai_fn,
         )
 
     def _gui(self, moc):
@@ -269,7 +270,7 @@ class TestOffsetMoi(unittest.TestCase):
 
 
 class TestTraLoiTinNhan(unittest.TestCase):
-    def _tra_loi(self, cau_hoi):
+    def _tra_loi(self, cau_hoi, tra_loi_ai_fn=None):
         return nguoi_truc.tra_loi_tin_nhan(
             cau_hoi=cau_hoi,
             env={"REPORT_ACCOUNT_NAME": "Test"},
@@ -278,6 +279,7 @@ class TestTraLoiTinNhan(unittest.TestCase):
             lan_gui_cuoi=luc(12, 1),
             da_gui={8, 12},
             now=luc(13),
+            tra_loi_ai_fn=tra_loi_ai_fn,
         )
 
     def test_hoi_con_song_thi_tra_loi_tinh_trang(self):
@@ -293,13 +295,56 @@ class TestTraLoiTinNhan(unittest.TestCase):
         self.assertIn("8h", tl)
         self.assertIn("12h", tl)
 
-    def test_hoi_cau_khac_thi_noi_ro_chua_co_AI(self):
-        tl = self._tra_loi("camp nào tệ nhất tuần này?")
-        self.assertIn("giai đoạn sau", tl)
-        self.assertNotIn("✅", tl)
+    def test_hoi_con_song_thi_khong_goi_ai(self):
+        """Cau hoi suc khoe phai tra loi ngay, KHONG ton luot AI."""
+        da_goi = []
 
-    def test_cau_hoi_rong_cung_tra_loi_chua_co_AI(self):
-        self.assertIn("giai đoạn sau", self._tra_loi(""))
+        def ai_gia(cau_hoi):
+            da_goi.append(cau_hoi)
+            return "khong bao gio toi day", None
+
+        self._tra_loi("còn sống không?", tra_loi_ai_fn=ai_gia)
+        self.assertEqual(da_goi, [])
+
+    def test_cau_hoi_so_lieu_thi_goi_ai(self):
+        da_goi = []
+
+        def ai_gia(cau_hoi):
+            da_goi.append(cau_hoi)
+            return "Chi tieu hom qua la 7.034.942 dong.", None
+
+        tl = self._tra_loi("camp nào tệ nhất tuần này?", tra_loi_ai_fn=ai_gia)
+        self.assertEqual(da_goi, ["camp nào tệ nhất tuần này?"])
+        self.assertIn("7.034.942", tl)
+
+    def test_ai_loi_thi_tra_loi_kem_ly_do(self):
+        def ai_gia(cau_hoi):
+            return None, "HTTP 429 - het han muc goi AI"
+
+        tl = self._tra_loi("doanh thu hôm nay?", tra_loi_ai_fn=ai_gia)
+        self.assertIn("chưa trả lời được", tl)
+        self.assertIn("HTTP 429", tl)
+
+    def test_ai_nem_loi_cung_khong_lam_chet(self):
+        def ai_gia(cau_hoi):
+            raise RuntimeError("no ra")
+
+        tl = self._tra_loi("số hôm nay?", tra_loi_ai_fn=ai_gia)
+        self.assertIn("chưa trả lời được", tl)
+
+    def test_tin_rong_thi_khong_goi_ai(self):
+        da_goi = []
+
+        def ai_gia(cau_hoi):
+            da_goi.append(cau_hoi)
+            return "x", None
+
+        self._tra_loi("   ", tra_loi_ai_fn=ai_gia)
+        self.assertEqual(da_goi, [])
+
+    def test_cau_hoi_rong_thi_bao_khong_thay_noi_dung(self):
+        """Tin rong KHONG duoc goi AI (khong ton luot AI vo ich)."""
+        self.assertIn("chưa thấy nội dung", self._tra_loi(""))
 
 
 class TestDinhDangThoiGian(unittest.TestCase):
@@ -335,14 +380,24 @@ class TestXuLyTin(unittest.TestCase):
         self.assertEqual(len(tg.tin_da_gui), 1)
         self.assertIn("đang chạy", tg.tin_da_gui[0])
 
-    def test_tin_tu_dai_hoi_so_lieu_thi_bao_chua_co(self):
-        tg = TrucGia(luc(13))
+    def test_tin_tu_dai_hoi_so_lieu_thi_goi_ai(self):
+        """Giai doan 4: cau hoi so lieu duoc lop AI tra loi, khong con bao 'chua co'."""
+        tg = TrucGia(luc(13), tra_loi_ai_fn=lambda c: ("Chi tieu 7.034.942 dong.", None))
         tg.truc.xu_ly_tin({
             "update_id": 1,
             "message": {"chat": {"id": 123}, "text": "camp nào tệ nhất tuần này?"},
         })
         self.assertEqual(len(tg.tin_da_gui), 1)
-        self.assertIn("giai đoạn sau", tg.tin_da_gui[0])
+        self.assertIn("7.034.942", tg.tin_da_gui[0])
+
+    def test_tin_tu_dai_hoi_so_lieu_ai_loi_thi_noi_ro_ly_do(self):
+        tg = TrucGia(luc(13), tra_loi_ai_fn=lambda c: (None, "HTTP 429 - het han muc"))
+        tg.truc.xu_ly_tin({
+            "update_id": 1,
+            "message": {"chat": {"id": 123}, "text": "camp nào tệ nhất tuần này?"},
+        })
+        self.assertEqual(len(tg.tin_da_gui), 1)
+        self.assertIn("HTTP 429", tg.tin_da_gui[0])
 
     def test_che_do_thu_thi_khong_gui_tin_ra_ngoai(self):
         tg = TrucGia(luc(13), che_do_thu=True)

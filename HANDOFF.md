@@ -1,11 +1,12 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 29/09/2026 — hai bảng xếp hạng **đổi tiêu chí**: bảng "hiệu quả" nay xếp
-theo **chi phí mỗi đơn** (trước đây xếp theo số đơn), và tin nhắn Telegram nay **hiện luôn số tiền
-mỗi đơn**. Giai đoạn 3 (phần nhận định do AI viết) đã xong và đã lên GitHub.
+**Cập nhật lần cuối:** 29/09/2026 — **Giai đoạn 4 xong**: Đại nhắn bot hỏi số liệu và được trả lời
+(4 công cụ đọc sổ lịch sử). `270/270` kiểm thử đạt. Trước đó cùng ngày: hai bảng xếp hạng đổi tiêu
+chí sang **chi phí mỗi đơn**, và chữa lỗi nặng **bảng mã cp1252** làm báo cáo ngừng gửi.
 
-> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3, rồi thêm `GEMINI_API_KEY` vào `.env`
-> (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
+> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4, rồi thêm `GEMINI_API_KEY`
+> vào `.env` (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và
+> `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
 
 ---
 
@@ -53,8 +54,12 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 
 ### Chưa làm
 
-- ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận 3 bản cập nhật ngày 14/09.
+- ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)** và
+  **GĐ4 (trả lời câu hỏi)**, rồi thêm `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`).
   👉 **Hướng dẫn từng bước: xem file `HUONG-DAN-MAY-NHA.md`**
+- ⏳ **Giai đoạn 5 chưa làm:** tự xử lý lỗi (tự chờ và thử lại khi Meta chặn tạm, cảnh báo khi số
+  liệu bất thường) + **tự gia hạn token Meta**. Phần tự gia hạn **chưa thử lần nào** — cần thử
+  trước khi hứa bất cứ điều gì.
 
 ---
 
@@ -163,9 +168,11 @@ File `cai-dat-nguoi-truc.bat` **tự dò Python**. Nếu không tìm thấy, nó
 | File | Vai trò |
 |---|---|
 | `report.py` | **Script chính** — lấy số liệu Meta, gửi Telegram |
-| `ai.py` | **Lớp AI** — viết 3–5 câu nhận định bằng Gemini. Không tính số, không gọi Meta, không gửi tin |
-| `tests/` | Kiểm thử tự động (151 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
-| `HUONG-DAN-LAY-CHIA-KHOA-AI.md` | Hướng dẫn lấy chìa khoá Gemini cho phần nhận định |
+| `ai.py` | **Lớp AI** — viết 3–5 câu nhận định (GĐ3) **và** trả lời câu hỏi có vòng lặp công cụ (GĐ4). Không tính số, không gọi Meta, không gửi tin |
+| `cong_cu.py` | **Bốn công cụ cho AI** — `lay_mot_ngay` · `lay_khoang` · `xep_hang_camp` · `so_sanh`. Thuần đọc `logs/lich-su.json`, **không chạm mạng**. Kèm `moc_thoi_gian()` tính phạm vi ngày |
+| `tests/` | Kiểm thử tự động (270 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
+| `chay-kiem-thu.bat` | Bấm đúp là chạy 270 bài kiểm thử — **không tốn lượt AI** |
+| `HUONG-DAN-LAY-CHIA-KHOA-AI.md` | Hướng dẫn lấy chìa khoá Gemini + giải thích **hai model, hai trần riêng** |
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
 | `kiem-tra-token.py` | 🔍 **Kiểm tra token** — cả Telegram lẫn Meta, và token Meta **còn sống bao lâu**. Chạy sau MỖI lần lấy token mới. Không gửi tin nhắn, không in token đầy đủ. |
@@ -198,6 +205,11 @@ python report.py --mock 12  # giả lập mốc 12h, không gửi
 - **Python thuần** — không cần thư viện ngoài (`urllib`, `json`, `argparse`)
 - **Meta Graph API v21.0**
 - Lịch Windows: `NguoiTruc` (một lịch duy nhất, chạy khi đăng nhập). Cách cũ: `BaoCaoMetaAds_08`, `_12`, `_17`
+- **Gemini — hai model, hai trần riêng (20 lượt/ngày MỖI model):**
+  - `GEMINI_MODEL` = `gemini-3.6-flash` → viết phần nhận định trong báo cáo
+  - `GEMINI_MODEL_HOI_DAP` = `gemini-3.8-flash` → trả lời câu hỏi của Đại
+  - `GEMINI_MODEL_HOI_DAP_DU_PHONG` = `gemini-3.5-flash` → dùng khi model trên trả 503/404
+  - `gemini-2.5-flash` **không dùng được nữa** (`404: no longer available to new users`)
 
 ### BẢN SỬA NGÀY 14/09/2026 — `report.py` gọi Meta API 1 lần thay vì 2
 
@@ -540,6 +552,71 @@ Kiểm thử: `185/185` đạt (thêm 10 bài, gồm 5 bài cho `_ep_stdout_utf8
 >
 > 🔎 **Cách nhận ra nhanh lỗi này về sau:** nhật ký có `UnicodeEncodeError` + `charmap` + `cp1252`,
 > và `report.py ... thoat voi ma 1`. Khi đó **báo cáo không gửi được**, không phải lỗi Meta/Telegram.
+
+### BẢN SỬA NGÀY 29/09/2026 (tiếp) — GIAI ĐOẠN 4: NGƯỜI TRỰC TRẢ LỜI CÂU HỎI
+
+**Thêm gì:** file mới `cong_cu.py`. Đại nhắn bot một câu hỏi về số liệu và **nhận được câu trả lời
+có số thật**, lấy từ sổ lịch sử. Kế hoạch đầy đủ:
+`docs/superpowers/plans/2026-09-29-giai-doan-4-tra-loi-cau-hoi.md`.
+
+**Kiến trúc:** AI **xin** hệ thống lấy số (gọi công cụ), chứ không tự bịa. Bốn công cụ:
+`lay_mot_ngay` · `lay_khoang` · `xep_hang_camp` · `so_sanh`.
+
+**Bảy điều bắt buộc nhớ:**
+
+1. **Hai model, hai trần riêng.** Trần miễn phí Gemini tính **riêng cho từng model**
+   (`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`, 20 lượt/ngày). Nên:
+   báo cáo dùng `GEMINI_MODEL` (`gemini-3.6-flash`), hỏi đáp dùng `GEMINI_MODEL_HOI_DAP`
+   (`gemini-3.8-flash`), dự phòng `GEMINI_MODEL_HOI_DAP_DU_PHONG` (`gemini-3.5-flash`).
+   **Đừng gộp lại một model** — hỏi đáp sẽ ăn hết lượt của báo cáo.
+2. **`TOI_DA_LUOT_CONG_CU = 3`, không phải 5.** Phép thử thật cho thấy AI cần **đúng 3 lượt công cụ**
+   rồi trả lời ở lượt 4. Để 5 thì một câu hỏi tốn 6 lượt AI ⇒ chỉ 3 câu là hết trần trong ngày.
+   Lượt cuối cùng **gọi KHÔNG kèm công cụ** để buộc AI trả lời bằng chữ.
+3. **`thoughtSignature` phải giữ nguyên.** Response của Gemini 3.x có trường này trong part.
+   `ai.tra_loi()` gửi lại **nguyên `content` của model**, không bóc ra ghép lại. Đã kiểm chứng thật.
+4. **Số tiền do CODE định dạng, không để AI tự thêm dấu.** Lần gọi AI đầu tiên trả về
+   `20319895 đồng` — đọc rất mệt. Sửa bằng cách công cụ trả thêm trường `*_hien_thi` là **chuỗi đã
+   định dạng sẵn** (`"20.319.895"`), câu lệnh bắt AI chép từ đó. **Đừng "sửa" bằng cách bảo AI tự
+   thêm dấu** — làm vậy là để AI *sửa số*, đúng rủi ro đã tránh ở GĐ3.
+5. **Phạm vi ngày do CODE tính.** `cong_cu.moc_thoi_gian()` chèn vào câu lệnh một mục MỐC THỜI GIAN.
+   Lý do: trong phép thử, AI tự hiểu *"tuần này"* thành **28/09→29/09 (hai ngày)**. Phạm vi thời
+   gian là một phép tính.
+6. **Câu lệnh CẤM markdown.** AI viết `**...**` và gạch đầu dòng, Telegram hiện rất rối. Có quy tắc
+   "tối đa 8 câu, văn xuôi liền mạch, không dấu sao / dấu thăng / gạch đầu dòng".
+7. **`NguoiTruc` có thêm `tra_loi_ai_fn`.** Đây là **lỗi thật do bước dựng thử bắt được**: thiếu
+   đường tiêm này thì **bộ kiểm thử gọi AI thật** — tốn lượt AI và phụ thuộc mạng. Khi viết kiểm
+   thử đi qua `NguoiTruc`, **luôn tiêm hàm giả**.
+
+**BA thay đổi so với kế hoạch đã duyệt — cả ba đều do dựng thử / kiểm chứng thật bắt được:**
+
+| # | Kế hoạch ghi | Thực tế | Vì sao |
+|---|---|---|---|
+| 1 | Không nhắc gì tới `NguoiTruc` | Thêm `tra_loi_ai_fn` vào `NguoiTruc.__init__` và `xu_ly_tin` | Thiếu thì `TestXuLyTin` **gọi AI thật**. Lỗi hiện ra khi chạy kiểm thử trong thư mục tạm **không có `GEMINI_API_KEY`** |
+| 2 | Không nhắc gì tới định dạng số tiền | Công cụ trả thêm `tong_hien_thi`, `chi_tieu_hien_thi`, `chi_phi_moi_don_hien_thi`, `chenh_lech_hien_thi` | Lần gọi Gemini thật đầu tiên ra `20319895 đồng`. Xem điều 4 ở trên |
+| 3 | Chỉ nói sửa `test_hoi_cau_khac_thi_noi_ro_chua_co_AI` | Phải sửa **HAI** bài cũ: thêm `test_cau_hoi_rong_cung_tra_loi_chua_co_AI` | Bài thứ hai nằm ở cuối lớp, kế hoạch bỏ sót; cả hai đều khẳng định có chữ `"giai đoạn sau"` |
+
+**Bằng chứng mạnh nhất của giai đoạn** (gọi Gemini thật, dùng `logs/lich-su.json` thật):
+
+```
+Trong ngày 28/09/2026, tổng chi tiêu quảng cáo của shop là 20.319.895 đồng. Chiến dịch
+tốn kém nhất trong ngày là 2026-09-04-dainq-Online-Scale KHTN với chi tiêu 2.745.452 đồng.
+Chiến dịch này đã mang về 10 lượt mua và 39 tin nhắn mới, với chi phí mỗi đơn là 274.545 d.
+```
+
+Đối chiếu `lich-su.json`: chi tiêu ngày 28/09 = **20.319.895** ✅, camp đắt nhất = **2.745.452** ✅,
+**10 lượt mua** ✅. Phép kiểm tự động soi từng số AI viết và báo
+**`So KHONG khop du lieu: KHONG CO (dat)`**.
+
+**Một hạn chế đã biết, KHÔNG sửa được bằng code:** model chèn khoảng trắng quanh dấu gạch nối
+trong tên chiến dịch (`2026-09-04-dainq` → `2026 - 09 - 04 - dainq`). Câu lệnh đã ghi rõ mà model
+vẫn làm. **Không sai số, vẫn nhận ra đúng chiến dịch.** Đừng mất công "sửa" lần nữa.
+
+**Kiểm thử:** `270/270` đạt (trước GĐ4 là 185). Thêm `tests/test_cong_cu.py` (66 bài) và 19 bài
+mới trong `tests/test_ai.py`, cùng các bài thay thế trong `tests/test_nguoi_truc.py`.
+Kiểm thử **không gọi mạng** — mọi lời gọi Gemini đều đi qua hàm giả tiêm vào bằng `goi_mang_fn=`.
+
+**Tài liệu đã cập nhật:** `README.md` (mục "Nhắn tin hỏi bot"), `HUONG-DAN-LAY-CHIA-KHOA-AI.md`
+(mục "Hai model, hai trần riêng"), `chay-kiem-thu.bat` (155 → 270 bài), `.env` và `.env.example`.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 

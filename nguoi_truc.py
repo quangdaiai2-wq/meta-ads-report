@@ -28,6 +28,8 @@ import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import ai
+import cong_cu
 import report
 
 GOC = Path(__file__).parent
@@ -53,16 +55,15 @@ CHO_REPORT_TOI_DA = 600
 # Danh sach moc mac dinh khi .env khong ghi gi.
 MOC_MAC_DINH = [8, 12, 17, 22]
 
-# Cau tra loi cho cau hoi chua lam duoc (phan AI thuoc Giai doan 4).
-TRA_LOI_CHUA_CO_AI = (
-    "Tôi đang trực, nhưng chưa trả lời được câu hỏi về số liệu.\n"
+# Cau tra loi khi lop AI khong tra loi duoc. Phai noi RO LY DO, khong im lang:
+# Dai khong biet ky thuat, mot tin nhan im lang se lam Dai tuong bot hong.
+TRA_LOI_AI_LOI = (
+    "Tôi chưa trả lời được câu hỏi này.\n"
     "\n"
-    "Phần hỏi số liệu (ví dụ \"camp nào tệ nhất tuần này?\") sẽ có ở "
-    "giai đoạn sau, khi nối phần AI vào.\n"
+    "Lý do: {ly_do}\n"
     "\n"
-    "Hiện tôi làm được hai việc:\n"
-    "- Gửi báo cáo tự động đúng các mốc giờ mỗi ngày.\n"
-    "- Trả lời câu \"còn sống không?\" để Đại biết tôi còn chạy."
+    "Đại thử lại sau vài phút. Nếu vẫn không được thì xem file "
+    "logs\\baocao.log để biết chi tiết."
 )
 
 
@@ -295,12 +296,44 @@ def _moc_ke_tiep(now, danh_sach_moc, da_gui):
     return "ngày mai"
 
 
+def _lay_so_hom_nay(env, ngay):
+    """Goi Meta lay so lieu MOT ngay. Tra dict stats hoac None.
+
+    Chi dung cho cau hoi can so HOM NAY, khi lich su chua kip ghi. Moi cau hoi
+    toi da mot lan goi, vi goi Meta mat 15-30 giay (do duoc trong log).
+    """
+    try:
+        stats, err = report.compute_stats(env, ngay, ngay)
+        if err:
+            report.log(f"NGUOI TRUC: khong lay duoc so hom nay tu Meta: {err}")
+            return None
+        return stats
+    except Exception as e:
+        report.log(f"NGUOI TRUC: loi khi lay so hom nay tu Meta: {e}")
+        return None
+
+
+def _tra_loi_bang_ai(cau_hoi, env, now):
+    """Goi lop AI de tra loi cau hoi ve so lieu. Tra ve (chu, loi)."""
+    duong_dan_ls = report.LOG_DIR / "lich-su.json"
+    bo = cong_cu.BoCongCu(
+        duong_dan=duong_dan_ls,
+        lay_so_hom_nay_fn=lambda ngay: _lay_so_hom_nay(env, ngay),
+        hom_nay=now.date(),
+    )
+    moc_tg = cong_cu.moc_thoi_gian(duong_dan_ls, hom_nay=now.date())
+    return ai.tra_loi(cau_hoi, bo, env=env, moc_tg=moc_tg)
+
+
 def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
-                     now=None):
+                     now=None, tra_loi_ai_fn=None):
     """Soan cau tra loi cho mot tin nhan tu Dai.
 
-    Giai doan 2 chi tra loi duoc cau hoi suc khoe. Phan hoi so lieu can lop AI
-    (Giai doan 4), nen cac cau hoi khac duoc tra loi that tha la chua co.
+    Giai doan 2 tra loi cau hoi suc khoe. Giai doan 4 tra loi them cau hoi ve
+    so lieu, bang cach goi lop AI (ai.tra_loi).
+
+    `tra_loi_ai_fn` phai tiem duoc: neu khong thi kiem thu se goi AI that, vua
+    hong phep kiem vua ton luot AI.
     """
     now = now or datetime.now()
     chuan = (cau_hoi or "").lower().strip()
@@ -325,7 +358,21 @@ def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
             f"- Mốc kế tiếp: {_moc_ke_tiep(now, danh_sach_moc, da_gui)}",
         ])
 
-    return TRA_LOI_CHUA_CO_AI
+    if not chuan:
+        return "Tôi chưa thấy nội dung trong tin nhắn của Đại."
+
+    # Cau hoi ve so lieu -> lop AI (Giai doan 4).
+    if tra_loi_ai_fn is None:
+        tra_loi_ai_fn = lambda c: _tra_loi_bang_ai(c, env, now)
+
+    try:
+        chu, loi = tra_loi_ai_fn(cau_hoi)
+    except Exception as e:
+        chu, loi = None, f"loi khong luong truoc: {e}"
+
+    if chu:
+        return chu
+    return TRA_LOI_AI_LOI.format(ly_do=loi or "khong ro")
 
 
 class NguoiTruc:
@@ -342,10 +389,13 @@ class NguoiTruc:
     def __init__(self, env, danh_sach_moc, che_do_thu=False,
                  gui_bao_cao_fn=None, gui_tin_fn=None,
                  doc_da_gui_fn=None, dong_ho=None,
-                 xa_tin_fn=None, lay_tin_fn=None):
+                 xa_tin_fn=None, lay_tin_fn=None, tra_loi_ai_fn=None):
         self.env = env or {}
         self.danh_sach_moc = list(danh_sach_moc) or list(MOC_MAC_DINH)
         self.che_do_thu = che_do_thu
+        # Ham tra loi bang AI. Phai tiem duoc: neu khong thi kiem thu se goi AI
+        # that (ton luot AI va phu thuoc mang).
+        self.tra_loi_ai_fn = tra_loi_ai_fn
 
         if gui_bao_cao_fn is None:
             def gui_bao_cao_fn(moc):
@@ -464,6 +514,7 @@ class NguoiTruc:
             lan_gui_cuoi=self.lan_gui_cuoi,
             da_gui=self._da_gui_hom_nay(now),
             now=now,
+            tra_loi_ai_fn=self.tra_loi_ai_fn,
         )
         if self.che_do_thu:
             report.log(f"NGUOI TRUC [THU]: se tra loi: {tra_loi.splitlines()[0]}")
