@@ -60,8 +60,18 @@ Telegram. Không cần bấm `bat-chay-bu.bat` nữa.
 
 **Không cần làm gì.** Máy bật **và đã đăng nhập Windows** là báo cáo tự chạy.
 
-Muốn biết hệ thống còn sống hay không: nhắn cho bot Telegram câu `còn sống không?` — bot trả
-lời kèm tình trạng (đã chạy bao lâu, hôm nay đã gửi mốc nào).
+**Hai câu hỏi nhanh cho bot Telegram** — cả hai đều **không tốn lượt AI**, trả lời được ngay:
+
+| Nhắn cho bot | Bot trả lời |
+|---|---|
+| `còn sống không?` | Máy nào, đã chạy bao lâu, hôm nay đã gửi mốc nào, mốc kế tiếp |
+| `token` | Token Meta còn sống bao nhiêu ngày, hết hạn ngày nào, cần làm gì |
+
+Muốn hỏi **số liệu** thì nhắn câu hỏi bình thường, ví dụ *"camp nào tệ nhất tuần này?"* — câu này
+**có** dùng AI nên tốn một lượt trong hạn mức miễn phí (20 lượt/ngày).
+
+> 💡 Nếu báo cáo có dòng `⚠️ Số liệu kỳ này trông bất thường` thì **không phải báo cáo hỏng** — hệ
+> thống chỉ nghi ngờ số liệu và vẫn gửi báo cáo. Đọc lý do ngay trên dòng đó.
 
 Chỉ `git pull` KHI:
 - AI báo *"có bản cập nhật, chạy git pull"*, hoặc
@@ -94,7 +104,14 @@ git push
 2. **Copy file `.env` sang máy kia bằng USB** (vì `.env` không lên GitHub).
 3. Bảo AI đẩy code nếu có đổi script.
 
-> ⚠️ Hệ thống sẽ **tự nhắn cảnh báo** vào Telegram khi token hết hạn — Đại không cần tự nhớ ngày.
+> ⛔ **Hệ thống KHÔNG tự gia hạn token được.** Đã thử thật ngày 29/09/2026: Meta trả về token mới
+> nhưng **giữ nguyên ngày hết hạn cũ** (lệch +0 giây, thử hai lần đều vậy). Đây là quy định của
+> Meta, **không phải** hạn chế của chương trình — nên bắt buộc phải làm tay mỗi 60 ngày.
+> Chi tiết: `HUONG-DAN-DIEN-TOKEN.md`.
+
+> 💡 Hệ thống **nhắc hai mức**: còn dưới **30 ngày** thì nhắc nhẹ một lần mỗi ngày ở báo cáo buổi
+> sáng; còn dưới **7 ngày** thì nhắc ở **mọi** báo cáo. Muốn kiểm bất cứ lúc nào thì nhắn chữ
+> `token` cho bot — **không tốn lượt AI**.
 
 ---
 

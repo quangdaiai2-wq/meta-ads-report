@@ -1,16 +1,67 @@
-# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 28/09/2026 (Giai đoạn 2: Người trực)
+# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 29/09/2026 (Giai đoạn 2 + 3 + 4 + 5)
 
 **Dành cho:** Đại (người không cần biết code) **và** trợ lý AI trên máy nhà.
 
-> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy 3 bản cập nhật lên GitHub.
+> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy 4 bản cập nhật lên GitHub.
 > File này nói rõ có gì mới, máy nhà cần làm gì, và những điểm cần biết về token.
 > Đọc hết trước khi làm.
 
 **Ngày máy công ty cài đặt:** 14/09/2026. Kho GitHub: `meta-ads-report`, nhánh `main`.
+**Mốc mới nhất đã đẩy:** `2e91314` (29/09/2026, gồm cả Giai đoạn 5).
 
 ---
 
-## ⚠️ CẬP NHẬT NGÀY 28/09/2026 — ĐỌC PHẦN NÀY TRƯỚC
+## 🆕 CẬP NHẬT NGÀY 29/09/2026 — ĐỌC PHẦN NÀY TRƯỚC
+
+Nếu máy nhà đã làm xong bản 28/09 (Giai đoạn 2) thì nay chỉ còn **BA bước nhỏ**:
+
+1. **`git pull`** → nhận Giai đoạn 3 + 4 + 5.
+2. **Thêm `GEMINI_API_KEY` vào `.env`** — chìa khoá AI, lấy theo `HUONG-DAN-LAY-CHIA-KHOA-AI.md`
+   (khoảng 5 phút, có bản miễn phí). **Không có chìa khoá thì báo cáo vẫn gửi đầy đủ**, chỉ thiếu
+   mục NHẬN ĐỊNH và bot không trả lời được câu hỏi về số liệu.
+3. **Nhắn thử bot một chữ `token`** để xác nhận (xem mục "Hai lệnh nhanh" bên dưới).
+
+**Không phải bấm lại `cai-dat-nguoi-truc.bat`**, không phải sửa gì khác.
+
+### Có gì mới kể từ bản 28/09
+
+| Giai đoạn | Có gì mới |
+|---|---|
+| **3** | Mục `🔵 NHẬN ĐỊNH` trong báo cáo nay do AI viết 3–5 câu, có so sánh với kỳ trước (chỉ ở mốc 8h) |
+| **4** | **Nhắn bot hỏi được số liệu** bằng tiếng Việt: *"camp nào tệ nhất tuần này?"* → bot trả lời có số thật |
+| **5** | **Tự xử lý lỗi**: Meta chặn tạm thì tự chờ rồi thử lại; token chết thì không thử lại vô ích; số liệu trông sai thì cảnh báo; cùng một lỗi chỉ nhắn **một tin** thay vì 9 tin mỗi ngày |
+
+### Hai lệnh nhanh mới — **không tốn lượt AI**
+
+| Nhắn cho bot | Bot trả lời |
+|---|---|
+| `còn sống không?` | Máy nào, đã chạy bao lâu, hôm nay đã gửi mốc nào |
+| `token` | Token Meta còn sống bao nhiêu ngày, hết hạn ngày nào, cần làm gì |
+
+### ⛔ Điều quan trọng nhất về token — đã kiểm chứng
+
+**Hệ thống KHÔNG tự gia hạn token được. Meta không cho.** Máy công ty đã thử thật ngày 29/09/2026:
+Meta trả về token mới nhưng **giữ nguyên ngày hết hạn cũ** (lệch **+0 giây**, thử hai lần đều vậy).
+
+⇒ **Vẫn phải làm tay mỗi 60 ngày.** Nhưng hệ thống nay nhắc **hai mức** cho bạn:
+- Còn dưới **30 ngày** → nhắc nhẹ một lần mỗi ngày ở báo cáo buổi sáng
+- Còn dưới **7 ngày** → nhắc ở **mọi** báo cáo
+
+Và bạn chủ động kiểm được bất cứ lúc nào bằng cách nhắn chữ `token`.
+
+> 🔎 Có **một hướng chưa thử**: token "System User" trong Business Manager có tuỳ chọn không hết hạn.
+> **Chưa ai thử, chưa hứa gì.** Ghi lại đây để lúc nào rảnh thì nghiên cứu.
+
+### Token máy nhà hết hạn ngày nào?
+
+| Máy | Token hết hạn |
+|---|---|
+| **Máy nhà** | **10/11/2026** |
+| Máy công ty |  |
+
+---
+
+## ⚠️ CẬP NHẬT NGÀY 28/09/2026 — nếu máy nhà CHƯA làm bản này
 
 Bản 28/09 sửa hai lỗi đang chạy thật. Bản 28/09 (Giai đoạn 2) thay **cách hệ thống chạy**:
 không còn ba lịch Windows rời rạc mà là **một tiến trình thường trú**. Vì vậy máy nhà **PHẢI
