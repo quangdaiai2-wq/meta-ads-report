@@ -12,6 +12,35 @@
 
 ---
 
+## Cập nhật khi thi công (29/09/2026) — ĐÃ XONG
+
+**Đã thi công xong 4/4 task. `270/270` kiểm thử đạt** (trước GĐ4 là 185). Commit **`bfa5275`**,
+đã push lên GitHub (`61db82e..bfa5275`). Chi tiết đầy đủ ở `HANDOFF.md`, mục "GIAI ĐOẠN 4".
+
+**Ba chỗ khác kế hoạch — tất cả đều do dựng thử hoặc kiểm chứng thật bắt được**, ghi chi tiết ở
+mục "Ba lỗi của kế hoạch đã bị chính bước dựng thử bắt được" phía dưới:
+
+1. Thêm `tra_loi_ai_fn` vào `NguoiTruc` (kế hoạch không nhắc) — thiếu thì bộ kiểm thử gọi AI thật.
+2. Công cụ trả thêm các trường `*_hien_thi` (kế hoạch không nhắc) — vì AI viết `20319895 đồng`.
+3. Phải sửa **hai** bài kiểm thử cũ, không phải một — kế hoạch bỏ sót bài thứ hai.
+
+**Kiểm chứng trên máy thật, sau khi thi công:**
+
+| Phép kiểm | Kết quả |
+|---|---|
+| `python -m unittest discover -s tests -t .` | **270/270 đạt**, không gọi mạng |
+| `chay-kiem-thu.bat` | Chạy đúng, đã cập nhật số bài từ 155 → 270 |
+| Bốn công cụ trên `logs/lich-su.json` THẬT | Số khớp bản ghi 28/09 |
+| **`nguoi_truc.tra_loi_tin_nhan` + Gemini THẬT** trong repo thật | Trả lời `20.319.895`, 19 chiến dịch, 125 tin nhắn, 40 lượt mua — **khớp cả bốn** |
+| `.env` sau khi thêm hai khoá mới | Đọc được 14 khoá, model hỏi đáp tách khỏi model báo cáo |
+| `.env` có lọt lên GitHub không | **Không** — `.gitignore` chặn cả `.env`, `.env.*`, `logs/` |
+| Định dạng số tiền trong câu trả lời | `20.319.895` — **có dấu chấm**, không còn `20319895` |
+
+> 📌 **Sao lưu `.env` trước khi sửa:** đã tạo `.env.bak-truoc-gd4` (bị `.gitignore` chặn, không lên
+> GitHub). Nếu hai khoá mới gây vấn đề gì, chép đè file đó lại là về nguyên trạng.
+
+---
+
 ## Kết quả kiểm chứng trước khi viết kế hoạch (29/09/2026)
 
 Đây là **việc thử nghiệm đầu tiên** của giai đoạn, làm bằng **chìa khoá thật của Đại**, trước khi viết một dòng kế hoạch nào. Kết quả quyết định hình dạng cả kế hoạch.
@@ -113,21 +142,19 @@ y nguyên từng ký tự, không thêm khoảng trắng quanh dấu gạch nố
 vi của model, không phải lỗi logic: **không sai số, vẫn đọc được, vẫn nhận ra đúng chiến dịch nào**.
 Ghi lại đây để sau này không ai mất công "sửa" nó lần nữa.
 
-### Ghi chú nhỏ: kiểu xuống dòng của repo KHÔNG nhất quán
+### Ghi chú nhỏ: chuyện xuống dòng — KHÔNG phải vấn đề
 
-Đo thật ngày 29/09/2026:
+Đo thật ngày 29/09/2026: trên đĩa, `ai.py`/`nguoi_truc.py`/`tests/test_ai.py` là **LF**, còn
+`report.py`/`lich_su.py`/`dashboard.py`/các file `.bat` là **CRLF**. Nhìn qua tưởng repo không
+nhất quán — **không phải**.
 
-| File | Kiểu xuống dòng |
-|---|---|
-| `ai.py`, `nguoi_truc.py`, `tests/test_ai.py` (các file mới) | **LF** |
-| `report.py`, `lich_su.py`, `dashboard.py`, các file `.bat` (các file cũ) | **CRLF** |
+Nguyên nhân thật: máy này bật **`core.autocrlf = true`**. Nghĩa là Git **lưu LF trong repo** và
+**tự đổi thành CRLF khi checkout ra đĩa**. Các file do công cụ AI tạo (Write/Edit) thì không đi
+qua checkout nên ở lại LF trên đĩa — nhưng khi `git add` thì Git vẫn chuẩn hoá về LF.
 
-Repo **không có** `.gitattributes`, nên Git không tự chuyển. Vì vậy:
-
-- `cong_cu.py` và `tests/test_cong_cu.py` viết bằng **LF** là đúng — khớp với `ai.py` cùng giai đoạn.
-- **File `.bat` mới (nếu có) phải ghi bằng CRLF** — đây là quy tắc cũ vẫn đúng, vì batch trên Windows
-  cần CRLF. Giai đoạn này không tạo file `.bat` nào.
-- Ghi chú trong `HANDOFF.md` nói "cả repo đang CRLF" nay **không còn đúng** với các file mới.
+⇒ **Không cần ép kiểu xuống dòng bằng tay.** Cứ để Git lo. Lệnh `git add` sẽ in cảnh báo
+`LF will be replaced by CRLF the next time Git touches it` — **đó là thông tin bình thường**,
+không phải lỗi, không phải dấu hiệu hỏng gì.
 
 ---
 
