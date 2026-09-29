@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dinh nghia AI Agent - He thong Facebook Ads cua Dai</title>
+<style>
+:root{--bg:#0e1117;--card:#161b26;--line:#28303f;--tx:#e6edf3;--dim:#9aa7b8;--ac:#4da3ff;--warn:#ffb454}
+*{box-sizing:border-box}
+body{margin:0;padding:28px 18px;background:var(--bg);color:var(--tx);
+font:15px/1.65 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:920px;margin:0 auto;background:var(--card);border:1px solid var(--line);
+border-radius:12px;padding:28px 30px}
+h1{font-size:24px;margin:0 0 6px;padding-bottom:14px;border-bottom:2px solid var(--ac)}
+h2{font-size:19px;margin:30px 0 10px;color:var(--ac)}
+h3{font-size:16px;margin:22px 0 8px;color:var(--warn)}
+p{margin:10px 0} code{background:#1c2231;border:1px solid var(--line);border-radius:4px;
+padding:1px 5px;font:13px/1.4 Consolas,monospace;color:#ffd580;word-break:break-all}
+pre{background:#111722;border:1px solid var(--line);border-left:3px solid var(--ac);
+border-radius:8px;padding:14px;overflow-x:auto}
+pre code{background:none;border:none;padding:0;color:#c9d6e4}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#1c2231;color:var(--ac);font-weight:600}
+tr:nth-child(even) td{background:#131926}
+blockquote{margin:14px 0;padding:12px 16px;background:#1c2231;border-left:3px solid var(--warn);
+border-radius:0 8px 8px 0;color:var(--dim)}
+hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+ul,ol{margin:10px 0;padding-left:24px} li{margin:5px 0}
+strong{color:#fff}
+footer{max-width:920px;margin:14px auto 0;color:var(--dim);font-size:12px;text-align:center}
+</style></head><body>
+<main>
+<h1>ĐỊNH NGHĨA AI AGENT — VÀ HỆ THỐNG FACEBOOK ADS CỦA ĐẠI</h1>
+<p><strong>Ngày:</strong> 29/09/2026<br><strong>Người duyệt:</strong> Đại<br><strong>Trạng thái:</strong> Chờ Đại đọc và duyệt — chưa động vào code<br><strong>Đây là:</strong> việc #1 trong ba việc Đại đã chốt (làm theo thứ tự 1 → 2 → 3)</p>
+<hr>
+<h2>0. TÓM TẮT TRONG NỬA TRANG</h2>
+<p><strong>Hệ thống đang chạy của Đại chưa phải AI Agent.</strong> Nó là <em>tự động hóa có AI viết văn</em>.<br>Điều này không phải lỗi — bản thiết kế "Người trực" ngày 28/09 <strong>cố ý</strong> làm như vậy, vì báo cáo<br>tiền bạc thì không được để AI quyết định con số. Quyết định đó vẫn đúng và nên giữ.</p>
+<p>Nhưng nếu Đại muốn một <strong>AI Agent đúng nghĩa</strong> cho Facebook Ads, thì đó là một hệ thống <strong>mới</strong>,<br>đứng cạnh hệ thống cũ, không phải một bản sửa của hệ thống cũ.</p>
+<p>Bốn thứ một AI Agent bắt buộc phải có, và hệ thống hiện tại có/thiếu:</p>
+<table><thead><tr><th>Đặc tính</th><th>Hệ thống hiện tại</th></tr></thead><tbody><tr><td><strong>Mục tiêu</strong> — biết "tốt" là gì</td><td>❌ Không có. Nó mô tả số, không phán xét số</td></tr><tr><td><strong>Vòng lặp</strong> — tự quyết bước kế tiếp</td><td>⚠️ Có, nhưng chỉ trong nhánh hỏi đáp, tối đa 3 lượt</td></tr><tr><td><strong>Công cụ</strong> — tác động ra thế giới</td><td>❌ Bốn công cụ đều chỉ <strong>đọc</strong></td></tr><tr><td><strong>Trí nhớ</strong> — nhớ việc mình đã làm</td><td>⚠️ Nhớ <strong>số liệu</strong>, không nhớ <strong>hành động</strong></td></tr></tbody></table>
+<p><strong>Một sự thật kỹ thuật phải nói trước:</strong> tôi đã hỏi thẳng Meta bằng token của Đại (ngày 29/09/2026).<br>Token hiện có quyền <code>ads_read</code>, <code>business_management</code>, <code>public_profile</code> — và <strong>không có</strong><br><code>ads_management</code>. Nghĩa là: <strong>với token đang có, không agent nào tắt được camp hay đổi ngân sách.</strong><br>Muốn tự hành động thì phải xin lại token, và đó là việc Đại phải làm tay trong giao diện Meta.</p>
+<p><strong>Đề nghị của tôi:</strong> làm theo ba bước, mỗi bước dừng lại cho Đại xem kết quả. Đừng nhảy thẳng<br>sang "agent tự tắt camp" — vì lúc đó tiền thật đã bị tác động bởi một thứ Đại không đọc được code.</p>
+<hr>
+<h2>1. AI AGENT LÀ GÌ — ĐỊNH NGHĨA CHẶT</h2>
+<h3>1.1. Định nghĩa một câu</h3>
+<blockquote>**AI Agent là một hệ thống trong đó AI tự quyết định hành động kế tiếp, dựa trên kết quả của<br>hành động vừa làm, cho tới khi đạt được mục tiêu — và đường đi không được vẽ sẵn từ trước.**</blockquote>
+<p>Chữ quan trọng nhất là <strong>"không được vẽ sẵn"</strong>. Nếu người viết code biết trước ở mỗi bước hệ thống<br>sẽ làm gì, thì đó là script tự động, không phải agent. Trí thông minh nằm ở chỗ hệ thống tự chọn<br>đường, kể cả khi đường đó không ai lường trước.</p>
+<h3>1.2. Bốn đặc tính bắt buộc — thiếu một là không phải agent</h3>
+<table><thead><tr><th>#</th><th>Đặc tính</th><th>Nghĩa là gì</th><th>Thiếu nó thì sao</th></tr></thead><tbody><tr><td>1</td><td><strong>Mục tiêu</strong></td><td>Biết mình đang cố đạt cái gì, và đo được đã đạt chưa</td><td>Hệ thống chỉ mô tả, không bao giờ biết nên làm gì</td></tr><tr><td>2</td><td><strong>Vòng lặp</strong></td><td>Quan sát → suy nghĩ → hành động → quan sát lại, lặp tới khi xong</td><td>Hệ thống chỉ chạy một lượt rồi dừng</td></tr><tr><td>3</td><td><strong>Công cụ</strong></td><td>Có khả năng <strong>thay đổi</strong> thế giới bên ngoài, không chỉ sinh chữ</td><td>Hệ thống chỉ biết nói, không làm được gì</td></tr><tr><td>4</td><td><strong>Trí nhớ</strong></td><td>Nhớ việc mình đã làm và kết quả ra sao, để lần sau khác lần trước</td><td>Hệ thống lặp lại sai lầm cũ mãi mãi</td></tr></tbody></table>
+<h3>1.3. Phân biệt bốn loại — để không tự lừa mình</h3>
+<table><thead><tr><th>Loại</th><th>Ai quyết định bước kế tiếp</th><th>Có tác động ra ngoài?</th><th>Thí dụ</th></tr></thead><tbody><tr><td><strong>Script tự động</strong></td><td>Người viết code</td><td>Không</td><td><code>report.py</code> chạy lúc 8h</td></tr><tr><td><strong>Chatbot</strong></td><td>Người dùng hỏi gì thì đáp nấy</td><td>Không</td><td>Bot trả lời số liệu (GĐ4)</td></tr><tr><td><strong>Workflow</strong></td><td>Người thiết kế, theo sơ đồ cố định</td><td>Có, nhưng theo đường đã vẽ</td><td>Zapier, n8n</td></tr><tr><td><strong>AI Agent</strong></td><td><strong>Chính AI</strong></td><td><strong>Có</strong></td><td>Hệ thống tự thấy camp đốt tiền rồi tự tắt</td></tr></tbody></table>
+<p>Ranh giới giữa <strong>workflow</strong> và <strong>agent</strong> là chỗ dễ nhầm nhất. Một workflow có 20 nhánh vẫn là<br>workflow, vì người thiết kế đã vẽ đủ 20 nhánh. Một agent có thể chỉ có 3 công cụ, nhưng nó<br><strong>tự quyết</strong> dùng công cụ nào, theo thứ tự nào, và khi nào dừng.</p>
+<h3>1.4. Ba mức tự hành — dùng thống nhất từ đây về sau</h3>
+<table><thead><tr><th>Mức</th><th>Tên</th><th>AI được làm gì</th><th>Rủi ro</th></tr></thead><tbody><tr><td><strong>Mức 1</strong></td><td>Đọc và nói</td><td>Đọc số, viết nhận xét, trả lời câu hỏi</td><td>Không có — sai thì chỉ sai lời</td></tr><tr><td><strong>Mức 2</strong></td><td>Đọc, nói, <strong>đề xuất</strong></td><td>Thêm: đề xuất hành động cụ thể ("tắt camp X vì...")</td><td>Thấp — Đại vẫn là người bấm</td></tr><tr><td><strong>Mức 3</strong></td><td><strong>Tự hành có trần</strong></td><td>Thêm: tự làm trong giới hạn Đại đặt ra</td><td><strong>Tiền thật bị tác động</strong></td></tr></tbody></table>
+<p>Hệ thống hiện tại đang ở <strong>giữa Mức 1 và Mức 2</strong> (nó nhận xét được nhưng không đề xuất hành động).<br>Đích Đại đã chốt là <strong>Mức 3</strong>. Đường đi đề nghị: Mức 2 trước, Mức 3 sau.</p>
+<hr>
+<h2>2. HỆ THỐNG HIỆN TẠI CỦA ĐẠI — SOI THEO ĐỊNH NGHĨA</h2>
+<h3>2.1. Những gì đã có (đáng ghi nhận, đừng làm lại)</h3>
+<p>Đọc kỹ <code>ai.py</code>, <code>cong_cu.py</code>, <code>nguoi_truc.py</code> ngày 29/09/2026:</p>
+<ul><li><strong>Tiến trình thường trú</strong> <code>nguoi_truc.py</code> — chạy suốt khi máy bật, biết rõ lịch của chính nó.<br>Đây là hạ tầng đúng, agent sẽ ở lại trong đó.</li><li><strong>Vòng lặp công cụ</strong> trong <code>ai.py::tra_loi()</code> (dòng 514) — AI tự xin gọi công cụ, code chạy<br>công cụ, trả kết quả về, AI gọi tiếp. Giới hạn 3 lượt, có ngân sách thời gian 180 giây.<br><strong>Đây chính là mầm mống của một agent</strong> — nó đã đúng về hình dạng.</li><li><strong>Bốn công cụ</strong>: <code>lay_mot_ngay</code>, <code>lay_khoang</code>, <code>xep_hang_camp</code>, <code>so_sanh</code> (<code>cong_cu.py</code> dòng 155).</li><li><strong>Bộ nhớ số liệu</strong>: <code>logs/lich-su.json</code>, giữ 180 ngày, ghi <strong>trước</strong> khi gửi báo cáo.</li><li><strong>Xử lý lỗi chín</strong>: phân biệt lỗi tạm thời / vĩnh viễn, model dự phòng, suy giảm êm.</li></ul>
+<p>Nói thẳng: phần hạ tầng này tốt hơn mặt bằng chung. Agent xây trên nền này sẽ không phải làm lại<br>chuyện mạng, chuyện lỗi, chuyện trần AI.</p>
+<h3>2.2. Những gì còn thiếu — bảng đối chiếu bốn đặc tính</h3>
+<table><thead><tr><th>Đặc tính</th><th>Trạng thái</th><th>Chi tiết thiếu</th></tr></thead><tbody><tr><td><strong>Mục tiêu</strong></td><td>❌ Thiếu hẳn</td><td>Không có chỗ nào trong code định nghĩa "kết quả tốt". Hệ thống biết <code>cpr</code> (chi phí mỗi đơn) là bao nhiêu, nhưng không biết bao nhiêu thì gọi là tốt, và không biết nên làm gì khi nó xấu</td></tr><tr><td><strong>Vòng lặp</strong></td><td>⚠️ Có nhưng hẹp</td><td>Vòng lặp chỉ chạy khi <strong>Đại nhắn tin</strong>. Không có vòng lặp nền. AI không bao giờ tự khởi xướng việc gì</td></tr><tr><td><strong>Công cụ</strong></td><td>❌ Toàn đọc</td><td>Cả bốn công cụ chỉ đọc <code>lich-su.json</code>. <strong>Không một công cụ nào ghi.</strong> AI có thể nói "camp X tệ" nhưng không thể làm gì với nó</td></tr><tr><td><strong>Trí nhớ</strong></td><td>⚠️ Nhớ số, quên việc</td><td><code>lich-su.json</code> nhớ số liệu. Không có chỗ nào nhớ "ngày 29/09 tôi đã đề xuất tắt camp X, Đại đã tắt, kết quả ra sao"</td></tr></tbody></table>
+<h3>2.3. Kết luận trung thực</h3>
+<p>Hệ thống hiện tại là: <strong>tự động hóa chín + AI viết văn + một công cụ tra cứu thông minh.</strong></p>
+<p>Nó <strong>không phải</strong> agent, và <strong>không nên trở thành</strong> agent bằng cách sửa tại chỗ. Ba lý do:</p>
+<ol><li><strong>Xung đột mục tiêu.</strong> Báo cáo cần số <strong>giống hệt nhau ở mọi lần chạy</strong>. Agent cần **tự do<br>quyết định**. Nhét hai thứ vào một chỗ là mời tai nạn.</li><li><strong>Trần AI.</strong> Gemini miễn phí cho <strong>20 lượt/ngày/model</strong> — đã đo thật. Agent chạy nền liên tục<br>sẽ ăn hết lượt của báo cáo, và Đại sẽ mất phần nhận định mà không hiểu vì sao.</li><li><strong>Rủi ro tiền.</strong> Hệ thống báo cáo sai thì Đại đọc một con số sai. Agent sai thì Đại **mất tiền<br>thật**. Hai mức hậu quả khác nhau, phải tách nhau ra.</li></ol>
+<p>⇒ <strong>Agent phải là thư mục riêng, tiến trình riêng, model AI riêng, và có trần riêng.</strong></p>
+<hr>
+<h2>3. ĐÍCH ĐẾN: "TỰ HÀNH CÓ TRẦN" NGHĨA LÀ GÌ CỤ THỂ</h2>
+<h3>3.1. Cái trần gồm năm thứ — và cả năm đều phải là CODE, không phải lời dặn AI</h3>
+<p>Đây là bài học lớn nhất rút từ dự án này. <code>ai.py</code> dòng 11–13 ghi:</p>
+<blockquote>*"PHEP SO SANH DO CODE LAM, khong giao cho AI. Ly do: khi AI phai tu doi chieu hai dong so voi<br>nhau, no de doc sai ma cau van van troi chay."*</blockquote>
+<p>Áp dụng y nguyên cho quyền hạn:</p>
+<blockquote><strong>GIỚI HẠN QUYỀN DO CODE LÀM, không giao cho AI tự giác.</strong></blockquote>
+<p>Nghĩa là: không viết trong câu lệnh cho AI "đừng tăng ngân sách quá 20%". Mà viết một hàm<br><code>rao_an_toan.py</code> <strong>chặn đứng</strong> lệnh đó trước khi nó tới Meta. AI có thể xin gì cũng được; rào chặn<br>là thứ quyết định. Nếu AI bị lừa hoặc hiểu sai, rào vẫn đứng.</p>
+<table><thead><tr><th>#</th><th>Cái trần</th><th>Nội dung</th><th>Chặn ở đâu</th></tr></thead><tbody><tr><td>1</td><td><strong>Danh sách trắng</strong></td><td>Chỉ được đụng camp có tên chứa <code>dainq</code> (khớp bộ lọc báo cáo hiện có). Mọi camp khác: cấm tuyệt đối</td><td>Trước khi gửi lệnh lên Meta</td></tr><tr><td>2</td><td><strong>Trần tiền</strong></td><td>Không tăng ngân sách quá X% và không quá Y đồng/ngày cho một camp. Không tăng tổng ngân sách tài khoản quá Z%</td><td>Trước khi gửi lệnh</td></tr><tr><td>3</td><td><strong>Cấm đụng camp đang hiệu quả</strong></td><td>Camp có ≥ N đơn trong 3 ngày gần nhất: <strong>cấm tắt</strong>, dù AI nói gì</td><td>Trước khi gửi lệnh</td></tr><tr><td>4</td><td><strong>Hạn mức hành động</strong></td><td>Tối đa K hành động/ngày và M hành động/giờ. Vượt: dừng, báo Đại</td><td>Bộ đếm trong <code>ky_uc.py</code></td></tr><tr><td>5</td><td><strong>Ghi sổ bắt buộc</strong></td><td>Mọi hành động phải ghi vào <code>logs/nhat-ky-agent.json</code> <strong>trước</strong> khi gửi lên Meta, và báo Telegram <strong>ngay sau</strong> khi gửi</td><td>Cứng, không tắt được</td></tr></tbody></table>
+<h3>3.2. Chế độ tập sự — điều kiện bắt buộc trước khi cho phép ghi</h3>
+<p>Trong <strong>1–2 tuần đầu</strong>, agent chạy ở <strong>chế độ tập sự</strong> (shadow mode):</p>
+<pre><code>Agent phân tích → viết ra &quot;tôi SẼ tắt camp X, vì lý do Y&quot;
+                 → ghi vào nhật ký
+                 → gửi Telegram cho Đại đọc
+                 → NHƯNG KHÔNG GỬI LỆNH NÀO LÊN META</code></pre>
+<p>Đại đọc vài ngày, tự đối chiếu: agent đoán đúng bao nhiêu phần trăm? Nếu đúng nhiều thì mở quyền<br>ghi thật. Nếu sai nhiều thì sửa câu lệnh, chưa mất đồng nào.</p>
+<p><strong>Đây là bước không được bỏ.</strong> Không có nó, lần đầu agent sai là Đại mất tiền thật, và Đại không<br>có cách nào biết trước.</p>
+<h3>3.3. Điều kiện kỹ thuật bắt buộc — ĐÃ KIỂM CHỨNG, KHÔNG ĐOÁN</h3>
+<p><strong>Phép đo ngày 29/09/2026</strong> — gọi thẳng <code>debug_token</code> và <code>me/permissions</code> của Meta bằng token thật:</p>
+<table><thead><tr><th>Câu hỏi</th><th>Kết quả đo được</th></tr></thead><tbody><tr><td>Token còn sống?</td><td>Có, hết hạn </td></tr><tr><td>Loại token</td><td><code>USER</code> (token người dùng)</td></tr><tr><td>Quyền được cấp</td><td><code>ads_read</code>, <code>business_management</code>, <code>public_profile</code></td></tr><tr><td>Có <code>ads_management</code> (quyền ghi)?</td><td><strong>KHÔNG</strong></td></tr></tbody></table>
+<p>⇒ <strong>Kết luận: phải xin lại token.</strong> Không có đường vòng.</p>
+<p>Ba việc Đại phải làm tay (giống hệt quy trình <code>HUONG-DAN-DIEN-TOKEN.md</code> đã có):</p>
+<pre><code>1. Vào developers.facebook.com → Graph API Explorer
+2. Ở phần Permissions, tick THÊM quyền  ads_management  (hiện chỉ có ads_read)
+3. Generate Access Token → xác nhận → đổi sang token 60 ngày như cũ</code></pre>
+<p><strong>⚠️ Ba điều chưa kiểm chứng, phải nói rõ là chưa:</strong></p>
+<ol><li><strong>Chưa chắc Meta cho dùng <code>ads_management</code>.</strong> Đây là quyền nâng cao. App của Đại đang ở chế độ<br>Development — thường thì chủ app dùng được, nhưng <strong>chưa thử lần nào</strong>. Phải thử trước khi hứa.</li><li><strong>Token người dùng 60 ngày là quá ngắn cho một agent.</strong> Agent tự hành mà chết sau 60 ngày thì<br>không gọi là tự hành. Hướng đúng là <strong>System User token</strong> trong Business Manager — có tuỳ chọn<br>không bao giờ hết hạn. Đã ghi trong <code>HUONG-DAN-DIEN-TOKEN.md</code> từ trước, <strong>vẫn chưa ai thử</strong>.</li><li><strong>Chưa đo được giới hạn tần suất ghi của Meta.</strong> Meta giới hạn số lệnh ghi mỗi giờ. Chưa biết<br>ngưỡng thật của tài khoản Đại. Phải đo bằng cách ghi thử vài lệnh vô hại.</li></ol>
+<p>⇒ <strong>Việc đầu tiên của #3 là một phép thử, không phải viết code.</strong> Xin token có <code>ads_management</code>,<br>gọi thử một lệnh ghi <strong>vô hại</strong> (ví dụ đổi tên một camp nháp, hoặc tạm dừng rồi bật lại ngay một<br>camp trong danh sách trắng), rồi báo kết quả. Chỉ khi phép thử đạt mới tính chuyện xây tiếp.</p>
+<hr>
+<h2>4. KIẾN TRÚC ĐỀ XUẤT</h2>
+<h3>4.1. Vòng lặp chính</h3>
+<p>Khác hẳn <code>nguoi_truc.py</code> (chỉ thức dậy khi tới mốc giờ), agent có <strong>nhịp riêng</strong>:</p>
+<pre><code>mỗi 30 phút (cấu hình được, mặc định 30):
+
+  1. QUAN SÁT   đọc số liệu hiện tại (từ lich-su.json, hoặc gọi Meta nếu cần số mới)
+  2. SO SÁNH    đối chiếu với ký ức: có gì đổi so với lần trước?
+  3. PHÁN XÉT   có gì đáng làm không?  ← ĐÂY là chỗ AI suy nghĩ
+  4. QUYẾT ĐỊNH nếu có → xin hành động
+  5. RÀO CHẶN   rao_an_toan.py kiểm. Chặn thì thôi, không làm
+  6. HÀNH ĐỘNG  gửi lệnh lên Meta (chỉ khi đã qua chế độ tập sự)
+  7. GHI KÝ ỨC  ghi việc đã làm + lý do
+  8. BÁO ĐẠI    gửi Telegram
+  9. THEO DÕI   lần chạy sau, kiểm hậu quả hành động đó</code></pre>
+<p>Bước 9 quan trọng và dễ quên: agent phải biết hành động của mình có kết quả tốt hay không. Không<br>có bước này thì nó chỉ là "làm rồi báo", không học được gì.</p>
+<h3>4.2. Các khối — mỗi khối một việc, tách rời được</h3>
+<table><thead><tr><th>File</th><th>Việc duy nhất</th><th>Phụ thuộc</th></tr></thead><tbody><tr><td><code>agent.py</code></td><td>Vòng lặp. Không chứa logic nghiệp vụ</td><td>tất cả dưới</td></tr><tr><td><code>muc_tieu.py</code></td><td>Định nghĩa "tốt" là gì, đo được</td><td>đọc <code>lich-su.json</code></td></tr><tr><td><code>ky_uc.py</code></td><td>Nhật ký hành động: đã làm gì, vì sao, kết quả ra sao</td><td><code>logs/nhat-ky-agent.json</code></td></tr><tr><td><code>cong_cu_ghi.py</code></td><td>Công cụ ghi: tắt camp, bật camp, đổi ngân sách</td><td>Meta API</td></tr><tr><td><code>rao_an_toan.py</code></td><td><strong>Cái trần.</strong> Hàm thuần, không gọi mạng, kiểm được bằng unit test</td><td>không</td></tr><tr><td><code>theo_doi.py</code></td><td>Đo hậu quả của hành động đã làm</td><td><code>ky_uc.py</code></td></tr></tbody></table>
+<p><strong><code>rao_an_toan.py</code> là file quan trọng nhất trong cả hệ thống.</strong> Nó phải là <strong>hàm thuần</strong> — nhận<br>một đề xuất hành động, trả về "cho phép" hoặc "chặn + lý do". Không gọi mạng, không đọc file,<br>không phụ thuộc AI. Nhờ vậy nó kiểm thử được từng trường hợp một, và nhờ vậy nó **không thể bị AI<br>thuyết phục**.</p>
+<p>Đây là điểm khác biệt giữa "agent an toàn" và "agent nguy hiểm": ở hệ thống an toàn, thứ quyết định<br>cuối cùng là một hàm 50 dòng không có AI trong đó.</p>
+<h3>4.3. Bộ nhớ — hai loại, đừng lẫn</h3>
+<table><thead><tr><th>Loại</th><th>File</th><th>Nội dung</th><th>Đã có?</th></tr></thead><tbody><tr><td>Nhớ <strong>số</strong></td><td><code>logs/lich-su.json</code></td><td>Số liệu từng ngày, từng mốc</td><td>✅ Có sẵn, dùng lại</td></tr><tr><td>Nhớ <strong>việc</strong></td><td><code>logs/nhat-ky-agent.json</code></td><td>Đã đề xuất/làm gì, vì sao, kết quả</td><td>❌ Phải viết mới</td></tr></tbody></table>
+<p>Nhớ <strong>việc</strong> là thứ biến hệ thống từ "chạy lại y hệt mỗi ngày" thành "biết mình đã thử gì". Ví dụ<br>một bản ghi:</p>
+<pre><code>{
+  &quot;luc&quot;: &quot;2026-10-02T14:30:00+07:00&quot;,
+  &quot;che_do&quot;: &quot;tap_su&quot;,
+  &quot;quan_sat&quot;: &quot;camp &#x27;dainq-mua-3&#x27; chi 480.000d, 0 don, 4 ngay lien tiep&quot;,
+  &quot;de_xuat&quot;: &quot;tam dung camp dainq-mua-3&quot;,
+  &quot;ly_do&quot;: &quot;chi tieu 4 ngay lien tuc khong ra don, CPR khong do duoc&quot;,
+  &quot;rao_an_toan&quot;: &quot;cho phep&quot;,
+  &quot;da_gui_len_meta&quot;: false,
+  &quot;dai_phan_hoi&quot;: null,
+  &quot;ket_qua_sau_24h&quot;: null
+}</code></pre>
+<p><code>dai_phan_hoi</code> và <code>ket_qua_sau_24h</code> là hai trường để trống, điền sau. Đây là chỗ học.</p>
+<h3>4.4. Về việc dùng AI nào</h3>
+<p><strong>Phải dùng model riêng, không dùng chung với báo cáo.</strong> Lý do đã đo được: Gemini miễn phí cho<br>20 lượt/ngày/<strong>model</strong>. Agent chạy 30 phút một lần là 48 lượt/ngày — vượt trần ngay.</p>
+<p>Ba lựa chọn, xếp theo mức tôi khuyến nghị:</p>
+<ol><li><strong>Không dùng AI cho vòng lặp nền.</strong> Viết luật bằng code ("camp chi &gt; 0, đơn = 0, 3 ngày liền →<br>đề xuất tắt"). AI chỉ dùng khi cần <strong>diễn giải</strong> một tình huống lạ. Rẻ, ổn định, dễ kiểm thử.<br><strong>Đây là lựa chọn tôi khuyến nghị cho giai đoạn đầu.</strong></li><li><strong>AI chạy theo lô.</strong> Gom 1 ngày số liệu, gọi AI <strong>một lần</strong> để phán xét cả ngày. Tốn 1–2 lượt/ngày.</li><li><strong>AI chạy mỗi vòng.</strong> Tốn 48 lượt/ngày ⇒ phải trả tiền. Chưa cần.</li></ol>
+<p>Nói thẳng: <strong>agent không nhất thiết phải để AI quyết mọi bước.</strong> Một vòng lặp bằng luật code, có<br>AI tham gia ở đúng một chỗ khó, vẫn là agent đúng nghĩa — vì nó tự chạy, tự quyết, tự nhớ. Và nó<br>là loại agent Đại kiểm tra được.</p>
+<hr>
+<h2>5. BA VIỆC 1–2–3 — ĐƯỜNG ĐI CỤ THỂ</h2>
+<table><thead><tr><th>Việc</th><th>Nội dung</th><th>Đụng vào đâu</th><th>Cần token mới?</th></tr></thead><tbody><tr><td><strong>#1</strong></td><td>Bản định nghĩa này</td><td>Chỉ tài liệu</td><td>Không</td></tr><tr><td><strong>#2</strong></td><td>Nâng hệ thống <strong>hiện có</strong> lên Mức 2: AI không chỉ nhận xét mà <strong>đề xuất hành động cụ thể</strong>, có kèm số và lý do, gửi vào Telegram</td><td><code>ai.py</code> (thêm mục đề xuất), <code>report.py</code> (chỗ ghép báo cáo)</td><td>Không</td></tr><tr><td><strong>#3</strong></td><td><strong>Agent mới, tách riêng</strong>, Mức 3, có trần</td><td>Thư mục mới, code mới</td><td><strong>Có</strong></td></tr></tbody></table>
+<p>Chi tiết việc #2 — nó nhỏ hơn vẻ ngoài:</p>
+<p>Hiện <code>viet_nhan_dinh()</code> chỉ viết 3–5 câu nhận xét. Nâng lên Mức 2 nghĩa là **thêm một mục<br>"ĐỀ XUẤT"** vào báo cáo, trong đó AI nói rõ: camp nào, làm gì, vì sao, số nào chống lưng. Vẫn giữ<br>nguyên tắc cũ: <strong>AI chỉ chép số đã tính sẵn</strong>, không tự tính. Không cần token mới, không cần thêm<br>lượt AI (vẫn một lần gọi, chỉ đổi câu lệnh).</p>
+<p>Làm #2 trước #3 có lợi rõ ràng: Đại đọc đề xuất của AI vài ngày, **đối chiếu với việc Đại tự<br>quyết**, rồi mới biết có nên cho AI cầm quyền. Đây là cách đo độ chính xác mà không mất tiền.</p>
+<hr>
+<h2>6. NHỮNG ĐIỀU TÔI KHÔNG KHUYẾN NGHỊ — VÀ VÌ SAO</h2>
+<table><thead><tr><th>Không nên</th><th>Vì sao</th></tr></thead><tbody><tr><td>Cho AI tự tính tiền, tự cộng số</td><td>Đã chứng minh sai trong dự án này. Code tính, AI chép</td></tr><tr><td>Cho agent đụng tài khoản ngoài danh sách trắng</td><td>Một tài khoản khác của khách, agent tắt camp là Đại mang tiếng</td></tr><tr><td>Chạy agent không có nhật ký</td><td>Khi có chuyện, không ai biết nó đã làm gì lúc nào</td></tr><tr><td>Nhét agent vào <code>nguoi_truc.py</code></td><td>Trần AI 20 lượt/ngày, và xung đột mục tiêu với báo cáo</td></tr><tr><td>Bật quyền ghi ngay từ đầu</td><td>Không có dữ liệu để biết agent đoán đúng bao nhiêu phần trăm</td></tr><tr><td>Để AI tự đọc <code>.env</code></td><td>Quy ước cũ của dự án: <code>soan_prompt()</code> không nhận <code>env</code>, nên về cấu trúc không thể lộ token. Giữ nguyên</td></tr><tr><td>Chạy agent khi máy đang ngủ / không có ai xem</td><td>Giai đoạn đầu nên chạy lúc Đại có mặt</td></tr></tbody></table>
+<hr>
+<h2>7. CÂU HỎI CẦN ĐẠI CHỐT TRƯỚC KHI VIẾT CODE</h2>
+<p>Trả lời được năm câu này là đủ để bắt đầu việc #2 và #3:</p>
+<ol><li><strong>Mục tiêu tối ưu là gì?</strong> Giảm chi phí mỗi đơn (CPR)? Tăng số đơn? Hay chỉ giữ ổn định và<br>cảnh báo khi có bất thường?</li><li><strong>Trần tiền cụ thể là bao nhiêu?</strong> Ví dụ: "không tăng ngân sách quá 20% và không quá 500.000đ<br>mỗi ngày cho một camp".</li><li><strong>Agent được đụng vào camp nào?</strong> Giữ nguyên luật cũ là tên chứa <code>dainq</code>, hay mở rộng?</li><li><strong>Bao nhiêu hành động mỗi ngày là chấp nhận được?</strong> Ví dụ: tối đa 3 hành động/ngày.</li><li><strong>Chế độ tập sự bao lâu?</strong> Đề nghị 1–2 tuần. Đại có muốn tự đặt con số không?</li></ol>
+<p>Không cần trả lời hết ngay trong một lần. Câu 1 và câu 2 là hai câu chặn đường.</p>
+<hr>
+<h2>8. RỦI RO — NÓI THẲNG</h2>
+<table><thead><tr><th>Rủi ro</th><th>Mức</th><th>Cách xử lý</th></tr></thead><tbody><tr><td>Meta không cấp <code>ads_management</code> cho app ở chế độ Development</td><td><strong>Cao</strong> — chặn cả việc #3</td><td>Thử <strong>trước tiên</strong>, trước khi viết dòng code nào. Không được thì việc #3 dừng ở Mức 2</td></tr><tr><td>Token 60 ngày chết giữa lúc agent đang chạy</td><td>Trung bình</td><td>Chuyển sang System User token (không hết hạn). Nếu không được thì nhắc sớm 30 ngày như hiện có</td></tr><tr><td>Agent tắt nhầm camp đang chạy tốt</td><td><strong>Cao</strong> — mất tiền thật</td><td>Danh sách trắng + cấm tắt camp có đơn + chế độ tập sự + nút hoàn tác 24h</td></tr><tr><td>AI hiểu sai số liệu rồi đề xuất sai</td><td>Trung bình</td><td>Rào an toàn là code; AI chỉ được chép số đã tính</td></tr><tr><td>Agent chạy nền ăn hết trần AI của báo cáo</td><td>Trung bình</td><td>Model riêng, hoặc không dùng AI cho vòng lặp nền</td></tr><tr><td>Đại không đọc được code nên không biết agent sai lúc nào</td><td><strong>Cao</strong></td><td>Mọi hành động báo Telegram ngay; nhật ký ghi bằng tiếng Việt có dấu, không phải log kỹ thuật</td></tr><tr><td>Chi phí gọi AI vượt dự tính</td><td>Thấp</td><td>Bắt đầu bằng luật code; đo trước khi mở rộng</td></tr></tbody></table>
+<p>Rủi ro lớn nhất <strong>không phải kỹ thuật</strong> mà là: Đại giao quyền cho một hệ thống Đại không đọc<br>được. Cách chống duy nhất là <strong>chế độ tập sự</strong> và <strong>báo cáo mọi hành động</strong>. Hai thứ đó không<br>phải tính năng phụ — chúng là điều kiện để việc #3 được phép tồn tại.</p>
+<hr>
+<h2>9. VIỆC TIẾP THEO NGAY SAU KHI ĐẠI DUYỆT BẢN NÀY</h2>
+<ol><li>Đại trả lời câu 1 và câu 2 ở mục 7 (mục tiêu, trần tiền).</li><li>Tôi làm <strong>việc #2</strong> — thêm mục ĐỀ XUẤT vào báo cáo. Không cần token mới, làm được ngay.</li><li>Song song, Đại thử <strong>xin token có <code>ads_management</code></strong> — đây là phép thử quyết định việc #3 có<br>khả thi hay không.</li><li>Chỉ khi cả hai xong mới bàn tới việc #3.</li></ol>
+</main>
+<footer>Sinh tu dong tu 2026-09-29-dinh-nghia-ai-agent-facebook-design.md</footer>
+</body></html>
