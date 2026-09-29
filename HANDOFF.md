@@ -40,7 +40,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 2 | Người trực (từ 28/09/2026) | Một lịch `NguoiTruc` chạy `nguoi_truc.py` khi đăng nhập. Ba lịch `BaoCaoMetaAds_08/12/17` đã bị bỏ |
 | 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 3 lịch |
 | 4 | Dashboard HTML | Tự tạo lại mỗi lần chạy |
-| 5 | Đẩy code lên GitHub | Nhánh `main`, kho riêng tư. **Mốc mới nhất 29/09/2026: `27301f7`** (gồm GĐ3 + GĐ4 + GĐ5) |
+| 5 | Đẩy code lên GitHub | Nhánh `main`, kho riêng tư. **Mốc mới nhất 29/09/2026: `5415c39`** (gồm GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo) |
 | 6 | Cảnh báo lỗi qua Telegram | Tự gửi tin khi có sự cố |
 | 7 | Nhận định do AI viết (GĐ3) | Có so sánh với kỳ trước |
 | 8 | Hỏi bot, bot trả lời số liệu (GĐ4) | Bốn công cụ đọc sổ lịch sử |
