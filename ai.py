@@ -70,11 +70,38 @@ TOI_DA_LUOT_CONG_CU = 3
 
 # Thoi gian toi da cho mot luot goi AI khi tra loi cau hoi (giay).
 # Ngan hon TIMEOUT cua bao cao: nguoi dang cho tin nhan, khong the doi 60 giay.
-TIMEOUT_HOI_DAP = 30
+#
+# NANG tu 30 len 45 ngay 29/09/2026: Dai nhan hoi luc 12:00, Gemini dang qua tai,
+# va ca hai model deu het thoi gian cho (30 giay khong du). 45 giay van du ngan
+# de Dai khong phai cho qua lau.
+TIMEOUT_HOI_DAP = 45
 
-# Tran token cho mot cau tra loi. Phai dat vi model 3.x tinh ca token suy nghi
-# vao phan output; trong phep thu that cau tra loi bi CAT giua dong.
-TOI_DA_TOKEN_TRA_LOI = 2000
+# Ngan sach thoi gian cho MOT cau hoi (giay). Het thi BO CUOC va tra loi Dai,
+# khong treo Nguoi truc vo han.
+#
+# Vi sao can: ngay 29/09/2026 luc 12:00, Gemini qua tai toan he thong (bao cao
+# 12h cung gap HTTP 503). Neu moi luot AI deu cho het thoi gian roi thu lai thi
+# mot cau hoi co the treo Nguoi truc hang chuc phut - trong luc do MOC GIO BI
+# CHAN, tuc la bao cao co the bi tre.
+THOI_GIAN_TOI_DA_HOI_DAP = 180
+
+# Ma loi HTTP TAM THOI - thu lai duoc. Cac ma khac (400, 403, 404) la loi VINH
+# VIEN: thu lai chi ton thoi gian, phai doi model hoac bao loi ngay.
+MA_LOI_TAM_THOI = (429, 500, 502, 503, 504)
+
+# Tran token cho mot cau tra loi.
+#
+# NANG tu 2000 len 4000 ngay 29/09/2026 sau khi DO THAT: model Gemini 3.x tinh
+# ca token SUY NGHI (`thoughtsTokenCount`) vao tran nay. Do duoc that:
+#   786, 829, 477, 1132, 573 token chi rieng cho phan suy nghi, moi luot.
+# Voi tran 2000 thi luot CUOI (luc model viet cau tra loi dai) bi cat giua
+# dong - da xay ra that: cau tra loi dung o "...la 20" roi het.
+#
+# Cach chua khac da can nhac nhung CHUA KIEM CHUNG duoc (het han muc AI trong
+# ngay): dat `thinkingConfig.thinkingBudget = 0` de tat suy nghi. Neu sau nay
+# muon thu, nho rang gui truong la vao `generationConfig` co the bi loi 400
+# voi model khong ho tro.
+TOI_DA_TOKEN_TRA_LOI = 4000
 
 # Cac chi so dua vao bang so sanh: (khoa trong stats, ten hien cho AI, kieu)
 TEN_CHI_SO = [
@@ -288,7 +315,20 @@ def _goi_gemini_than(env, payload_them, model, timeout, goi_mang_fn):
             trang_thai = _trang_thai_loi(e)
             if trang_thai:
                 loi += f" [{trang_thai}]"
-            if e.code in (503, 429) and lan < SO_LAN_THU_LAI:
+            if e.code in MA_LOI_TAM_THOI and lan < SO_LAN_THU_LAI:
+                time.sleep(CHO_GIUA_HAI_LAN)
+                continue
+            return None, loi
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            # Het thoi gian cho hoac loi mang: TAM THOI, thu lai duoc.
+            #
+            # Da gap that ngay 29/09/2026 luc 12:00: Gemini qua tai, Dai nhan
+            # hoi, va ca hai model deu tra ve 'The read operation timed out'.
+            # Truoc khi sua, nhanh nay roi thang xuong `except Exception` va
+            # TRA LOI NGAY, khong thu lai - nen mot lan mang chap chon la Dai
+            # mat cau tra loi.
+            loi = f"loi mang hoac het thoi gian cho: {e}"
+            if lan < SO_LAN_THU_LAI:
                 time.sleep(CHO_GIUA_HAI_LAN)
                 continue
             return None, loi
@@ -395,22 +435,40 @@ def goi_gemini_cong_cu(env, noi_dung, khai_bao_cong_cu=None, timeout=None,
     if khai_bao_cong_cu:
         payload["tools"] = khai_bao_cong_cu
 
-    loi_cuoi = "chua goi duoc AI"
+    loi_da_gap = []
     for model in _chon_model_hoi_dap(env):
         du_lieu, loi = _goi_gemini_than(env, payload, model, timeout or TIMEOUT_HOI_DAP,
                                         goi_mang_fn)
         if loi:
-            loi_cuoi = f"{model}: {loi}"
+            loi_da_gap.append(f"{model}: {loi}")
             continue
         try:
-            return du_lieu["candidates"][0]["content"], None
+            ung_vien = du_lieu["candidates"][0]
+            # Cau tra loi bi CAT vi het tran token: tra ve LOI chu khong tra ve
+            # chuoi cut. Mot cau tra loi cut ("...la 20") con te hon la mot loi
+            # ro rang, vi Dai se tuong bot doc sai so.
+            if str(ung_vien.get("finishReason", "")).upper() == "MAX_TOKENS":
+                loi_da_gap.append(
+                    f"{model}: cau tra loi bi cat vi het tran token "
+                    f"(maxOutputTokens={TOI_DA_TOKEN_TRA_LOI})")
+                continue
+            return ung_vien["content"], None
         except (KeyError, IndexError, TypeError):
-            loi_cuoi = f"{model}: AI tra ve sai cau truc"
+            loi_da_gap.append(f"{model}: AI tra ve sai cau truc")
             continue
-    return None, loi_cuoi
+
+    # Ghi lai loi cua TAT CA cac model da thu, khong chi model cuoi.
+    #
+    # Da gap that ngay 29/09/2026: model chinh gap HTTP 503 (qua tai) nhung
+    # thong bao chi hien loi cua model du phong ('The read operation timed out'),
+    # nen Dai doc khong biet la AI dang qua tai ma tuong hong gi do.
+    if not loi_da_gap:
+        return None, "chua goi duoc AI"
+    return None, " | ".join(loi_da_gap)
 
 
-def tra_loi(cau_hoi, bo_cong_cu, env=None, moc_tg="", goi_mang_fn=None):
+def tra_loi(cau_hoi, bo_cong_cu, env=None, moc_tg="", goi_mang_fn=None,
+            dong_ho_fn=None):
     """Tra loi mot cau hoi cua Dai. Tra ve (chu, loi). KHONG BAO GIO nem loi.
 
     Vong lap: hoi AI -> AI xin goi cong cu -> CODE chay cong cu -> tra ket qua
@@ -420,6 +478,9 @@ def tra_loi(cau_hoi, bo_cong_cu, env=None, moc_tg="", goi_mang_fn=None):
     Vi sao phai buoc: da thu that ngay 29/09/2026, AI nhan ket qua roi goi tiep
     cong cu chu khong tu dung. Khong co gioi han cung thi mot cau hoi co the
     ton hang chuc luot goi AI, trong khi tran mien phi chi 20 luot/ngay.
+
+    Ngan sach thoi gian: ca cau hoi chi duoc dung THOI_GIAN_TOI_DA_HOI_DAP giay.
+    Het ngan sach thi bo cuoc va bao Dai, de MOC GIO khong bi tre.
     """
     try:
         prompt = soan_prompt_hoi_dap(cau_hoi, moc_tg)
@@ -433,12 +494,24 @@ def tra_loi(cau_hoi, bo_cong_cu, env=None, moc_tg="", goi_mang_fn=None):
         except Exception as e:
             return None, f"khong khai bao duoc cong cu: {e}"
 
+    dong_ho = dong_ho_fn or time.monotonic
+    bat_dau = dong_ho()
+
     noi_dung = [{"role": "user", "parts": [{"text": prompt}]}]
 
     for luot in range(TOI_DA_LUOT_CONG_CU + 1):
+        # Con bao nhieu giay trong ngan sach? Het thi bo cuoc.
+        da_dung = dong_ho() - bat_dau
+        con_lai = THOI_GIAN_TOI_DA_HOI_DAP - da_dung
+        if con_lai <= 0:
+            return None, (
+                f"AI chua tra loi duoc sau {int(da_dung)} giay "
+                f"(co the AI dang qua tai)")
+
         con_cong_cu = khai_bao if luot < TOI_DA_LUOT_CONG_CU else None
         content, loi = goi_gemini_cong_cu(
-            env, noi_dung, khai_bao_cong_cu=con_cong_cu, goi_mang_fn=goi_mang_fn)
+            env, noi_dung, khai_bao_cong_cu=con_cong_cu,
+            timeout=min(TIMEOUT_HOI_DAP, con_lai), goi_mang_fn=goi_mang_fn)
         if loi:
             return None, loi
         if content is None:

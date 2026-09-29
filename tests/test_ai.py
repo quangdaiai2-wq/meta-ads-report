@@ -7,6 +7,26 @@ import urllib.error
 import ai
 
 
+# Tat thoi gian cho giua hai lan thu cho TOAN BO file nay.
+#
+# Nhieu bai kiem thu gia lap loi mang / het thoi gian cho, va tu 29/09/2026
+# ai.py THU LAI ca nhung loi do (dung - do la loi tam thoi). De nguyen
+# CHO_GIUA_HAI_LAN = 5 thi moi bai nhu vay phai ngoi cho ~10 giay, lam ca file
+# cham them ~20 giay ma khong kiem them duoc gi.
+_CHO_GIUA_HAI_LAN_CU = None
+
+
+def setUpModule():
+    global _CHO_GIUA_HAI_LAN_CU
+    _CHO_GIUA_HAI_LAN_CU = ai.CHO_GIUA_HAI_LAN
+    ai.CHO_GIUA_HAI_LAN = 0
+
+
+def tearDownModule():
+    if _CHO_GIUA_HAI_LAN_CU is not None:
+        ai.CHO_GIUA_HAI_LAN = _CHO_GIUA_HAI_LAN_CU
+
+
 STATS = {
     "total_campaigns": 19,
     "totals": {
@@ -500,6 +520,32 @@ class TestGoiGeminiCongCu(unittest.TestCase):
         self.assertIsNone(content)
         self.assertIn("sai cau truc", loi)
 
+    def test_cau_tra_loi_bi_cat_thi_bao_loi_chu_khong_tra_chuoi_cut(self):
+        """Het tran token -> tra LOI, khong tra chuoi cut.
+
+        Da xay ra that 29/09/2026: cau tra loi dung o '...la 20' roi het.
+        Mot cau cut con te hon mot loi ro rang, vi Dai se tuong bot doc sai so.
+        """
+        def gia(url, payload, timeout):
+            return {"candidates": [{
+                "content": {"parts": [{"text": "cau tra loi bi cat giua"}],
+                            "role": "model"},
+                "finishReason": "MAX_TOKENS"}]}
+
+        content, loi = self._goi(goi_mang_fn=gia)
+        self.assertIsNone(content)
+        self.assertIn("bi cat", loi)
+
+    def test_finish_reason_STOP_thi_tra_ve_binh_thuong(self):
+        def gia(url, payload, timeout):
+            return {"candidates": [{
+                "content": {"parts": [{"text": "xong"}], "role": "model"},
+                "finishReason": "STOP"}]}
+
+        content, loi = self._goi(goi_mang_fn=gia)
+        self.assertIsNotNone(content)
+        self.assertIsNone(loi)
+
 
 class TestTraLoi(unittest.TestCase):
     def setUp(self):
@@ -641,6 +687,160 @@ class TestTraLoi(unittest.TestCase):
                    moc_tg="Hom nay 29/09/2026", goi_mang_fn=gia)
         self.assertNotIn("BIMAT123",
                          json.dumps(thay["payload"], ensure_ascii=False))
+
+
+class TestThuLaiLoiTamThoi(unittest.TestCase):
+    """Loi mang / het thoi gian cho la loi TAM THOI - phai THU LAI.
+
+    Loi that ngay 29/09/2026: Dai nhan hoi luc 12:00, Gemini qua tai toan he
+    thong, ca hai model deu tra ve 'The read operation timed out'. Truoc khi
+    sua, ai.py roi thang xuong `except Exception` va TRA LOI NGAY, khong thu
+    lai - nen mot lan mang chap chon la Dai mat cau tra loi.
+    """
+
+    def _dem_lan_goi(self, ham_nem_loi):
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            raise ham_nem_loi(url)
+
+        ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        return dem["n"]
+
+    def test_loi_mang_thi_thu_lai(self):
+        self.assertEqual(self._dem_lan_goi(lambda url: OSError("mat mang")),
+                         ai.SO_LAN_THU_LAI + 1)
+
+    def test_het_thoi_gian_cho_thi_thu_lai(self):
+        self.assertEqual(self._dem_lan_goi(lambda url: TimeoutError("het gio")),
+                         ai.SO_LAN_THU_LAI + 1)
+
+    def test_urlerror_thi_thu_lai(self):
+        self.assertEqual(
+            self._dem_lan_goi(lambda url: urllib.error.URLError("khong ket noi")),
+            ai.SO_LAN_THU_LAI + 1)
+
+    def test_ma_500_thu_lai(self):
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 500, "loi may chu", {},
+                                         io.BytesIO(b"{}"))
+        dem = {"n": 0}
+
+        def gia_dem(url, payload, timeout):
+            dem["n"] += 1
+            return gia(url, payload, timeout)
+
+        ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia_dem)
+        self.assertEqual(dem["n"], ai.SO_LAN_THU_LAI + 1)
+
+    def test_ma_404_khong_thu_lai(self):
+        """404 = ten model sai, thu lai chi ton thoi gian."""
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            raise urllib.error.HTTPError(url, 404, "khong co model", {},
+                                         io.BytesIO(b"{}"))
+
+        ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertEqual(dem["n"], 1)
+
+    def test_danh_sach_ma_tam_thoi(self):
+        for ma in (429, 500, 502, 503, 504):
+            self.assertIn(ma, ai.MA_LOI_TAM_THOI, ma)
+        for ma in (400, 403, 404):
+            self.assertNotIn(ma, ai.MA_LOI_TAM_THOI, ma)
+
+    def test_loi_mang_het_luot_thi_bao_loi_ro(self):
+        def gia(url, payload, timeout):
+            raise OSError("mat mang")
+
+        chu, loi = ai.goi_gemini({"GEMINI_API_KEY": "k"}, "x", goi_mang_fn=gia)
+        self.assertIsNone(chu)
+        self.assertIn("mat mang", loi)
+        self.assertIn("het thoi gian cho", loi)
+
+
+class TestThongBaoLoiNhieuModel(unittest.TestCase):
+    """Thong bao loi phai ghi TAT CA cac model da thu, khong chi model cuoi.
+
+    Loi that ngay 29/09/2026: model chinh gap HTTP 503 (qua tai), model du
+    phong het thoi gian cho. Thong bao chi hien loi cua model du phong, nen Dai
+    doc khong biet la AI dang qua tai ma tuong hong gi do.
+    """
+
+    def test_ghi_ca_hai_model(self):
+        def gia(url, payload, timeout):
+            raise urllib.error.HTTPError(url, 503, "qua tai", {}, io.BytesIO(b"{}"))
+
+        content, loi = ai.goi_gemini_cong_cu(
+            {"GEMINI_API_KEY": "k"},
+            [{"role": "user", "parts": [{"text": "x"}]}], goi_mang_fn=gia)
+        self.assertIsNone(content)
+        self.assertIn("gemini-3.8-flash", loi)
+        self.assertIn("gemini-3.5-flash", loi)
+        self.assertIn("503", loi)
+
+    def test_loi_cua_hai_model_ngan_cach_bang_gach_dung(self):
+        def gia(url, payload, timeout):
+            raise OSError("mat mang")
+
+        _, loi = ai.goi_gemini_cong_cu(
+            {"GEMINI_API_KEY": "k"},
+            [{"role": "user", "parts": [{"text": "x"}]}], goi_mang_fn=gia)
+        self.assertIn(" | ", loi)
+
+
+class TestNganSachThoiGianTraLoi(unittest.TestCase):
+    """Het ngan sach thi BO CUOC, de moc gio khong bi tre."""
+
+    def _env(self):
+        return {"GEMINI_API_KEY": "k"}
+
+    def test_het_ngan_sach_thi_bo_cuoc(self):
+        bo = BoCongCuGia()
+
+        def gia(url, payload, timeout):
+            return _kq_gemini(_content_goi_cong_cu("lay_khoang", {}))
+
+        gio = {"t": 0.0}
+
+        def dong_ho():
+            gio["t"] += 100.0
+            return gio["t"]
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia,
+                              dong_ho_fn=dong_ho)
+        self.assertIsNone(chu)
+        self.assertIn("qua tai", loi)
+
+    def test_con_thoi_gian_thi_khong_cat_som(self):
+        bo = BoCongCuGia()
+        dem = {"n": 0}
+
+        def gia(url, payload, timeout):
+            dem["n"] += 1
+            if dem["n"] == 1:
+                return _kq_gemini(_content_goi_cong_cu("lay_khoang", {}))
+            return _kq_gemini(_content_chu("xong roi"))
+
+        chu, loi = ai.tra_loi("?", bo, env=self._env(), goi_mang_fn=gia,
+                              dong_ho_fn=lambda: 0.0)
+        self.assertEqual(chu, "xong roi")
+        self.assertIsNone(loi)
+
+    def test_ngan_sach_duoc_dat_ro_rang(self):
+        self.assertEqual(ai.THOI_GIAN_TOI_DA_HOI_DAP, 180)
+        self.assertGreater(ai.TIMEOUT_HOI_DAP, 30)
+
+    def test_tran_token_du_rong_cho_token_suy_nghi(self):
+        """Model 3.x tinh token SUY NGHI vao tran nay.
+
+        Do that: moi luot ton 477-1132 token chi rieng cho suy nghi. Tran 2000
+        tung lam cau tra loi bi cat giua dong.
+        """
+        self.assertGreaterEqual(ai.TOI_DA_TOKEN_TRA_LOI, 4000)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
 **Cập nhật lần cuối:** 29/09/2026 — **Giai đoạn 4 xong**: Đại nhắn bot hỏi số liệu và được trả lời
-(4 công cụ đọc sổ lịch sử). `270/270` kiểm thử đạt. Trước đó cùng ngày: hai bảng xếp hạng đổi tiêu
+(4 công cụ đọc sổ lịch sử). `285/285` kiểm thử đạt. Trước đó cùng ngày: hai bảng xếp hạng đổi tiêu
 chí sang **chi phí mỗi đơn**, và chữa lỗi nặng **bảng mã cp1252** làm báo cáo ngừng gửi.
 
 > ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4, rồi thêm `GEMINI_API_KEY`
@@ -170,8 +170,8 @@ File `cai-dat-nguoi-truc.bat` **tự dò Python**. Nếu không tìm thấy, nó
 | `report.py` | **Script chính** — lấy số liệu Meta, gửi Telegram |
 | `ai.py` | **Lớp AI** — viết 3–5 câu nhận định (GĐ3) **và** trả lời câu hỏi có vòng lặp công cụ (GĐ4). Không tính số, không gọi Meta, không gửi tin |
 | `cong_cu.py` | **Bốn công cụ cho AI** — `lay_mot_ngay` · `lay_khoang` · `xep_hang_camp` · `so_sanh`. Thuần đọc `logs/lich-su.json`, **không chạm mạng**. Kèm `moc_thoi_gian()` tính phạm vi ngày |
-| `tests/` | Kiểm thử tự động (270 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
-| `chay-kiem-thu.bat` | Bấm đúp là chạy 270 bài kiểm thử — **không tốn lượt AI** |
+| `tests/` | Kiểm thử tự động (285 bài). **Không gọi mạng**, không tốn hạn mức Meta/Gemini |
+| `chay-kiem-thu.bat` | Bấm đúp là chạy 285 bài kiểm thử — **không tốn lượt AI** |
 | `HUONG-DAN-LAY-CHIA-KHOA-AI.md` | Hướng dẫn lấy chìa khoá Gemini + giải thích **hai model, hai trần riêng** |
 | `dashboard.py` | Tạo file `dashboard.html` xem báo cáo |
 | `doi-token-60-ngay.py` | Gia hạn token Meta lên 60 ngày |
@@ -611,12 +611,60 @@ Chiến dịch này đã mang về 10 lượt mua và 39 tin nhắn mới, với
 trong tên chiến dịch (`2026-09-04-dainq` → `2026 - 09 - 04 - dainq`). Câu lệnh đã ghi rõ mà model
 vẫn làm. **Không sai số, vẫn nhận ra đúng chiến dịch.** Đừng mất công "sửa" lần nữa.
 
-**Kiểm thử:** `270/270` đạt (trước GĐ4 là 185). Thêm `tests/test_cong_cu.py` (66 bài) và 19 bài
+**Kiểm thử:** `285/285` đạt (trước GĐ4 là 185). Thêm `tests/test_cong_cu.py` (66 bài), 19 bài
 mới trong `tests/test_ai.py`, cùng các bài thay thế trong `tests/test_nguoi_truc.py`.
 Kiểm thử **không gọi mạng** — mọi lời gọi Gemini đều đi qua hàm giả tiêm vào bằng `goi_mang_fn=`.
 
 **Tài liệu đã cập nhật:** `README.md` (mục "Nhắn tin hỏi bot"), `HUONG-DAN-LAY-CHIA-KHOA-AI.md`
-(mục "Hai model, hai trần riêng"), `chay-kiem-thu.bat` (155 → 270 bài), `.env` và `.env.example`.
+(mục "Hai model, hai trần riêng"), `chay-kiem-thu.bat` (155 → 285 bài), `.env` và `.env.example`.
+
+### BẢN SỬA NGÀY 29/09/2026 (tiếp) — CHỮA LỖI HỎI ĐÁP KHI AI QUÁ TẢI
+
+**Triệu chứng (Đại gặp thật lúc 12:00):** Đại nhắn *"chi tiêu ngày 28/09 là bao nhiêu?"* và nhận
+tin *"Tôi chưa trả lời được câu hỏi này. Lý do: gemini-3.5-flash: The read operation timed out"*.
+
+**Nguyên nhân — KHÔNG phải lỗi tài khoản, KHÔNG phải hết hạn mức, KHÔNG cần đổi nhà cung cấp AI:**
+cùng lúc đó Gemini **quá tải toàn hệ thống**. Log chứng minh:
+
+```
+[12:00:39] AI viet nhan dinh that bai: HTTP 503 - may chu AI dang qua tai [UNAVAILABLE]
+[12:00:40] THANH CONG - moc 12h, da gui Telegram      <- bao cao VAN GUI DU
+[12:00:42] THANH CONG - moc 12h, da gui file HTML
+```
+
+Cùng câu hỏi đó, gọi lại lúc 12:24 thì trả lời được **ngay**. Vậy đây là lỗi **tạm thời**.
+
+**BỐN lỗi thật đã sửa:**
+
+| # | Lỗi | Cách sửa |
+|---|---|---|
+| 1 | Lỗi mạng / hết thời gian chờ **không được thử lại** — rơi thẳng vào `except Exception` rồi trả lỗi ngay | Thêm nhánh bắt `URLError`/`TimeoutError`/`OSError` và **thử lại** như lỗi 503 |
+| 2 | Chỉ thử lại mã 503 và 429 | Thêm `ai.MA_LOI_TAM_THOI = (429, 500, 502, 503, 504)` |
+| 3 | Thông báo chỉ hiện lỗi của **model cuối**, che mất lý do thật của model chính | Ghi lại lỗi của **TẤT CẢ** model đã thử, nối bằng ` \| ` |
+| 4 | **Câu trả lời bị cắt giữa dòng** (`...là 20`) | Nâng trần token + báo lỗi rõ ràng (xem dưới) |
+
+**Nguyên nhân câu trả lời bị cắt — đo được thật:** Gemini 3.x tính **token suy nghĩ**
+(`thoughtsTokenCount`) **vào** `maxOutputTokens`. Đo 5 lượt thật: **786, 829, 477, 1132, 573** token
+chỉ riêng cho phần suy nghĩ. Với trần 2000, lượt cuối (viết câu trả lời dài) bị cắt.
+
+Đã nâng trần lên **4000**, và nay nếu vẫn bị cắt thì hệ thống **báo lỗi rõ ràng** thay vì gửi câu
+cụt cho Đại — một câu cụt còn tệ hơn một lời báo lỗi, vì Đại sẽ tưởng bot đọc sai số.
+
+**Thêm giới hạn tổng thời gian:** `ai.THOI_GIAN_TOI_DA_HOI_DAP = 180` giây cho một câu hỏi. Hết
+ngân sách thì bỏ cuộc và báo Đại. Lý do: nếu AI quá tải, mỗi lượt có thể chờ hết timeout rồi thử
+lại — không giới hạn thì một câu hỏi treo Người trực hàng chục phút, **trong lúc đó mốc giờ bị chặn**.
+
+**Một cách chữa nữa CHƯA KIỂM CHỨNG được:** tắt suy nghĩ bằng `thinkingConfig.thinkingBudget = 0`
+(sẽ nhanh hơn và rẻ hơn nhiều). Chưa thử được vì **hết hạn mức AI trong ngày** — cả ba model đều
+trả 429. Ghi lại để thử sau; nhớ rằng gửi trường lạ trong `generationConfig` có thể bị **lỗi 400**
+với model không hỗ trợ.
+
+**Kiểm thử:** `270` → **`285/285`** đạt. Thêm 15 bài, trong đó có bài khoá việc **thử lại khi lỗi
+mạng** và bài khoá việc **báo lỗi khi câu trả lời bị cắt**.
+
+> 📌 **BÀI HỌC DÙNG ĐƯỢC CHO MỌI DỰ ÁN:** khi một lời gọi AI thất bại, **thông báo lỗi phải ghi lý do
+> của MỌI phương án đã thử**, không chỉ phương án cuối cùng. Nếu chỉ ghi phương án cuối, Đại đọc
+> `The read operation timed out` và tưởng hỏng chìa khoá — trong khi sự thật là Gemini đang quá tải.
 
 ### ⚠️ BẪY QUAN TRỌNG NHẤT — đừng để mất
 
