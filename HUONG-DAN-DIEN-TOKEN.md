@@ -186,7 +186,57 @@ Script này cũng kiểm luôn:
 ---
 
 ⚠️ **Sau 60 ngày** token hết hạn → lặp lại Bước A → E.
-Hệ thống sẽ **nhắn tin cảnh báo vào Telegram** khi token hết hạn, nên bạn sẽ không bị bỏ lỡ.
+Hệ thống sẽ **nhắn tin cảnh báo vào Telegram** khi token sắp hết hạn, nên bạn sẽ không bị bỏ lỡ.
+Từ 29/09/2026 hệ thống nhắc **hai mức**: còn dưới **30 ngày** thì nhắc nhẹ một lần mỗi ngày ở báo cáo
+buổi sáng, còn dưới **7 ngày** thì nhắc ở mọi báo cáo.
+
+---
+
+## ❓ Vì sao hệ thống KHÔNG tự gia hạn token được?
+
+Câu hỏi rất hợp lý: nếu Meta cho phép đổi token, sao không để máy tự đổi lấy, đỡ phải làm tay?
+
+**Ngày 29/09/2026 đã thử thật, bằng chính token của bạn. Kết quả: Meta KHÔNG cho.**
+
+Cách thử: gọi đúng lệnh mà Meta hướng dẫn (`fb_exchange_token`) để xin một token mới.
+
+| Phép đo | Kết quả |
+|---|---|
+| Token hiện tại còn sống | 44,75 ngày |
+| Meta có trả token mới không | **CÓ** — một chuỗi khác hẳn token cũ |
+| Hạn của token mới (thử lần 1) | `2026-11-13 01:15:07 UTC` |
+| Hạn của token mới (thử lần 2) | `2026-11-13 01:15:07 UTC` |
+| Hạn của token cũ | `2026-11-13 01:15:07 UTC` |
+| **Chênh lệch** | **+0 giây** |
+
+Nghĩa là: Meta **đưa cho bạn một token mới, nhưng giữ nguyên ngày hết hạn cũ**. Đổi bao nhiêu lần
+cũng vậy. Đây là quy định của Meta: lệnh đó chỉ dùng để biến token **sống 1–2 giờ** thành token
+**sống 60 ngày** — còn token đã 60 ngày rồi thì nó không gia hạn thêm.
+
+⇒ **Không có cách nào để máy tự làm việc này.** Meta bắt **người thật đăng nhập** mới cấp token mới.
+Không phần mềm nào vượt được rào đó, kể cả có AI.
+
+**Vậy hệ thống làm gì để đỡ cho bạn?**
+
+1. **Nhắc sớm 30 ngày** — để bạn còn kịp xếp thời gian, không bị bất ngờ.
+2. **Nhắn một chữ `token` cho bot** — bot trả lời ngay còn bao nhiêu ngày, hết hạn ngày nào, cần làm
+   gì. Cách này **không tốn lượt AI**, hỏi lúc nào cũng được:
+
+   ```
+   🔑 TOKEN META
+   - Máy: 
+   - Còn sống: 44 ngày
+   - Hết hạn: 
+   - Việc cần làm: chưa cần làm gì.
+   ```
+
+> 🔎 **Một hướng khác, CHƯA thử — đừng tin cho tới khi thử:** Meta có loại token của
+> **"System User"** trong **Business Manager**, loại này có tuỳ chọn **không bao giờ hết hạn** và
+> dùng được cho quyền `ads_read`. Nếu chạy được thì **hết hẳn chuyện phải làm tay 60 ngày một lần**.
+> Nhưng phải tạo bằng tay trong giao diện Business Manager, và **chưa ai thử lần nào**. Ghi lại đây
+> để lúc nào rảnh thì thử, **không hứa trước**.
+
+---
 
 ### 🔐 META_AD_ACCOUNT_ID
 

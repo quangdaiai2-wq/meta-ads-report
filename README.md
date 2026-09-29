@@ -92,6 +92,59 @@ lời được, vì không cần gọi AI.
 > ⚠️ **Cách viết số tiền:** bot luôn ghi `20.319.895` (có dấu chấm ngăn nghìn), giống hệt báo cáo.
 > Dấu chấm là do hệ thống đặt sẵn, không phải AI tự thêm — nên không có chuyện AI làm sai con số.
 
+### 🆕 Hai lệnh nhanh, không tốn lượt AI (từ 29/09/2026)
+
+Hai câu này **không đi qua AI** nên trả lời được ngay, kể cả khi AI đang quá tải hoặc hết hạn mức:
+
+| Nhắn cho bot | Bot trả lời |
+|---|---|
+| `còn sống không?` | Máy nào, đã chạy bao lâu, hôm nay đã gửi mốc nào, mốc kế tiếp |
+| `token` | Token Meta còn sống bao nhiêu ngày, hết hạn ngày nào, cần làm gì |
+
+Ví dụ trả lời của lệnh `token`:
+
+```
+🔑 TOKEN META
+- Máy:
+- Còn sống: 44 ngày
+- Hết hạn:
+- Việc cần làm: chưa cần làm gì.
+- Hệ thống KHÔNG tự gia hạn được — Meta không cho (đã thử 29/09/2026).
+```
+
+> 💡 Số ngày được **làm tròn xuống** (44,75 ngày ghi "44 ngày") — với một hạn chốt thì hệ thống cố
+> tình nói thiếu, không nói thừa.
+
+### 🆕 Hệ thống tự xử lý lỗi (từ 29/09/2026)
+
+Bốn việc hệ thống **tự làm**, không cần bạn can thiệp:
+
+| Tình huống | Hệ thống làm gì |
+|---|---|
+| Meta tạm chặn vì quá nhiều yêu cầu | **Tự chờ 5 giây rồi 15 giây** và thử lại. Không nhắn gì cho bạn |
+| Số liệu **trông sai** | **Vẫn gửi báo cáo**, nhưng thêm một dòng ⚠️ ở đầu kèm lý do |
+| Token Meta **đã chết** | Báo **một lần**, rồi **không thử lại vô ích**. Sửa token xong thì mốc sau gửi bình thường |
+| Cùng một lỗi lặp lại nhiều lần | **Chỉ nhắn một tin** trong 12 giờ (trước đây là 9 tin giống nhau mỗi ngày) |
+
+**Dòng cảnh báo ⚠️ trông như thế này:**
+
+```
+⚠️ Số liệu kỳ này trông bất thường: có chi tiêu 1.234.567 đồng nhưng 0 lượt mua,
+trong khi 7 ngày trước đó trung bình có 9.4 lượt mua/ngày. Nên kiểm tra lại trước khi tin.
+```
+
+Ba trường hợp duy nhất bị coi là bất thường — **cần đủ 7 ngày lịch sử** mới bật kiểm tra:
+
+1. Chi tiêu cao hơn **3 lần** mức trung bình 7 ngày trước đó
+2. Có chi tiêu mà **0 lượt mua**, trong khi 7 ngày trước vẫn có lượt mua
+3. **Mọi chỉ số đều bằng 0**, trong khi 7 ngày trước ngày nào cũng có chi tiêu
+
+Hai trường hợp đầu **chỉ xét ở báo cáo buổi sáng** (báo cáo trọn ngày). Báo cáo 12h và 17h mới là
+một phần của ngày — đem so nửa ngày với ngày đầy đủ thì luôn thấy sai, nên hệ thống không so.
+
+> ⚠️ Dòng ⚠️ **không** có nghĩa báo cáo hỏng. Hệ thống **không bao giờ** tự chặn báo cáo — nó chỉ
+> nói lên nghi ngờ và để bạn quyết định.
+
 ---
 
 ## Cách cài đặt (chỉ làm 1 lần)
@@ -319,6 +372,8 @@ do `nguoi_truc.py` đảm nhiệm. Nó:
 | Nhịp tim | Ghi một dòng nhật ký mỗi 30 phút để biết còn sống |
 | Tự bật lại nếu chết | Lịch có trigger **lặp mỗi 5 phút**; tiến trình đang chạy thì lần lặp bị bỏ qua, tiến trình đã chết thì được bật lại |
 | Viết nhận định | Mỗi báo cáo gọi AI **một lần** để viết 3–5 câu nhận xét. AI lỗi thì bỏ qua phần đó, **báo cáo vẫn gửi đầy đủ** |
+| Tự xử lý lỗi | Meta chặn tạm → tự chờ 5s rồi 15s và thử lại. Token chết → **không thử lại vô ích**. Cùng một lỗi → chỉ báo **một tin** trong 12 giờ |
+| Trả lời lệnh nhanh | `còn sống không?` và `token` — hai câu này **không tốn lượt AI** |
 
 **Mốc giờ là cấu hình của từng máy**, đọc từ khoá `REPORT_SLOTS` trong `.env`:
 
@@ -393,6 +448,11 @@ Token Meta thường hết hạn sau một thời gian. Khi đó báo cáo sẽ 
 
 **Cách sửa:** lấy token mới, dán lại vào `.env`.
 
+> ⚠️ **Hệ thống KHÔNG tự gia hạn token được — đã thử thật ngày 29/09/2026 và Meta không cho.**
+> Meta trả về token mới nhưng giữ nguyên ngày hết hạn cũ. Không phần mềm nào tự làm được việc này;
+> bắt buộc phải có người thật đăng nhập. Vì vậy hệ thống **nhắc sớm 30 ngày**, và bạn **nhắn chữ
+> `token`** cho bot để tự kiểm bất cứ lúc nào. Chi tiết đầy đủ ở `HUONG-DAN-DIEN-TOKEN.md`.
+
 ### 3. File `.env` không được đưa lên GitHub
 
 File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng đừng tự ý bỏ chặn.
@@ -410,6 +470,8 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 │
 ├── 📄 report.py                 ← Script chính (chạy báo cáo)
 ├── 📄 ai.py                     ← Lớp AI: viết 3-5 câu nhận định (không tính số, không gửi tin)
+├── 📄 cong_cu.py                ← Bốn công cụ cho AI đọc sổ lịch sử (không chạm mạng)
+├── 📄 bat_thuong.py             ← Phát hiện số liệu trông bất thường (chỉ cảnh báo, không chặn)
 ├── 📄 dashboard.py              ← Bộ tạo file dashboard.html
 ├── 📄 dashboard.html            ← Dashboard xem báo cáo (tự tạo lại mỗi lần chạy)
 ├── 📄 doi-token-60-ngay.py      ← Công cụ gia hạn token Meta lên 60 ngày
@@ -424,6 +486,9 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 nguoi_truc.py              ← Tiến trình chạy suốt: canh mốc giờ + nghe Telegram
 ├── 📄 bat-danh-thuc-may.bat     ← Bấm để cho phép Windows tự thức máy chạy báo cáo (cần Admin)
 ├── 📄 logs/baocao.log           ← Nhật ký chạy (xem khi cần chẩn đoán)
+├── 📄 logs/lich-su.json         ← Số liệu các ngày đã lưu (giữ 180 ngày)
+├── 📄 logs/da_gui.json          ← Sổ đã gửi mốc nào trong ngày (chống gửi trùng)
+├── 📄 logs/canh_bao.json        ← Lần cuối gửi cảnh báo lỗi từng loại (chống tin lặp lại)
 │
 ├── 📄 test_telegram.py          ← Test token Telegram
 ├── 📄 test_meta.py              ← Test kết nối Meta
@@ -470,6 +535,10 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 | Báo cáo ghi "LOI GUI TELEGRAM" | Kiểm tra token Telegram và Chat ID |
 | Số liệu ra 0 hết | Kiểm tra bộ lọc `dainq` có khớp campaign nào không |
 | `dashboard.html` mở ra trắng/trống | Chạy lại `python report.py --dry` để tạo lại file |
+| Báo cáo có dòng ⚠️ **"Số liệu kỳ này trông bất thường"** | Hệ thống **vẫn gửi báo cáo**, chỉ nghi ngờ số liệu. **Đọc lý do ngay trên dòng đó.** Thường là bộ lọc sai hoặc token hỏng |
+| Nhật ký ghi `loi VINH VIEN` | Hệ thống **cố ý không thử lại** (token chết / thiếu quyền). Sửa token xong thì **mốc sau gửi bình thường**, không phải bấm gì |
+| Chỉ nhận **một** tin cảnh báo dù lỗi lặp nhiều lần | **Đúng như thiết kế.** Cùng một loại lỗi chỉ báo một lần trong 12 giờ — trước đây là 9 tin giống nhau mỗi ngày |
+| Muốn biết token còn sống bao lâu | Nhắn đúng một chữ `token` cho bot — **không tốn lượt AI** |
 | Mục NHẬN ĐỊNH ghi "Phần nhận định do AI viết tạm không có" | **Đọc lý do trong ngoặc** ngay sau đó — hệ thống ghi rõ bằng tiếng Việt (hết hạn mức / tên model sai / chìa khoá sai / mất mạng). **Báo cáo vẫn đầy đủ số liệu.** Chạy `python test_gemini.py` để kiểm chìa khoá |
 | Phần nhận định chỉ mô tả, không so sánh | Bình thường trong ~7 ngày đầu: sổ lịch sử chưa đủ số kỳ trước. Xem mục "NHẬN ĐỊNH nay do AI viết" ở đầu file |
 | Ghi chú AI báo `het han muc goi AI` | Bản miễn phí cho **20 lượt/ngày**; chạy thử `report.py` nhiều lần cũng tốn lượt. Hôm sau tự có lại. Muốn thử code thì bấm đúp **`chay-kiem-thu.bat`** (không tốn lượt) |
@@ -494,6 +563,12 @@ Cách xử lý:
 → Cần lấy token mới rồi dán lại vào file .env.
 ```
 
+**Từ 29/09/2026, cùng một loại lỗi chỉ báo MỘT lần trong 12 giờ.** Trước đây token chết gây **9 tin
+cảnh báo giống hệt nhau mỗi ngày** (3 mốc giờ × 3 lần thử), đọc rất mệt. Nay:
+- Lỗi **đầu tiên** của mỗi loại **luôn được gửi** — không bao giờ bị bỏ quên
+- Lỗi **khác loại** (token chết ≠ mất mạng) **không chặn nhau**
+- Mọi lần lỗi vẫn được ghi đầy đủ vào `logs/baocao.log`
+
 **Nhật ký:** Mọi lần chạy đều được ghi vào `logs/baocao.log`.
 
 ```
@@ -514,7 +589,19 @@ File này là **cách nhanh nhất để biết** lịch có chạy hay không. 
 
 **Cách gia hạn:** làm theo `HUONG-DAN-DIEN-TOKEN.md` → mục `META_ADS_ACCESS_TOKEN`.
 
-Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn không cần tự nhớ ngày.
+Hệ thống **nhắc hai mức** để bạn không quên:
+
+| Mức | Khi nào | Nhắc ở đâu |
+|---|---|---|
+| 🔵 Nhắc nhẹ | Còn dưới **30 ngày** | Một lần mỗi ngày, ở báo cáo buổi sáng |
+| 🟡 Cảnh báo sớm | Còn dưới **7 ngày** | Ở **mọi** báo cáo |
+| 🔴 Báo lỗi | Token **đã chết** | Tin nhắn riêng |
+
+Bạn cũng có thể **nhắn đúng một chữ `token`** cho bot để hỏi bất cứ lúc nào — **không tốn lượt AI**.
+
+> ⛔ **Hệ thống KHÔNG tự gia hạn token được.** Đã thử thật ngày 29/09/2026: Meta trả về token mới
+> nhưng **giữ nguyên ngày hết hạn cũ**. Đây là quy định của Meta, không phải hạn chế của chương
+> trình. Chi tiết và bảng số liệu ở `HUONG-DAN-DIEN-TOKEN.md`.
 
 ---
 
@@ -530,6 +617,43 @@ Hệ thống sẽ **nhắn tin cảnh báo** khi token hết hạn, nên bạn k
   ở **tiến trình riêng** kèm `--slot N`.
 - **Mốc giờ**: khoá `REPORT_SLOTS` trong `.env`. Không có khoá thì mặc định `8,12,17,22`.
 - **Dashboard**: `dashboard.py` sinh HTML tĩnh, không dùng thư viện ngoài, không cần server. `report.py` gọi `compute_stats()` **một lần duy nhất** rồi dùng chung cho cả text lẫn HTML (tránh gọi API 2 lần).
+
+### Mã thoát của `report.py` (thêm 29/09/2026)
+
+| Mã | Nghĩa | Người trực làm gì |
+|---|---|---|
+| **0** | Thành công | Đánh dấu mốc đã gửi |
+| **1** | Lỗi **tạm thời** (mạng, Meta chặn tạm) | Thử lại tối đa 3 lần, cách nhau 5 phút |
+| **2** | Lỗi **vĩnh viễn** (token chết, thiếu quyền) | **KHÔNG thử lại** |
+
+⚠️ **Chỉ đúng mã 2 mới là vĩnh viễn.** Rất nhiều đường khác trong `report.py` thoát với mã 1 mà
+**không** phải lỗi Meta (không đọc được `.env`, không gửi được Telegram). Dùng `!= 0` thay vì `== 2`
+sẽ làm báo cáo **im lặng không bao giờ gửi lại**.
+
+### Lùi dần khi Meta chặn tạm (thêm 29/09/2026)
+
+`api_get` chờ **5 giây rồi 15 giây** trước hai lần thử lại (`CHO_TRUOC_KHI_THU_LAI`). Trước đây
+vòng lặp `continue` **thử lại ngay lập tức, không chờ giây nào** — đúng lúc Meta đang chặn vì quá
+nhiều yêu cầu thì thử lại ngay chỉ tốn thêm một lần gọi nữa.
+
+Mã lỗi được coi là **tạm thời**: `4, 17, 32, 613, 80004`. Mã **vĩnh viễn**: `10, 100, 102, 190, 200,
+272, 463, 467, 803`. Không rõ mã thì mặc định là **tạm thời** — thử lại thừa vô hại, còn tự bỏ một
+lỗi thật thì báo cáo im lặng không gửi.
+
+### Phát hiện số liệu bất thường — `bat_thuong.py` (thêm 29/09/2026)
+
+Ba điều kiện duy nhất, cần **đủ 7 ngày lịch sử** mới bật. Hai điều kiện đầu **chỉ xét ở báo cáo trọn
+ngày** (mốc sáng); điều kiện thứ ba xét mọi mốc. Khi phát hiện thì **vẫn gửi báo cáo**, chỉ thêm một
+dòng ⚠️ ở đầu — **không bao giờ tự chặn**.
+
+> ⚠️ **Bẫy đã bị dựng thử bắt được:** nếu không kiểm "có đủ 7 chỉ số không" trước, thì `stats = {}`
+> làm mọi phép đọc ra 0 và điều kiện (3) báo động sai trên một báo cáo bình thường.
+
+### Chống gửi tin cảnh báo lặp lại (thêm 29/09/2026)
+
+`logs/canh_bao.json` nhớ lần cuối gửi cảnh báo theo **từng loại lỗi** (phân loại + mã lỗi). Cùng một
+loại thì trong **12 giờ** không gửi lại. **Lỗi đầu tiên của mỗi loại luôn được gửi.** Lỗi khác loại
+không chặn nhau. Trước đây token chết gây **9 tin giống hệt nhau mỗi ngày** (3 mốc × 3 lần thử).
 
 ### ⚠️ Lưu ý quan trọng khi sửa script
 

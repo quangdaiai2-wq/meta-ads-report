@@ -12,7 +12,9 @@ Uu tien doc moc gio tu tham so --mock, neu khong co thi lay gio hien tai.
 """
 import argparse
 import json
+import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -20,6 +22,7 @@ from pathlib import Path
 
 from dashboard import save_dashboard
 import ai
+import bat_thuong
 import lich_su
 
 
@@ -164,6 +167,31 @@ def tao_boi_canh(env, period_text, tron_ngay):
 # Truoc day he thong chi bao SAU khi token da chet (luc do moi bao cao that bai).
 NGUONG_CANH_BAO_NGAY = 7
 
+# Nhac NHE tu muc nay (ngay). Con 3 tuan la con kip xep thoi gian di lay token
+# moi, ma chua den muc phai gap. Chi nhac o bao cao MOC SANG - mot tin moi ngay,
+# khong lam roi bang 3 tin giong nhau.
+NGUONG_NHAC_NHE_NGAY = 30
+
+# Ma loi Meta TAM THOI - thu lai duoc, phai CHO roi moi thu.
+# 17 va 80004 da gap that; 4, 32, 613 la cac ma chan vi qua nhieu yeu cau khac
+# cua Meta (app / page / endpoint).
+MA_LOI_META_TAM_THOI = (4, 17, 32, 613, 80004)
+
+# Ma loi Meta VINH VIEN - thu lai chi ton thoi gian, phai bao ngay.
+# 190 = token het han / khong hop le (kem 463, 467) - day la ma hay gap nhat.
+# 10, 200, 272 = thieu quyen. 100 = tham so sai. 803 = tai khoan khong ton tai.
+MA_LOI_META_VINH_VIEN = (10, 100, 102, 190, 200, 272, 463, 467, 803)
+
+# Thoi gian CHO (giay) truoc lan thu lai thu nhat va thu hai. LUY TIEN:
+# Meta chan vi qua nhieu yeu cau thi cho ngan khong co tac dung gi.
+CHO_TRUOC_KHI_THU_LAI = (5, 15)
+
+# Ma thoat cua report.py. Nguoi truc (nguoi_truc.py) doc ma nay de biet co nen
+# thu lai hay khong.
+MA_THOAT_OK = 0
+MA_THOAT_TAM_THOI = 1
+MA_THOAT_VINH_VIEN = 2
+
 # Ten cac loai action trong Meta API (da kiem chung bang list_actions.py)
 # LUU Y: Meta tra ve NHIEU ten cho CUNG mot hanh dong (omni_*, onsite_*, offsite_*).
 # Neu cong het se bi dem trung. Chi dung MOT ten duy nhat cho moi chi so.
@@ -265,8 +293,88 @@ def ghi_da_gui(slot):
         log(f"Khong ghi duoc trang thai chong trung: {e}")
 
 
+# --- CHONG LAP TIN CANH BAO LOI ---
+# Ly do: khi token Meta chet, CA BA moc gio deu that bai, va moi moc Nguoi truc
+# thu lai 3 lan. Ket qua that: 9 tin canh bao GIONG HET NHAU moi ngay, trong khi
+# viec can lam chi co MOT (lay token moi). Dai se bo qua het, ke ca tin that.
+#
+# Cach lam: nho lan cuoi gui canh bao cho tung LOAI loi (loai + ma loi). Loi DAU
+# TIEN cua mot loai luon duoc gui. Chi nhung lan LAP LAI moi bi chan.
+CANH_BAO_FILE = LOG_DIR / "canh_bao.json"
+CHO_GIUA_HAI_CANH_BAO = 12 * 3600
+
+
+def _doc_canh_bao():
+    """Doc so lan cuoi da gui canh bao cho tung loai loi."""
+    try:
+        if CANH_BAO_FILE.exists():
+            d = json.loads(CANH_BAO_FILE.read_text(encoding="utf-8"))
+            if isinstance(d, dict):
+                return d
+    except Exception:
+        pass
+    return {}
+
+
+def _ghi_canh_bao(loai, ts):
+    """Ghi lai vua gui canh bao loai nay luc nao. Khong bao gio nem loi."""
+    try:
+        LOG_DIR.mkdir(exist_ok=True)
+        d = _doc_canh_bao()
+        d[loai] = ts
+        CANH_BAO_FILE.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        log(f"Khong ghi duoc so canh bao: {e}")
+
+
+def loai_canh_bao(chuoi_loi):
+    """Khoa nhan dang LOAI loi, de biet hai lan loi co phai cung mot thu khong.
+
+    Ghep ca phan loai (tam thoi / vinh vien) lan ma loi: token het han (190) va
+    loi mang la hai chuyen khac nhau, khong duoc chan lan nhau.
+    """
+    ma = doc_ma_loi(chuoi_loi)
+    return f"{phan_loai_loi(chuoi_loi)}:{ma if ma is not None else 'khong-ro'}"
+
+
+def nen_gui_canh_bao(loai, now=None, doc_fn=None, ghi_fn=None):
+    """True neu nen gui canh bao loai nay. Chan lap lai trong CHO_GIUA_HAI_CANH_BAO.
+
+    `doc_fn` / `ghi_fn` tiem duoc de kiem thu khong phai cham vao file that.
+    Moi truc trac deu tra ve True (gui) - bo sot mot canh bao loi te hon la
+    gui thua mot tin.
+    """
+    now = now or datetime.now()
+    doc_fn = doc_fn or _doc_canh_bao
+    ghi_fn = ghi_fn or _ghi_canh_bao
+    try:
+        cu = (doc_fn() or {}).get(loai)
+        if cu:
+            truoc = datetime.strptime(str(cu), "%Y-%m-%d %H:%M:%S")
+            if (now - truoc).total_seconds() < CHO_GIUA_HAI_CANH_BAO:
+                return False
+    except Exception:
+        pass
+    # Ghi lai vao file la viec PHU. Ghi khong duoc thi van phai GUI canh bao -
+    # bo sot mot canh bao loi te hon la gui thua mot tin.
+    try:
+        ghi_fn(loai, now.strftime("%Y-%m-%d %H:%M:%S"))
+    except Exception:
+        pass
+    return True
+
+
 def send_error_alert(env, err):
-    """Gui canh bao loi vao Telegram — de loi khong bao gio xay ra im lang."""
+    """Gui canh bao loi vao Telegram — de loi khong bao gio xay ra im lang.
+
+    Chan lap lai: cung MOT loai loi trong vong CHO_GIUA_HAI_CANH_BAO thi khong
+    gui lai. Truoc day token chet gay 9 tin canh bao giong nhau moi ngay
+    (3 moc x 3 lan thu), trong khi viec can lam chi co MOT.
+    """
+    loai = loai_canh_bao(err)
+    if not nen_gui_canh_bao(loai):
+        log(f"Bo qua canh bao lap lai ({loai}) - da gui trong 12 gio qua")
+        return
     msg = (
         "⚠️ BÁO CÁO META ADS GẶP LỖI\n"
         "\n"
@@ -304,7 +412,69 @@ def send_error_alert(env, err):
         log(f"Khong gui duoc canh bao Telegram: {e}")
 
 
-def api_get(path, params):
+def _ma_nguyen(v):
+    """Meta co the tra ma loi dang SO hoac dang CHUOI. Chuan hoa ve so nguyen.
+
+    Vi sao can: so sanh `"17" in (4, 17, ...)` la False. Neu Meta doi kieu tra
+    ve thi tinh nang lui dan im lang mat tac dung ma khong ai biet.
+    """
+    try:
+        return int(v)
+    except (ValueError, TypeError):
+        return None
+
+
+def mo_ta_loi_meta(err):
+    """Chuoi loi de doc, KEM MA LOI - de con phan loai duoc tam thoi / vinh vien.
+
+    Truoc day chi tra ve `err['message']`, nen khong co cach nao biet loi do co
+    thu lai duoc hay khong.
+    """
+    err = err or {}
+    msg = err.get("message", "loi khong ro")
+    ma = _ma_nguyen(err.get("code"))
+    if ma is None:
+        return f"Loi lay du lieu Meta: {msg}"
+    return f"Loi lay du lieu Meta (ma {ma}): {msg}"
+
+
+def doc_ma_loi(chuoi_loi):
+    """Boc ma loi Meta ra khoi chuoi loi. Khong doc duoc -> None."""
+    m = re.search(r"\(ma (-?\d+)\)", str(chuoi_loi or ""))
+    return int(m.group(1)) if m else None
+
+
+def phan_loai_loi(chuoi_loi):
+    """Tra ve 'tam_thoi' hoac 'vinh_vien'.
+
+    Mac dinh tra ve 'tam_thoi' khi khong ro: thu lai mot lan nua la vo hai, con
+    tu bo mot loi that su thi bao cao im lang khong gui - te hon nhieu.
+    """
+    ma = doc_ma_loi(chuoi_loi)
+    if ma in MA_LOI_META_VINH_VIEN:
+        return "vinh_vien"
+    if ma in MA_LOI_META_TAM_THOI:
+        return "tam_thoi"
+
+    low = str(chuoi_loi or "").lower()
+    for tu in ("expired", "session has expired", "invalid oauth",
+               "khong hop le", "thieu quyen", "permission"):
+        if tu in low:
+            return "vinh_vien"
+    return "tam_thoi"
+
+
+def api_get(path, params, ngu_fn=None):
+    """Goi Meta Graph API. Tra ve (du_lieu, loi).
+
+    Loi TAM THOI (Meta chan vi qua nhieu yeu cau) thi CHO roi thu lai, cho lau
+    dan theo CHO_TRUOC_KHI_THU_LAI. Truoc day vong lap thu lai NGAY LAP TUC,
+    khong cho giay nao - dung luc Meta dang chan vi qua nhieu yeu cau thi thu
+    lai ngay chi ton them mot lan goi nua.
+
+    `ngu_fn` tiem duoc de kiem thu khong phai ngu that.
+    """
+    ngu = ngu_fn or time.sleep
     url = f"{GRAPH}/{path}?" + urllib.parse.urlencode(params)
     for attempt in range(3):
         try:
@@ -317,60 +487,83 @@ def api_get(path, params):
             except Exception:
                 err = {"message": f"HTTP {e.code}"}
             # Loi rate limit thi thu lai
-            if err.get("code") in (17, 80004) and attempt < 2:
+            if _ma_nguyen(err.get("code")) in MA_LOI_META_TAM_THOI and attempt < 2:
+                ngu(CHO_TRUOC_KHI_THU_LAI[attempt])
                 continue
             return None, err
         except Exception as e:
             if attempt < 2:
+                ngu(CHO_TRUOC_KHI_THU_LAI[attempt])
                 continue
             return None, {"message": str(e)}
     return None, {"message": "Khong the ket noi sau 3 lan thu"}
 
 
-def doc_han_token(env):
-    """Hoi Meta xem token con song bao lau (bang debug_token).
+def doc_han_token_chi_tiet(env):
+    """Hoi Meta xem token con song bao lau. Tra ve (so_ngay, het_han, loi).
 
-    Tra ve:
-        (so_ngay, None)  -> doc duoc. so_ngay = None nghia la token khong bao gio het han.
-        (None, ly_do)    -> khong doc duoc (thieu App ID/Secret, hoac Meta bao loi).
+    so_ngay = None  -> token khong bao gio het han (het_han = None).
+    so_ngay = 0.0   -> token da het han / khong hop le.
+    het_han         -> datetime theo GIO MAY, hoac None neu khong xac dinh duoc.
+
+    Ham nay ra doi vi `doc_han_token` cu chi tra ve SO NGAY, khong du de tra loi
+    Dai cau "het han ngay nao".
     """
     token = env.get("META_ADS_ACCESS_TOKEN", "").strip()
     app_id = env.get("META_APP_ID", "").strip()
     app_secret = env.get("META_APP_SECRET", "").strip()
 
     if not token or not app_id or not app_secret:
-        return None, "thieu META_APP_ID hoac META_APP_SECRET trong .env"
+        return None, None, "thieu META_APP_ID hoac META_APP_SECRET trong .env"
 
     data, err = api_get("debug_token", {
         "input_token": token,
         "access_token": f"{app_id}|{app_secret}",
     })
     if err:
-        return None, err.get("message", "loi khong ro")
+        return None, None, err.get("message", "loi khong ro")
 
     d = data.get("data", {})
     if not d.get("is_valid"):
-        return 0.0, None
+        return 0.0, None, None
 
     expires_at = d.get("expires_at", 0)
     if not expires_at:
-        return None, None  # token khong bao gio het han
+        return None, None, None  # token khong bao gio het han
 
-    het_han = datetime.fromtimestamp(expires_at, tz=timezone.utc)
-    con_lai = het_han - datetime.now(timezone.utc)
-    return con_lai.total_seconds() / 86400, None
+    het_han_utc = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+    con_lai = het_han_utc - datetime.now(timezone.utc)
+    return con_lai.total_seconds() / 86400, het_han_utc.astimezone(), None
 
 
-def canh_bao_han_token(env):
+def doc_han_token(env):
+    """Nhu doc_han_token_chi_tiet nhung chi tra ve (so_ngay, loi).
+
+    Giu lai de khong pha vo phan da chay duoc.
+    """
+    so_ngay, _, loi = doc_han_token_chi_tiet(env)
+    return so_ngay, loi
+
+
+def canh_bao_han_token(env, slot=None, danh_sach_moc=None):
     """Tra ve doan text canh bao neu token Meta sap het han, hoac '' neu khong can.
 
     Muc dich: bao TRUOC khi token chet, de con kip lay token moi.
     Truoc day he thong chi bao SAU khi token da chet.
 
+    HAI MUC:
+      - tu NGUONG_NHAC_NHE_NGAY (30) den NGUONG_CANH_BAO_NGAY (7): nhac nhe,
+        CHI o bao cao MOC SANG - mot tin moi ngay thay vi ba tin giong nhau.
+      - duoi NGUONG_CANH_BAO_NGAY (7): nhac o MOI bao cao (nhu truoc day).
+      - da het han: bao do.
+
+    `slot=None` (cach goi cu) nghia la hien o moi bao cao - giu nguyen hanh vi
+    cu cho ai goi ham nay ma khong truyen moc gio.
+
     Ham nay KHONG BAO GIO lam hong bao cao: moi loi deu bi nuot va chi ghi nhat ky.
     """
     try:
-        so_ngay, loi = doc_han_token(env)
+        so_ngay, het_han, loi = doc_han_token_chi_tiet(env)
     except Exception as e:
         log(f"Khong kiem duoc han token Meta: {e}")
         return ""
@@ -379,27 +572,48 @@ def canh_bao_han_token(env):
         log(f"Khong kiem duoc han token Meta: {loi}")
         return ""
 
-    if so_ngay is None or so_ngay >= NGUONG_CANH_BAO_NGAY:
-        return ""
+    if so_ngay is None:
+        return ""  # token khong bao gio het han
 
     if so_ngay <= 0:
         return (
             "🔴 CẢNH BÁO TOKEN META\n"
             "Token đã HẾT HẠN. Số liệu trong báo cáo này có thể không đầy đủ.\n"
             "→ Lấy token mới theo file HUONG-DAN-DIEN-TOKEN.md\n"
+            "→ Hệ thống KHÔNG tự gia hạn được (đã thử 29/09/2026).\n"
         )
 
-    # Duoi 1 ngay thi hien thi theo GIO, vi "con 0 ngay" doc rat kho hieu
+    het_han_txt = f" (hết hạn {het_han.strftime('%d/%m/%Y')})" if het_han else ""
+
+    if so_ngay >= NGUONG_NHAC_NHE_NGAY:
+        return ""
+
+    # Duoi 1 ngay thi hien thi theo GIO, vi "con 0 ngay" doc rat kho hieu.
+    # Lam TRON XUONG (int) chu khong lam tron gan nhat: con 44,7 ngay ma ghi
+    # "45 ngày" la noi THUA thoi gian con lai - voi mot han chot thi phai noi
+    # thieu, khong duoc noi thua.
     if so_ngay < 1:
         con_lai_txt = f"{so_ngay * 24:.0f} giờ"
     else:
-        con_lai_txt = f"{so_ngay:.0f} ngày"
+        con_lai_txt = f"{int(so_ngay)} ngày"
 
+    if so_ngay < NGUONG_CANH_BAO_NGAY:
+        return (
+            f"🟡 CẢNH BÁO TOKEN META — chỉ còn sống {con_lai_txt}{het_han_txt}\n"
+            "→ Nên lấy token mới sớm, đừng chờ tới lúc nó chết.\n"
+            "→ Làm theo HUONG-DAN-DIEN-TOKEN.md (Bước A → E)\n"
+            "→ Chỉ lấy token mới ở MỘT máy, rồi copy file .env sang máy kia bằng USB.\n"
+            "→ Hệ thống KHÔNG tự gia hạn được (đã thử 29/09/2026).\n"
+        )
+
+    # Tu 7 den 30 ngay: nhac nhe, CHI o bao cao moc sang.
+    if slot is None or danh_sach_moc is None or slot != moc_sang(danh_sach_moc):
+        return ""
     return (
-        f"🟡 CẢNH BÁO TOKEN META — chỉ còn sống {con_lai_txt}\n"
-        "→ Nên lấy token mới sớm, đừng chờ tới lúc nó chết.\n"
-        "→ Làm theo HUONG-DAN-DIEN-TOKEN.md (Bước A → E)\n"
-        "→ Chỉ lấy token mới ở MỘT máy, rồi copy file .env sang máy kia bằng USB.\n"
+        f"🔵 NHẮC TOKEN META — còn sống {con_lai_txt}{het_han_txt}\n"
+        "→ Chưa gấp. Đây là nhắc trước để Đại xếp thời gian lấy token mới.\n"
+        "→ Khi nào rảnh thì làm theo HUONG-DAN-DIEN-TOKEN.md (Bước A → E).\n"
+        "→ Hệ thống KHÔNG tự gia hạn được (đã thử 29/09/2026).\n"
     )
 
 
@@ -550,7 +764,7 @@ def compute_stats(env, since, until):
 
     rows, err = fetch_insights(env, since, until)
     if err:
-        return None, f"Loi lay du lieu Meta: {err.get('message')}"
+        return None, mo_ta_loi_meta(err)
 
     filtered = apply_filter(rows, include_kw, exclude_kws)
 
@@ -903,9 +1117,15 @@ def main():
     if err:
         print(f"LOI: {err}")
         log(f"THAT BAI - moc {slot}h: {err}")
+        loai = phan_loai_loi(err)
         if args.mock is None and not args.dry:
             send_error_alert(env, err)
-        sys.exit(1)
+        log(
+            f"LOI {loai} - moc {slot}h"
+            + (" (Nguoi truc se thu lai)" if loai == "tam_thoi"
+               else " (Nguoi truc KHONG thu lai)")
+        )
+        sys.exit(MA_THOAT_TAM_THOI if loai == "tam_thoi" else MA_THOAT_VINH_VIEN)
 
     # Luu lich su TRUOC khi gui: neu gui loi thi so lieu van con.
     # Chi ghi khi chay THAT - --mock va --dry khong ghi (xem co_nen_ghi_lich_su).
@@ -936,13 +1156,31 @@ def main():
         loi_ai = str(e)
         log(f"AI viet nhan dinh that bai (ngoai du kien): {e}")
 
+    # --- Canh bao SO LIEU BAT THUONG (ban thiet ke muc 7.3) ---
+    # Dat SAU khi da luu lich su: cua so 7 ngay la 7 ngay TRUOC ky bao cao, nen
+    # ban ghi vua luu khong lam nhieu ket qua.
+    ly_do_bt = []
+    try:
+        ly_do_bt = bat_thuong.kiem_tra(
+            stats, LOG_DIR / "lich-su.json", until, tron_ngay
+        )
+    except Exception as e:
+        log(f"Khong kiem duoc so bat thuong: {e}")
+    if ly_do_bt:
+        log(f"CANH BAO so bat thuong: {'; '.join(ly_do_bt)}")
+
     report = build_report(env, stats, period_text, nhan_dinh, loi_ai)
 
     # --- Canh bao SOM neu token Meta sap het han ---
     # Dat LEN DAU bao cao de de thay, khong bi lan vao cuoi tin nhan.
-    canh_bao = canh_bao_han_token(env)
-    if canh_bao:
-        report = canh_bao + "\n" + report
+    # Thu tu: token (nghiem trong nhat, Dai phai lam bang tay) -> so bat thuong
+    # -> than bao cao.
+    canh_bao_token = canh_bao_han_token(env, slot, danh_sach_moc)
+    if canh_bao_token:
+        report = canh_bao_token + "\n" + report
+    canh_bao_bt = bat_thuong.canh_bao(ly_do_bt)
+    if canh_bao_bt:
+        report = canh_bao_bt + report
 
     print("=" * 60)
     print(report)
@@ -971,7 +1209,7 @@ def main():
     else:
         print(f"LOI GUI TELEGRAM: {err}")
         log(f"THAT BAI GUI TELEGRAM - moc {slot}h: {err}")
-        sys.exit(1)
+        sys.exit(MA_THOAT_TAM_THOI)
 
     # --- Gui kem file dashboard HTML vao cung Telegram ---
     if dashboard_path:

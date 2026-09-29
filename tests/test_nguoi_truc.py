@@ -139,7 +139,7 @@ class TrucGia:
     """
 
     def __init__(self, now, da_gui=None, che_do_thu=False, ket_qua_gui=True,
-                 tin_cho_san=None, tra_loi_ai_fn=None):
+                 tin_cho_san=None, tra_loi_ai_fn=None, doc_han_fn=None):
         self.now = now
         self.da_gui = set(da_gui or ())
         self.gui_roi = []
@@ -158,11 +158,22 @@ class TrucGia:
             xa_tin_fn=lambda env: (None, None),
             lay_tin_fn=self._lay_tin,
             tra_loi_ai_fn=tra_loi_ai_fn,
+            doc_han_fn=doc_han_fn,
         )
 
     def _gui(self, moc):
+        """Tra ve MA THOAT (0 thanh cong / 1 tam thoi / 2 vinh vien).
+
+        `ket_qua_gui` nhan True/False nhu truoc (True -> 0, False -> 1) HOAC
+        mot ma thoat cu the, de kiem duoc truong hop loi vinh vien.
+        """
         self.gui_roi.append(moc)
-        return self._ket_qua_gui
+        kq = self._ket_qua_gui
+        if kq is True:
+            return nguoi_truc.report.MA_THOAT_OK
+        if kq is False:
+            return nguoi_truc.report.MA_THOAT_TAM_THOI
+        return kq
 
     def _gui_tin(self, text):
         self.tin_da_gui.append(text)
@@ -478,9 +489,196 @@ class TestGuiBaoCaoBangMaUtf8(unittest.TestCase):
         moi_truong = da_goi["kw"].get("env") or {}
         self.assertIn("PATH", moi_truong)
 
-    def test_van_tra_ve_True_khi_thanh_cong(self):
-        ok, _ = self._chay_voi_ket_qua(self.KetQuaGia())
-        self.assertTrue(ok)
+    def test_van_tra_ve_MA_THOAT_OK_khi_thanh_cong(self):
+        ma, _ = self._chay_voi_ket_qua(self.KetQuaGia())
+        self.assertEqual(ma, nguoi_truc.report.MA_THOAT_OK)
+
+
+class TestMaThoatCuaReport(unittest.TestCase):
+    """Nguoi truc phai phan biet duoc loi TAM THOI va loi VINH VIEN.
+
+    Loi THAT: token Meta chet thi ca ba moc gio deu that bai, va moi moc Nguoi
+    truc thu lai 3 lan - moi lan report.py lai gui mot tin canh bao. Ket qua la
+    9 tin canh bao GIONG HET NHAU moi ngay, trong khi viec can lam chi co MOT.
+    """
+
+    class KetQuaGia:
+        def __init__(self, returncode=0):
+            self.returncode = returncode
+            self.stdout = ""
+            self.stderr = ""
+
+    def _chay(self, returncode):
+        goc = nguoi_truc.subprocess.run
+        nguoi_truc.subprocess.run = lambda lenh, **kw: self.KetQuaGia(returncode)
+        try:
+            return nguoi_truc.gui_bao_cao(8)
+        finally:
+            nguoi_truc.subprocess.run = goc
+
+    def test_ma_0_la_thanh_cong(self):
+        self.assertEqual(self._chay(0), nguoi_truc.report.MA_THOAT_OK)
+
+    def test_ma_2_la_loi_vinh_vien(self):
+        self.assertEqual(self._chay(2), nguoi_truc.report.MA_THOAT_VINH_VIEN)
+
+    def test_ma_1_la_loi_tam_thoi(self):
+        self.assertEqual(self._chay(1), nguoi_truc.report.MA_THOAT_TAM_THOI)
+
+    def test_ma_la_khac_1_va_2_van_la_tam_thoi(self):
+        """Chi dung ma 2 moi la vinh vien.
+
+        Rat nhieu duong khac trong report.py thoat voi ma 1 ma KHONG phai loi
+        Meta (khong doc duoc .env, khong gui duoc Telegram). Coi chung la vinh
+        vien thi bao cao se im lang khong bao gio gui lai.
+        """
+        for ma in (1, 3, 7, 99, 130):
+            with self.subTest(ma=ma):
+                self.assertEqual(self._chay(ma), nguoi_truc.report.MA_THOAT_TAM_THOI)
+
+    def test_loi_vinh_vien_thi_KHONG_thu_lai(self):
+        tg = TrucGia(luc(12, 0, 5), ket_qua_gui=nguoi_truc.report.MA_THOAT_VINH_VIEN)
+        tg.truc.canh_moc(luc(12, 0, 5))
+        self.assertEqual(tg.gui_roi, [12])
+        # Qua khoang nghi: van KHONG thu lai
+        sau = luc(12, 0, 5) + timedelta(seconds=nguoi_truc.KHOANG_NGHI_GIUA_HAI_LAN_THU)
+        tg.truc.canh_moc(sau)
+        self.assertEqual(tg.gui_roi, [12])
+        self.assertIn(12, tg.truc.moc_hong_vinh_vien)
+
+    def test_loi_tam_thoi_thi_VAN_thu_lai(self):
+        tg = TrucGia(luc(12, 0, 5), ket_qua_gui=nguoi_truc.report.MA_THOAT_TAM_THOI)
+        tg.truc.canh_moc(luc(12, 0, 5))
+        sau = luc(12, 0, 5) + timedelta(seconds=nguoi_truc.KHOANG_NGHI_GIUA_HAI_LAN_THU)
+        tg.truc.canh_moc(sau)
+        self.assertEqual(tg.gui_roi, [12, 12])
+        self.assertNotIn(12, tg.truc.moc_hong_vinh_vien)
+
+    def test_moc_hong_vinh_vien_khong_chan_moc_sau(self):
+        """Token chet luc 8h, Dai sua xong thi moc 12h phai gui binh thuong."""
+        tg = TrucGia(luc(8, 0, 5), ket_qua_gui=nguoi_truc.report.MA_THOAT_VINH_VIEN)
+        tg.truc.canh_moc(luc(8, 0, 5))
+        tg._ket_qua_gui = True
+        tg.truc.canh_moc(luc(12, 0, 5))
+        self.assertEqual(tg.gui_roi, [8, 12])
+
+
+class TestLenhToken(unittest.TestCase):
+    """Lenh nhanh `token`: Dai tu kiem duoc han token, KHONG ton luot AI.
+
+    Day la thay the cho tinh nang "tu gia han token" - da chung minh ngay
+    29/09/2026 la Meta KHONG cho.
+    """
+
+    def _doc_gia(self, so_ngay, het_han=None, loi=None):
+        return lambda env: (so_ngay, het_han, loi)
+
+    def test_con_nhieu_ngay_thi_bao_chua_can_lam_gi(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"}, doc_han_fn=self._doc_gia(45))
+        self.assertIn("45 ngày", chu)
+        self.assertIn("chưa cần làm gì", chu)
+
+    def test_duoi_7_ngay_thi_bao_lay_token_moi_ngay(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"}, doc_han_fn=self._doc_gia(5))
+        self.assertIn("LẤY TOKEN MỚI NGAY", chu)
+
+    def test_tu_7_den_30_ngay_thi_nhac_nhe(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"}, doc_han_fn=self._doc_gia(20))
+        self.assertIn("chưa gấp", chu)
+        self.assertNotIn("LẤY TOKEN MỚI NGAY", chu)
+
+    def test_hien_moc_het_han_cu_the(self):
+        het_han = datetime(2026, 11, 13, 8, 15)
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"},
+            doc_han_fn=self._doc_gia(20, het_han))
+        self.assertIn("", chu)
+        self.assertIn("08:15", chu)
+
+    def test_token_da_het_han(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"}, doc_han_fn=self._doc_gia(0.0))
+        self.assertIn("ĐÃ HẾT HẠN", chu)
+
+    def test_token_khong_bao_gio_het_han(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"}, doc_han_fn=self._doc_gia(None))
+        self.assertIn("không bao giờ hết hạn", chu)
+
+    def test_doc_han_loi_thi_noi_ro_ly_do(self):
+        chu = nguoi_truc.tra_loi_han_token(
+            {"REPORT_ACCOUNT_NAME": "May A"},
+            doc_han_fn=self._doc_gia(None, None, "HTTP 400"))
+        self.assertIn("HTTP 400", chu)
+
+    def test_doc_han_nem_loi_cung_khong_lam_chet(self):
+        def no_loi(env):
+            raise RuntimeError("mang hong")
+        chu = nguoi_truc.tra_loi_han_token({}, doc_han_fn=no_loi)
+        self.assertIn("mang hong", chu)
+
+    def test_moi_cau_tra_loi_deu_noi_ro_KHONG_tu_gia_han_duoc(self):
+        for so_ngay in (45, 20, 5, 0.0):
+            with self.subTest(so_ngay=so_ngay):
+                chu = nguoi_truc.tra_loi_han_token(
+                    {}, doc_han_fn=self._doc_gia(so_ngay))
+                self.assertIn("KHÔNG tự gia hạn được", chu)
+
+    def test_nhan_chu_token_thi_tra_loi_han_token(self):
+        chu = nguoi_truc.tra_loi_tin_nhan(
+            cau_hoi="token",
+            env={"REPORT_ACCOUNT_NAME": "May A"},
+            danh_sach_moc=[8, 12, 17],
+            bat_dau=luc(8), lan_gui_cuoi=None, da_gui=set(),
+            now=luc(13),
+            doc_han_fn=self._doc_gia(20),
+        )
+        self.assertIn("TOKEN META", chu)
+        self.assertIn("20 ngày", chu)
+
+    def test_nhan_chu_token_KHONG_goi_AI(self):
+        """Cau hoi ve token khong duoc ton luot AI."""
+        da_goi_ai = []
+
+        def ai_gia(c):
+            da_goi_ai.append(c)
+            return "cau tra loi cua AI", None
+
+        nguoi_truc.tra_loi_tin_nhan(
+            cau_hoi="token còn bao lâu?",
+            env={}, danh_sach_moc=[8, 12, 17],
+            bat_dau=luc(8), lan_gui_cuoi=None, da_gui=set(),
+            now=luc(13), tra_loi_ai_fn=ai_gia,
+            doc_han_fn=self._doc_gia(20),
+        )
+        self.assertEqual(da_goi_ai, [])
+
+    def test_cau_hoi_so_lieu_van_di_duong_AI(self):
+        """Nhanh token KHONG duoc chan cau hoi so lieu binh thuong."""
+        chu = nguoi_truc.tra_loi_tin_nhan(
+            cau_hoi="camp nào tệ nhất tuần này?",
+            env={}, danh_sach_moc=[8, 12, 17],
+            bat_dau=luc(8), lan_gui_cuoi=None, da_gui=set(),
+            now=luc(13),
+            tra_loi_ai_fn=lambda c: ("Chi tieu 7.034.942 dong.", None),
+            doc_han_fn=self._doc_gia(20),
+        )
+        self.assertEqual(chu, "Chi tieu 7.034.942 dong.")
+
+    def test_cau_hoi_con_song_van_uu_tien_truoc(self):
+        """'còn sống không?' phai di duong suc khoe, khong bi nhanh token bat."""
+        chu = nguoi_truc.tra_loi_tin_nhan(
+            cau_hoi="còn sống không?",
+            env={"REPORT_ACCOUNT_NAME": "May A"},
+            danh_sach_moc=[8, 12, 17],
+            bat_dau=luc(8), lan_gui_cuoi=None, da_gui=set(),
+            now=luc(13),
+            doc_han_fn=self._doc_gia(20),
+        )
+        self.assertIn("Người trực đang chạy", chu)
 
 
 if __name__ == "__main__":

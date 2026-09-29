@@ -225,17 +225,30 @@ def lay_khoang(path, tu, den):
     return {"tong": tong, "so_ngay": so_ngay}
 
 
+def cua_so_truoc(ngay, so_ngay):
+    """Khoang `so_ngay` ngay NGAY TRUOC `ngay`. Tra (tu, den) dang 'YYYY-MM-DD'.
+
+    Ngay sai dinh dang -> (None, None), khong nem loi.
+
+    Tach rieng khoi lay_ky_truoc vi bat_thuong.py cung can DUNG khoang ngay nay
+    de dem so ngay co chi tieu. Chep lai phep tinh ngay o hai noi thi som muon
+    hai noi se lech nhau.
+    """
+    try:
+        d = datetime.strptime(_chuan_hoa_ngay(ngay), "%Y-%m-%d").date()
+    except ValueError:
+        return None, None
+    return ((d - timedelta(days=so_ngay)).strftime("%Y-%m-%d"),
+            (d - timedelta(days=1)).strftime("%Y-%m-%d"))
+
+
 def lay_ky_truoc(path, ngay, so_ngay):
     """Tra ve tong hop `so_ngay` ngay NGAY TRUOC `ngay` (khong tinh chinh ngay do).
 
     Ngay sai dinh dang thi tra ve tong rong, khong nem loi — giong cac ham
     khac trong module nay.
     """
-    ngay = _chuan_hoa_ngay(ngay)
-    try:
-        d = datetime.strptime(ngay, "%Y-%m-%d").date()
-    except ValueError:
+    tu, den = cua_so_truoc(ngay, so_ngay)
+    if tu is None:
         return {"tong": _tong_rong(), "so_ngay": 0}
-    den = (d - timedelta(days=1)).strftime("%Y-%m-%d")
-    tu = (d - timedelta(days=so_ngay)).strftime("%Y-%m-%d")
     return lay_khoang(path, tu, den)

@@ -174,5 +174,48 @@ class TestLayKhoang(unittest.TestCase):
         self.assertEqual(kq["tong"]["spend"], 0.0)
 
 
+class TestCuaSoTruoc(unittest.TestCase):
+    """Khoang ngay cua `so_ngay` ngay NGAY TRUOC mot ngay.
+
+    Ham nay tach ra o Giai doan 5 vi bat_thuong.py cung can DUNG khoang do.
+    Chep phep tinh ngay o hai noi thi som muon hai noi se lech nhau.
+    """
+
+    def test_bay_ngay_truoc(self):
+        self.assertEqual(
+            lich_su.cua_so_truoc("2026-09-29", 7), ("2026-09-22", "2026-09-28"))
+
+    def test_khong_bao_gom_chinh_ngay_do(self):
+        tu, den = lich_su.cua_so_truoc("2026-09-29", 1)
+        self.assertEqual((tu, den), ("2026-09-28", "2026-09-28"))
+
+    def test_vuot_qua_dau_thang(self):
+        self.assertEqual(
+            lich_su.cua_so_truoc("2026-10-03", 7), ("2026-09-26", "2026-10-02"))
+
+    def test_vuot_qua_dau_nam(self):
+        self.assertEqual(
+            lich_su.cua_so_truoc("2027-01-02", 7), ("2026-12-26", "2027-01-01"))
+
+    def test_ngay_sai_dinh_dang_tra_ve_None(self):
+        self.assertEqual(lich_su.cua_so_truoc("khong-phai-ngay", 7), (None, None))
+
+    def test_nhan_doi_tuong_date(self):
+        from datetime import date
+        self.assertEqual(
+            lich_su.cua_so_truoc(date(2026, 9, 29), 7), ("2026-09-22", "2026-09-28"))
+
+    def test_lay_ky_truoc_dung_cung_khoang_voi_cua_so_truoc(self):
+        """Hai ham phai cho ra cung mot khoang - neu lech thi canh bao sai."""
+        with tempfile.TemporaryDirectory() as tm:
+            path = Path(tm) / "lich-su.json"
+            lich_su.ghi(path, "2026-09-28", 8, stats_mau(spend=100.0))
+            tu, den = lich_su.cua_so_truoc("2026-09-29", 7)
+            kq1 = lich_su.lay_khoang(path, tu, den)
+            kq2 = lich_su.lay_ky_truoc(path, "2026-09-29", 7)
+            self.assertEqual(kq1["tong"]["spend"], kq2["tong"]["spend"])
+            self.assertEqual(kq1["so_ngay"], kq2["so_ngay"])
+
+
 if __name__ == "__main__":
     unittest.main()

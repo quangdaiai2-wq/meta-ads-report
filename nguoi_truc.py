@@ -67,6 +67,14 @@ TRA_LOI_AI_LOI = (
 )
 
 
+TOKEN_HET_HAN = (
+    "🔴 TOKEN META ĐÃ HẾT HẠN\n"
+    "Hệ thống không lấy được số liệu nữa.\n"
+    "→ Lấy token mới theo file HUONG-DAN-DIEN-TOKEN.md (Bước A → E).\n"
+    "→ Hệ thống KHÔNG tự gia hạn được — Meta không cho (đã thử 29/09/2026)."
+)
+
+
 def moc_da_toi(now, danh_sach_moc):
     """Cac moc gio da di qua tinh den thoi diem `now`, trong NGAY HOM NAY."""
     return [m for m in danh_sach_moc if now.hour >= m]
@@ -138,10 +146,14 @@ def chon_moc_can_gui(now, danh_sach_moc, da_gui, trang_thai):
 def gui_bao_cao(moc, che_do_thu=False):
     """Goi report.py o TIEN TRINH RIENG de gui bao cao moc `moc`.
 
+    Tra ve MA THOAT cua report.py:
+        report.MA_THOAT_OK (0)         = thanh cong
+        report.MA_THOAT_TAM_THOI (1)   = loi TAM THOI  -> nen thu lai
+        report.MA_THOAT_VINH_VIEN (2)  = loi VINH VIEN -> KHONG thu lai
+                                         (vi du token Meta da chet)
+
     Chay o tien trinh rieng vi: report.py co loi thi Nguoi truc van song, va
     phan tinh tien trong report.py khong bi dung toi.
-
-    Tra ve True neu report.py thoat voi ma 0.
     """
     lenh = [sys.executable, str(GOC / "report.py"), "--slot", str(moc)]
     if che_do_thu:
@@ -168,16 +180,26 @@ def gui_bao_cao(moc, che_do_thu=False):
         report.log(
             f"NGUOI TRUC: report.py moc {moc}h qua thoi gian cho {CHO_REPORT_TOI_DA} giay"
         )
-        return False
+        return report.MA_THOAT_TAM_THOI
     except Exception as e:
         report.log(f"NGUOI TRUC: khong chay duoc report.py moc {moc}h: {e}")
-        return False
+        return report.MA_THOAT_TAM_THOI
 
-    if kq.returncode == 0:
-        return True
+    if kq.returncode == report.MA_THOAT_OK:
+        return report.MA_THOAT_OK
+    # So sanh DUNG BANG 2, khong dung "khac 0". Rat nhieu duong khac trong
+    # report.py thoat voi ma 1 ma KHONG phai loi Meta vinh vien (khong doc duoc
+    # .env, khong gui duoc Telegram, --slot sai). Coi chung la vinh vien thi
+    # bao cao se im lang khong bao gio gui lai.
+    if kq.returncode == report.MA_THOAT_VINH_VIEN:
+        report.log(
+            f"NGUOI TRUC: report.py moc {moc}h loi VINH VIEN (ma 2) - khong thu lai"
+        )
+        return report.MA_THOAT_VINH_VIEN
+
     duoi = (kq.stderr or "")[-300:]
     report.log(f"NGUOI TRUC: report.py moc {moc}h thoat voi ma {kq.returncode}: {duoi}")
-    return False
+    return report.MA_THOAT_TAM_THOI
 
 
 def goi_telegram(env, method, params):
@@ -325,15 +347,72 @@ def _tra_loi_bang_ai(cau_hoi, env, now):
     return ai.tra_loi(cau_hoi, bo, env=env, moc_tg=moc_tg)
 
 
+def tra_loi_han_token(env, now=None, doc_han_fn=None):
+    """Cau tra loi cho lenh nhanh `token`. KHONG ton luot AI.
+
+    Day la thay the cho tinh nang "tu gia han token" - da chung minh ngay
+    29/09/2026 la Meta KHONG cho. Thay vi mot tinh nang khong ton tai, cho Dai
+    mot lenh de TU KIEM TRA bat cu luc nao.
+
+    `doc_han_fn` phai tiem duoc: neu khong thi kiem thu se goi mang that toi Meta.
+    """
+    now = now or datetime.now()
+    doc_han_fn = doc_han_fn or report.doc_han_token_chi_tiet
+    try:
+        so_ngay, het_han, loi = doc_han_fn(env)
+    except Exception as e:
+        so_ngay, het_han, loi = None, None, f"loi khong luong truoc: {e}"
+
+    if loi:
+        return (
+            "Chưa kiểm tra được hạn token Meta.\n"
+            f"Lý do: {loi}\n"
+            "→ Thử lại sau vài phút. Nếu vẫn vậy thì xem file logs\\baocao.log."
+        )
+
+    may = (env or {}).get("REPORT_ACCOUNT_NAME", "?")
+
+    if so_ngay is None:
+        return f"🔑 TOKEN META\n- Máy: {may}\n- Token không bao giờ hết hạn."
+
+    if so_ngay <= 0:
+        return TOKEN_HET_HAN
+
+    # Duoi 1 ngay thi hien thi theo GIO, vi "con 0 ngay" doc rat kho hieu.
+    # Lam TRON XUONG: con 44,7 ngay ma ghi "45 ngày" la noi THUA thoi gian con
+    # lai - voi mot han chot thi phai noi thieu, khong duoc noi thua.
+    if so_ngay < 1:
+        con_lai_txt = f"{so_ngay * 24:.0f} giờ"
+    else:
+        con_lai_txt = f"{int(so_ngay)} ngày"
+
+    dong = ["🔑 TOKEN META", f"- Máy: {may}", f"- Còn sống: {con_lai_txt}"]
+    if het_han:
+        dong.append(f"- Hết hạn: {het_han.strftime('%d/%m/%Y lúc %H:%M')}")
+
+    if so_ngay < report.NGUONG_CANH_BAO_NGAY:
+        dong.append("- Việc cần làm: LẤY TOKEN MỚI NGAY.")
+        dong.append("→ Làm theo HUONG-DAN-DIEN-TOKEN.md (Bước A → E).")
+        dong.append("→ Chỉ lấy ở MỘT máy, rồi copy .env sang máy kia bằng USB.")
+    elif so_ngay < report.NGUONG_NHAC_NHE_NGAY:
+        dong.append("- Việc cần làm: chưa gấp, nhưng nên xếp thời gian lấy token mới.")
+    else:
+        dong.append("- Việc cần làm: chưa cần làm gì.")
+
+    dong.append("- Hệ thống KHÔNG tự gia hạn được — Meta không cho (đã thử 29/09/2026).")
+    return "\n".join(dong)
+
+
 def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
-                     now=None, tra_loi_ai_fn=None):
+                     now=None, tra_loi_ai_fn=None, doc_han_fn=None):
     """Soan cau tra loi cho mot tin nhan tu Dai.
 
     Giai doan 2 tra loi cau hoi suc khoe. Giai doan 4 tra loi them cau hoi ve
-    so lieu, bang cach goi lop AI (ai.tra_loi).
+    so lieu, bang cach goi lop AI (ai.tra_loi). Giai doan 5 tra loi them cau hoi
+    ve han token.
 
-    `tra_loi_ai_fn` phai tiem duoc: neu khong thi kiem thu se goi AI that, vua
-    hong phep kiem vua ton luot AI.
+    `tra_loi_ai_fn` va `doc_han_fn` phai tiem duoc: neu khong thi kiem thu se
+    goi AI that / goi Meta that, vua hong phep kiem vua ton luot.
     """
     now = now or datetime.now()
     chuan = (cau_hoi or "").lower().strip()
@@ -357,6 +436,12 @@ def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
             f"- Lần gửi gần nhất: {lan_cuoi_txt}",
             f"- Mốc kế tiếp: {_moc_ke_tiep(now, danh_sach_moc, da_gui)}",
         ])
+
+    # Cau hoi ve han token -> tra loi bang so da co, KHONG ton luot AI.
+    # Dat truoc nhanh AI vi day la cau hoi ve suc khoe he thong, khong phai ve
+    # so lieu quang cao.
+    if "token" in chuan:
+        return tra_loi_han_token(env, now=now, doc_han_fn=doc_han_fn)
 
     if not chuan:
         return "Tôi chưa thấy nội dung trong tin nhắn của Đại."
@@ -389,13 +474,16 @@ class NguoiTruc:
     def __init__(self, env, danh_sach_moc, che_do_thu=False,
                  gui_bao_cao_fn=None, gui_tin_fn=None,
                  doc_da_gui_fn=None, dong_ho=None,
-                 xa_tin_fn=None, lay_tin_fn=None, tra_loi_ai_fn=None):
+                 xa_tin_fn=None, lay_tin_fn=None, tra_loi_ai_fn=None,
+                 doc_han_fn=None):
         self.env = env or {}
         self.danh_sach_moc = list(danh_sach_moc) or list(MOC_MAC_DINH)
         self.che_do_thu = che_do_thu
         # Ham tra loi bang AI. Phai tiem duoc: neu khong thi kiem thu se goi AI
         # that (ton luot AI va phu thuoc mang).
         self.tra_loi_ai_fn = tra_loi_ai_fn
+        # Ham doc han token Meta. Cung phai tiem duoc, cung ly do.
+        self.doc_han_fn = doc_han_fn
 
         if gui_bao_cao_fn is None:
             def gui_bao_cao_fn(moc):
@@ -426,6 +514,11 @@ class NguoiTruc:
         # Cac moc da xu ly trong PHIEN nay. Can thiet vi che do --thu khong ghi
         # so gui ra file, va vi mot lan ghi so that bai khong duoc gay gui lap.
         self.da_xu_ly = set()
+        # Cac moc hong VINH VIEN trong phien nay (token chet, thieu quyen...).
+        # Thu lai chi ton thoi gian va ban them tin canh bao cho Dai.
+        self.moc_hong_vinh_vien = set()
+        # Cac moc da bao "bo qua" roi, de khong ghi nhat ky lap moi 30 giay.
+        self.da_bao_bo_qua = set()
         self.da_xa_tin_ton_dong = False
         self.offset = None
 
@@ -438,23 +531,51 @@ class NguoiTruc:
             return set(self.da_xu_ly)
 
     def canh_moc(self, now):
-        """Kiem tra xem co moc nao can gui khong, va gui neu can."""
+        """Kiem tra xem co moc nao can gui khong, va gui neu can.
+
+        Ba ket cuc:
+          - Ma 0: da gui xong.
+          - Ma 2 (loi VINH VIEN, vi du token chet): KHONG thu lai moc nay. Moc
+            sau se gui binh thuong sau khi Dai sua xong.
+          - Ma 1 (loi tam thoi): giu nguyen hanh vi cu - thu lai toi da
+            MAX_LAN_THU_MOI_MOC lan, cach nhau KHOANG_NGHI_GIUA_HAI_LAN_THU.
+
+        LUU Y ve moc hong vinh vien: KHONG duoc coi no nhu "da gui". Neu coi nhu
+        da gui thi chon_moc_can_gui() se lui ve moc CU HON va gui bao cao cu -
+        dung thu ma giai doan 2 da co cong tranh. Da bi buoc dung thu bat duoc
+        ngay 29/09/2026: moc 12h hong vinh vien lam he thong lui ve gui moc 8h.
+        """
         moc, bo_qua = chon_moc_can_gui(
             now, self.danh_sach_moc, self._da_gui_hom_nay(now), self.trang_thai
         )
+        # Chi bao "bo qua" MOT lan cho moi moc. Vong lap 30 giay mot lan, neu
+        # bao moi vong thi mot ngay sinh ~2.880 dong nhat ky vo ich.
         for m in bo_qua:
-            report.log(
-                f"NGUOI TRUC: bo qua moc {m}h - da co bao cao moi hon chua gui"
-            )
+            if m not in self.da_bao_bo_qua:
+                self.da_bao_bo_qua.add(m)
+                report.log(
+                    f"NGUOI TRUC: bo qua moc {m}h - da co bao cao moi hon chua gui"
+                )
         if moc is None:
+            return
+
+        if moc in self.moc_hong_vinh_vien:
             return
 
         report.log(f"NGUOI TRUC: toi moc {moc}h - bat dau gui")
         self.trang_thai.ghi_lan_thu(moc, now)
-        if self.gui_bao_cao(moc):
+        ma = self.gui_bao_cao(moc)
+
+        if ma == report.MA_THOAT_OK:
             self.da_xu_ly.add(moc)
             self.lan_gui_cuoi = now
             report.log(f"NGUOI TRUC: da gui xong moc {moc}h")
+        elif ma == report.MA_THOAT_VINH_VIEN:
+            self.moc_hong_vinh_vien.add(moc)
+            report.log(
+                f"NGUOI TRUC: moc {moc}h loi VINH VIEN (token chet / thieu quyen) "
+                "- KHONG thu lai. Sua xong thi moc sau gui binh thuong."
+            )
         else:
             so_lan = self.trang_thai.so_lan.get(moc, 0)
             report.log(
@@ -515,6 +636,7 @@ class NguoiTruc:
             da_gui=self._da_gui_hom_nay(now),
             now=now,
             tra_loi_ai_fn=self.tra_loi_ai_fn,
+            doc_han_fn=self.doc_han_fn,
         )
         if self.che_do_thu:
             report.log(f"NGUOI TRUC [THU]: se tra loi: {tra_loi.splitlines()[0]}")
@@ -560,9 +682,14 @@ def main():
                 f"{danh_sach_moc}"
             )
             return 1
-        ok = gui_bao_cao(args.gui_ngay, che_do_thu=args.thu)
-        print("DA GUI" if ok else "GUI THAT BAI")
-        return 0 if ok else 1
+        ma = gui_bao_cao(args.gui_ngay, che_do_thu=args.thu)
+        if ma == report.MA_THOAT_OK:
+            print("DA GUI")
+        elif ma == report.MA_THOAT_VINH_VIEN:
+            print("GUI THAT BAI - LOI VINH VIEN (token chet / thieu quyen)")
+        else:
+            print("GUI THAT BAI - LOI TAM THOI")
+        return ma
 
     truc = NguoiTruc(env, danh_sach_moc, che_do_thu=args.thu)
     print(f"NGUOI TRUC dang chay. Moc gio: {danh_sach_moc}. Che do thu: {args.thu}")

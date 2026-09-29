@@ -590,5 +590,377 @@ class TestCoNenGhiLichSu(unittest.TestCase):
         self.assertFalse(report.co_nen_ghi_lich_su(mock=12, dry=True))
 
 
+# ============================================================================
+# GIAI DOAN 5 - TU XU LY LOI
+# ============================================================================
+
+
+class TestApiGetLuiDan(unittest.TestCase):
+    """Meta chan vi qua nhieu yeu cau thi phai CHO roi moi thu lai.
+
+    Loi THAT cua code cu: vong lap thu lai NGAY LAP TUC, khong cho giay nao.
+    Dung luc Meta dang chan vi qua nhieu yeu cau thi thu lai ngay chi ton them
+    mot lan goi nua, gan nhu chac chan that bai ca ba lan.
+    """
+
+    def _chay(self, cac_loi):
+        """`cac_loi`: danh sach loi se tra ve theo tung lan goi (None = thanh cong).
+
+        Tra ve (du_lieu, loi, danh_sach_thoi_gian_da_cho).
+        """
+        da_cho = []
+        so_lan = {"n": 0}
+
+        def urlopen_gia(url, timeout=None):
+            i = so_lan["n"]
+            so_lan["n"] += 1
+            loi = cac_loi[i] if i < len(cac_loi) else cac_loi[-1]
+            if loi is None:
+                return _TraLoiGia({"data": [1]})
+            raise _LoiHTTPGia(400, loi)
+
+        goc = report.urllib.request.urlopen
+        report.urllib.request.urlopen = urlopen_gia
+        try:
+            du_lieu, err = report.api_get("x", {}, ngu_fn=da_cho.append)
+        finally:
+            report.urllib.request.urlopen = goc
+        return du_lieu, err, da_cho
+
+    def test_ma_17_thi_cho_roi_thu_lai(self):
+        # Lan 1 chan, lan 2 thanh cong -> chi cho MOT lan.
+        _, err, da_cho = self._chay([{"code": 17, "message": "chan tam"}, None])
+        self.assertIsNone(err)
+        self.assertEqual(da_cho, [report.CHO_TRUOC_KHI_THU_LAI[0]])
+
+    def test_ma_80004_thi_cho_roi_thu_lai(self):
+        _, err, da_cho = self._chay([{"code": 80004, "message": "chan tam"}, None])
+        self.assertIsNone(err)
+        self.assertEqual(da_cho, [report.CHO_TRUOC_KHI_THU_LAI[0]])
+
+    def test_chan_ba_lan_thi_cho_du_hai_lan(self):
+        _, err, da_cho = self._chay([{"code": 17, "message": "chan tam"}])
+        self.assertIsNotNone(err)
+        self.assertEqual(da_cho, list(report.CHO_TRUOC_KHI_THU_LAI))
+
+    def test_cho_lau_dan(self):
+        self.assertLess(report.CHO_TRUOC_KHI_THU_LAI[0],
+                        report.CHO_TRUOC_KHI_THU_LAI[1])
+
+    def test_ma_190_thi_tra_loi_NGAY_khong_cho(self):
+        _, err, da_cho = self._chay([{"code": 190, "message": "token het han"}])
+        self.assertEqual(err.get("code"), 190)
+        self.assertEqual(da_cho, [])
+
+    def test_ma_100_thi_tra_loi_ngay_khong_cho(self):
+        _, err, da_cho = self._chay([{"code": 100, "message": "sai tham so"}])
+        self.assertEqual(da_cho, [])
+
+    def test_ma_dang_CHUOI_van_nhan_ra_tam_thoi(self):
+        """Meta co the tra ma dang chuoi. So sanh '17' in (4, 17) la False.
+
+        Neu khong chuan hoa thi tinh nang lui dan im lang mat tac dung ma
+        khong ai biet.
+        """
+        _, err, da_cho = self._chay([{"code": "17", "message": "chan tam"}, None])
+        self.assertIsNone(err)
+        self.assertEqual(da_cho, [report.CHO_TRUOC_KHI_THU_LAI[0]])
+
+    def test_ba_lan_deu_chan_thi_tra_loi_cuoi_cung(self):
+        """Het 3 luot thu ma Meta van chan thi phai TRA LOI, khong treo."""
+        _, err, da_cho = self._chay([{"code": 17, "message": "van chan"}])
+        self.assertIsNotNone(err)
+        self.assertEqual(err.get("code"), 17)
+        self.assertEqual(da_cho, list(report.CHO_TRUOC_KHI_THU_LAI))
+
+    def test_thanh_cong_ngay_lan_dau_thi_khong_cho(self):
+        du_lieu, err, da_cho = self._chay([None])
+        self.assertEqual(du_lieu, {"data": [1]})
+        self.assertEqual(da_cho, [])
+
+    def test_loi_mang_thi_cung_cho_roi_thu_lai(self):
+        da_cho = []
+
+        def urlopen_gia(url, timeout=None):
+            raise OSError("mang hong")
+
+        goc = report.urllib.request.urlopen
+        report.urllib.request.urlopen = urlopen_gia
+        try:
+            _, err = report.api_get("x", {}, ngu_fn=da_cho.append)
+        finally:
+            report.urllib.request.urlopen = goc
+        self.assertIsNotNone(err)
+        self.assertEqual(len(da_cho), 2)
+
+
+class _TraLoiGia:
+    """Gia lap doi tuong tra ve cua urllib.request.urlopen."""
+
+    def __init__(self, du_lieu):
+        self._du_lieu = du_lieu
+
+    def read(self):
+        import json as _json
+        return _json.dumps(self._du_lieu).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+class _LoiHTTPGia(report.urllib.error.HTTPError):
+    """Gia lap HTTPError cua urllib, mang theo phan than JSON cua Meta."""
+
+    def __init__(self, code, than):
+        import json as _json
+        super().__init__("http://x", code, "loi", {}, None)
+        self._than = _json.dumps({"error": than}).encode("utf-8")
+
+    def read(self):
+        return self._than
+
+
+class TestPhanLoaiLoi(unittest.TestCase):
+
+    def test_chin_ma_vinh_vien(self):
+        for ma in report.MA_LOI_META_VINH_VIEN:
+            with self.subTest(ma=ma):
+                chuoi = report.mo_ta_loi_meta({"code": ma, "message": "x"})
+                self.assertEqual(report.phan_loai_loi(chuoi), "vinh_vien")
+
+    def test_nam_ma_tam_thoi(self):
+        for ma in report.MA_LOI_META_TAM_THOI:
+            with self.subTest(ma=ma):
+                chuoi = report.mo_ta_loi_meta({"code": ma, "message": "x"})
+                self.assertEqual(report.phan_loai_loi(chuoi), "tam_thoi")
+
+    def test_token_het_han_la_vinh_vien(self):
+        chuoi = report.mo_ta_loi_meta(
+            {"code": 190, "message": "Session has expired"})
+        self.assertEqual(report.phan_loai_loi(chuoi), "vinh_vien")
+
+    def test_khong_ro_thi_mac_dinh_TAM_THOI(self):
+        """Thu lai mot lan nua la vo hai; tu bo mot loi that su thi te hon."""
+        self.assertEqual(report.phan_loai_loi("loi gi do khong ro"), "tam_thoi")
+
+    def test_chuoi_rong_van_tra_ve_tam_thoi(self):
+        self.assertEqual(report.phan_loai_loi(""), "tam_thoi")
+        self.assertEqual(report.phan_loai_loi(None), "tam_thoi")
+
+    def test_doan_ma_loi_tu_chuoi(self):
+        self.assertEqual(report.doc_ma_loi("Loi lay du lieu Meta (ma 190): x"), 190)
+        self.assertEqual(report.doc_ma_loi("Loi lay du lieu Meta (ma 80004): x"), 80004)
+        self.assertIsNone(report.doc_ma_loi("Loi lay du lieu Meta: khong co ma"))
+
+    def test_mo_ta_loi_kem_ma_de_doc_duoc(self):
+        chuoi = report.mo_ta_loi_meta({"code": 190, "message": "token chet"})
+        self.assertIn("190", chuoi)
+        self.assertIn("token chet", chuoi)
+
+    def test_mo_ta_loi_khi_khong_co_ma(self):
+        chuoi = report.mo_ta_loi_meta({"message": "mang hong"})
+        self.assertIn("mang hong", chuoi)
+        self.assertIsNone(report.doc_ma_loi(chuoi))
+
+
+class TestMaThoat(unittest.TestCase):
+
+    def test_ba_ma_thoat_khac_nhau(self):
+        self.assertEqual(report.MA_THOAT_OK, 0)
+        self.assertEqual(report.MA_THOAT_TAM_THOI, 1)
+        self.assertEqual(report.MA_THOAT_VINH_VIEN, 2)
+
+
+class TestChongLapCanhBao(unittest.TestCase):
+    """Cung MOT loai loi thi khong gui canh bao lai trong 12 gio.
+
+    Loi THAT: token chet gay 9 tin canh bao giong nhau moi ngay (3 moc x 3 lan
+    thu), trong khi viec can lam chi co MOT.
+    """
+
+    def _nen(self, loai, luc, kho):
+        return report.nen_gui_canh_bao(
+            loai, now=luc,
+            doc_fn=lambda: dict(kho),
+            ghi_fn=lambda k, ts: kho.__setitem__(k, ts),
+        )
+
+    def test_lan_dau_thi_gui(self):
+        kho = {}
+        self.assertTrue(self._nen("vinh_vien:190", _luc(8, 0), kho))
+
+    def test_lan_hai_trong_12_gio_thi_KHONG_gui(self):
+        kho = {}
+        self._nen("vinh_vien:190", _luc(8, 0), kho)
+        self.assertFalse(self._nen("vinh_vien:190", _luc(12, 0), kho))
+
+    def test_sau_12_gio_thi_gui_lai(self):
+        kho = {}
+        self._nen("vinh_vien:190", _luc(8, 0), kho)
+        self.assertTrue(self._nen("vinh_vien:190", _luc(20, 30), kho))
+
+    def test_hai_loai_loi_khac_nhau_thi_deu_gui(self):
+        """Token het han va loi mang la hai chuyen khac nhau."""
+        kho = {}
+        self.assertTrue(self._nen("vinh_vien:190", _luc(8, 0), kho))
+        self.assertTrue(self._nen("tam_thoi:khong-ro", _luc(8, 5), kho))
+
+    def test_khoa_canh_bao_ghep_ca_loai_lan_ma(self):
+        self.assertEqual(
+            report.loai_canh_bao(report.mo_ta_loi_meta(
+                {"code": 190, "message": "x"})), "vinh_vien:190")
+        self.assertEqual(
+            report.loai_canh_bao(report.mo_ta_loi_meta(
+                {"code": 17, "message": "x"})), "tam_thoi:17")
+
+    def test_doc_file_hong_thi_van_gui(self):
+        """Bo sot mot canh bao loi te hon la gui thua mot tin."""
+        def doc_hong():
+            raise OSError("file hong")
+        self.assertTrue(report.nen_gui_canh_bao(
+            "x", now=_luc(8, 0), doc_fn=doc_hong, ghi_fn=lambda k, ts: None))
+
+    def test_ghi_file_hong_khong_nem_loi(self):
+        def ghi_hong(k, ts):
+            raise OSError("khong ghi duoc")
+        self.assertTrue(report.nen_gui_canh_bao(
+            "x", now=_luc(8, 0), doc_fn=lambda: {}, ghi_fn=ghi_hong))
+
+
+def _luc(gio, phut=0, ngay=29):
+    from datetime import datetime as _dt
+    return _dt(2026, 9, ngay, gio, phut)
+
+
+class TestCanhBaoHanTokenHaiMuc(unittest.TestCase):
+    """Hai muc nhac: 30 ngay (nhe, mot tin/ngay) va 7 ngay (moi bao cao)."""
+
+    def _chay(self, so_ngay, slot=None, danh_sach_moc=None, het_han=None):
+        goc = report.doc_han_token_chi_tiet
+        report.doc_han_token_chi_tiet = lambda env: (so_ngay, het_han, None)
+        try:
+            return report.canh_bao_han_token(
+                {}, slot=slot, danh_sach_moc=danh_sach_moc)
+        finally:
+            report.doc_han_token_chi_tiet = goc
+
+    def test_con_45_ngay_thi_khong_nhac_gi(self):
+        self.assertEqual(self._chay(45, slot=8, danh_sach_moc=[8, 12, 17]), "")
+
+    def test_dung_30_ngay_thi_chua_nhac(self):
+        self.assertEqual(self._chay(30, slot=8, danh_sach_moc=[8, 12, 17]), "")
+
+    def test_con_20_ngay_thi_nhac_o_moc_sang(self):
+        chu = self._chay(20, slot=8, danh_sach_moc=[8, 12, 17])
+        self.assertIn("NHẮC TOKEN META", chu)
+
+    def test_con_20_ngay_thi_KHONG_nhac_o_moc_17h(self):
+        self.assertEqual(self._chay(20, slot=17, danh_sach_moc=[8, 12, 17]), "")
+
+    def test_con_20_ngay_thi_KHONG_nhac_o_moc_12h(self):
+        self.assertEqual(self._chay(20, slot=12, danh_sach_moc=[8, 12, 17]), "")
+
+    def test_con_5_ngay_thi_nhac_o_MOI_moc(self):
+        for slot in (8, 12, 17):
+            with self.subTest(slot=slot):
+                chu = self._chay(5, slot=slot, danh_sach_moc=[8, 12, 17])
+                self.assertIn("CẢNH BÁO TOKEN META", chu)
+
+    def test_con_5_ngay_thi_khong_con_la_nhac_nhe(self):
+        chu = self._chay(5, slot=8, danh_sach_moc=[8, 12, 17])
+        self.assertNotIn("NHẮC TOKEN META", chu)
+
+    def test_het_han_thi_bao_do(self):
+        chu = self._chay(0.0, slot=12, danh_sach_moc=[8, 12, 17])
+        self.assertIn("HẾT HẠN", chu)
+
+    def test_duoi_mot_ngay_thi_hien_theo_gio(self):
+        chu = self._chay(0.5, slot=8, danh_sach_moc=[8, 12, 17])
+        self.assertIn("12 giờ", chu)
+
+    def test_token_khong_bao_gio_het_han_thi_khong_nhac(self):
+        self.assertEqual(self._chay(None, slot=8, danh_sach_moc=[8, 12, 17]), "")
+
+    def test_hien_moc_het_han_cu_the(self):
+        from datetime import datetime as _dt
+        chu = self._chay(5, slot=8, danh_sach_moc=[8, 12, 17],
+                         het_han=_dt(2026, 11, 13, 8, 15))
+        self.assertIn("", chu)
+
+    def test_moi_muc_deu_noi_ro_KHONG_tu_gia_han_duoc(self):
+        for so_ngay in (20, 5, 0.0):
+            with self.subTest(so_ngay=so_ngay):
+                chu = self._chay(so_ngay, slot=8, danh_sach_moc=[8, 12, 17])
+                self.assertIn("KHÔNG tự gia hạn được", chu)
+
+    def test_cach_goi_cu_khong_truyen_slot_van_chay(self):
+        """Goi canh_bao_han_token(env) nhu truoc day: hien o moi bao cao."""
+        self.assertEqual(self._chay(20), "")
+
+    def test_loi_doc_han_thi_khong_lam_hong_bao_cao(self):
+        goc = report.doc_han_token_chi_tiet
+
+        def no_loi(env):
+            raise RuntimeError("mang hong")
+        report.doc_han_token_chi_tiet = no_loi
+        try:
+            self.assertEqual(report.canh_bao_han_token({}, 8, [8, 12, 17]), "")
+        finally:
+            report.doc_han_token_chi_tiet = goc
+
+
+class TestDocHanTokenChiTiet(unittest.TestCase):
+
+    def _chay(self, du_lieu, loi=None):
+        goc = report.api_get
+        report.api_get = lambda path, params, **kw: (du_lieu, loi)
+        try:
+            return report.doc_han_token_chi_tiet({
+                "META_ADS_ACCESS_TOKEN": "t", "META_APP_ID": "a",
+                "META_APP_SECRET": "s"})
+        finally:
+            report.api_get = goc
+
+    def test_token_hop_le_tra_ve_so_ngay_va_moc_het_han(self):
+        from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+        het_han = _dt.now(_tz.utc) + _td(days=10)
+        so_ngay, moc, loi = self._chay(
+            {"data": {"is_valid": True, "expires_at": het_han.timestamp()}})
+        self.assertIsNone(loi)
+        self.assertAlmostEqual(so_ngay, 10, delta=0.01)
+        self.assertIsNotNone(moc)
+
+    def test_token_khong_bao_gio_het_han(self):
+        so_ngay, moc, loi = self._chay(
+            {"data": {"is_valid": True, "expires_at": 0}})
+        self.assertIsNone(so_ngay)
+        self.assertIsNone(moc)
+        self.assertIsNone(loi)
+
+    def test_token_khong_hop_le_tra_ve_0(self):
+        so_ngay, _, loi = self._chay({"data": {"is_valid": False}})
+        self.assertEqual(so_ngay, 0.0)
+
+    def test_thieu_app_id_thi_bao_loi(self):
+        so_ngay, moc, loi = report.doc_han_token_chi_tiet(
+            {"META_ADS_ACCESS_TOKEN": "t"})
+        self.assertIsNotNone(loi)
+
+    def test_loi_mang_thi_tra_ve_ly_do(self):
+        so_ngay, moc, loi = self._chay(None, loi={"message": "mang hong"})
+        self.assertIn("mang hong", loi)
+
+    def test_doc_han_token_cu_van_chay(self):
+        goc = report.doc_han_token_chi_tiet
+        report.doc_han_token_chi_tiet = lambda env: (12.0, None, None)
+        try:
+            self.assertEqual(report.doc_han_token({}), (12.0, None))
+        finally:
+            report.doc_han_token_chi_tiet = goc
+
+
 if __name__ == "__main__":
     unittest.main()
