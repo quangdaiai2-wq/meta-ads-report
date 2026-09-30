@@ -211,10 +211,39 @@ chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 | **`x`** | **số lượt mua** đã đạt được |
 | **`y`** | **ngưỡng chi phí cho mỗi lượt mua** (CPR) — mức trần Đại chấp nhận cho nhóm đó |
 
-Đại giải thích (30/09/2026): *"140 là gấp đôi số tiền đang chi tiêu hiện tại"* — với nhóm **chưa ra
-đơn nào** thì chưa có CPR, nên ngưỡng lấy bằng **2 × số tiền đã chi**.
+#### Cách Đại ĐẶT `y` — khi nhóm chưa ra lượt mua nào
 
-**Kiểm chứng bằng dữ liệu thật** (đối chiếu tên nhóm với chi tiêu và số đơn tháng 9/2026):
+| Tình huống | Công thức |
+|---|---|
+| Nhóm **không ra tin nhắn / liên hệ nào** | `y` = **2 × số tiền đã chi** |
+| Nhóm **có tin nhắn nhưng 0 lượt mua** | `y` = **số tiền đã chi + 50.000** |
+| Đại quên, chi tiêu đã vượt `y` | đặt lại `y` = **chi tiêu mới + 50.000** |
+
+Ví dụ Đại đưa:
+- Chi 70.000đ mà **không ra tin nhắn nào** → ghi `0/140 X9` (140 = 2 × 70).
+- Chi 300.000đ, **có tin nhắn nhưng chưa ra lượt mua** → ghi `0/350 X9` (300 + 50).
+- Quên, chi tiêu đã vượt 350 → ghi `0/450 X9` (400 + 50).
+
+#### Kiểm chứng bằng dữ liệu thật — 217 nhóm `0/y X9`
+
+| Quy tắc | Số nhóm | Khớp trong 50.000đ |
+|---|---|---|
+| Không có tin nhắn → `y` = 2 × chi tiêu | 143 | **117/143 (82%)** |
+| Có tin nhắn, 0 lượt mua → `y` = chi tiêu + 50.000 | 74 | **52/74 (70%)** |
+
+Ví dụ khớp gần như tuyệt đối:
+
+| `y` | Chi tiêu thực tế | Kỳ vọng |
+|---|---|---|
+| 350 | 302.013đ | 300.000đ |
+| 400 | 353.568đ · 346.242đ · 363.068đ | 350.000đ |
+| 500 | 453.405đ · 454.098đ | 450.000đ |
+| 300 | 260.195đ · 261.011đ | 250.000đ |
+| 160 | 83.723đ · 84.310đ · 86.416đ | 80.000đ |
+
+*(Chi tiêu thực hơi cao hơn kỳ vọng một chút vì nhóm vẫn chạy thêm một lúc sau khi Đại đặt tên.)*
+
+#### Và khi nhóm ĐÃ có lượt mua thì `y` chính là ngưỡng chi phí mỗi đơn
 
 | Tên nhóm | Chi phí mỗi đơn thực tế |
 |---|---|
@@ -229,7 +258,7 @@ chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 - **`x` khớp đúng số lượt mua ở 297/308 nhóm (96%).**
 
 ⇒ Quy tắc của Đại **đúng và nhất quán**. `y` là **ngưỡng riêng từng nhóm**, không phải một mức
-chung — và nó chính là **ngưỡng CPR mà Đại chấp nhận**.
+chung — và nó luôn có nghĩa là **số tiền tối đa Đại chấp nhận bỏ ra cho một lượt mua**.
 
 Đuôi tên nhóm đếm được **34 kiểu khác nhau** trong 30 ngày:
 
