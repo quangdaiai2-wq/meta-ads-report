@@ -129,6 +129,26 @@ thì nâng lên lại.
 **Đây là chỗ tôi cần Đại xác nhận** — vì nếu đúng, nấc 2 nên đề xuất **"hạ về 27.000"** thay vì
 **"tạm dừng"**, vì đó mới là cách Đại thật sự làm.
 
+### 3.4. 🔑 NGƯỠNG TẮT THẬT — Đại vừa nói rõ (30/09/2026)
+
+> *"450 là số ngưỡng mà tôi sẽ định tắt khi chi tiêu đến đó. Ví dụ ad set đang chi tiêu ở mức
+> 400.000 cho tổng cả tháng đó và đạt được 6 lượt mua hoặc lượt thanh toán thì đã là lúc tôi tắt
+> camp đó, do chi tiêu đến ngưỡng 400k là mức trần cho phép rồi."*
+
+Đọc ra được ba điều:
+
+1. **Ngưỡng đo bằng TỔNG CHI TIÊU CẢ THÁNG** của ad set — không phải theo ngày.
+2. **Ngưỡng gắn với số lượt mua / lượt thanh toán** đạt được.
+3. Con số **400.000đ** xuất hiện như "mức trần cho phép".
+
+**Đây là câu trả lời gần đúng cho câu chặn đường C1** — nhưng **chưa đủ**, vì 400.000đ là
+**ngưỡng chi phí Đại chấp nhận**, không phải **lãi**. Muốn biết nhóm chi 400.000đ cho một đơn là
+lãi hay lỗ thì vẫn phải biết **mỗi đơn lãi bao nhiêu**.
+
+Và còn một chỗ chưa khớp: trong tên nhóm, `y` nhận nhiều giá trị khác nhau — `120`, `160`, `200`,
+`450`, `500`, `550` — chứ không chỉ 400. Cần Đại làm rõ quan hệ giữa **`y` trong tên** và
+**con số 400.000đ**.
+
 ---
 
 ## 4. CÁCH TẮT / BẬT
@@ -184,9 +204,17 @@ tương đối dứt khoát.
 Nói cách khác: **Đại dùng tên nhóm như một cuốn nhật ký nhẹ** — nhìn tên là biết nhóm đó đã tắt
 chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 
-### 5.2. Phần đầu `x/y` — ⏳ CHƯA RÕ
+### 5.2. Phần `x/y` — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026)
 
-Đuôi tên nhóm mà Đại dùng, đếm được **34 kiểu khác nhau** trong 30 ngày:
+| Phần | Nghĩa |
+|---|---|
+| **`x`** | **số lượt mua** (hoặc lượt thanh toán) đã đạt được |
+| **`y`** | **ngưỡng chi tiêu** mà Đại định tắt khi chi tiêu chạm tới |
+
+Ví dụ Đại đưa: ad set chi **400.000đ cho tổng cả tháng** và đạt **6 lượt mua** → đã đến lúc tắt,
+vì chi tiêu chạm ngưỡng trần cho phép.
+
+Đuôi tên nhóm đếm được **34 kiểu khác nhau** trong 30 ngày:
 
 | Đuôi | Số lần gặp |
 |---|---|
@@ -199,20 +227,42 @@ chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 | `6/450 X9-26` | 34 |
 | `4/450 X9-26` | 32 |
 
-Phần `X9` / `X9-26` nay đã hiểu. **Còn phần `x/y` ở đầu thì chưa** — đoán của tôi là
-*số đơn / ngân sách*, nhưng chưa được xác nhận. Đã hỏi lại Đại.
+### 5.3. Sang tháng 10 thì đổi số — ✅ ĐÃ RÕ
 
-### 5.3. Vì sao điều này quan trọng
+**Tháng 10 dùng `X10`**, quy tắc giữ nguyên. Tức là `<X><số tháng>`.
 
-Tên nhóm chứa **thông tin vận hành do Đại tự ghi**. Nếu hệ thống đọc được, nó có thể:
+### 5.4. Khi bật lại nhóm — ✅ ĐÃ RÕ
+
+Điều kiện để bật lại: trong **ngày hôm đó hoặc ngày hôm sau** có thêm kết quả, **kéo giá trung bình
+tháng của mỗi lượt mua / lượt thanh toán xuống dưới ngưỡng 400.000đ**.
+
+Khi đó, ký hiệu ở **ba cấp khác nhau**:
+
+| Cấp | Ký hiệu |
+|---|---|
+| **Campaign** (ngoài cùng) | **Vẫn giữ `X`**, nhưng thêm **chữ `v` viết nhỏ** = đã bật lại |
+| **Ad set** (nhóm quảng cáo) | Bật lại và **xoá dấu `X`** |
+| **Ad** (quảng cáo) | Ký hiệu **giống ad set** — xoá dấu `X` |
+
+### 5.5. Đại muốn hệ thống TỰ LÀM VIỆC ĐẶT KÝ HIỆU
+
+> *"Nếu bạn tự thêm được giúp tôi theo mốc thời gian vậy thì tốt quá"* — Đại, 30/09/2026
+
+Nghĩa là: khi hệ thống tắt/bật nhóm hộ, nó **tự thêm / xoá ký hiệu theo đúng quy tắc trên**, để Đại
+không phải nhớ mà thêm tay. Đây là **một tính năng mới**, sẽ đưa vào kế hoạch nấc 2.
+
+### 5.6. Vì sao điều này quan trọng
+
+Tên nhóm chứa **thông tin vận hành do Đại tự ghi**. Nếu hệ thống đọc và ghi được, nó có thể:
 
 1. Biết nhóm nào Đại **đã tắt** mà không cần hỏi Meta.
 2. Biết nhóm nào **có phát sinh tin nhắn** — vì đó là nhóm Đại đánh dấu kỹ hơn.
-3. **Tự thêm ký hiệu giúp Đại** khi hệ thống tắt nhóm hộ — giữ đúng thói quen ghi chép của Đại,
-   thay vì để Đại phải nhớ mà thêm tay.
+3. **Tự thêm ký hiệu giúp Đại** khi tắt/bật nhóm hộ — giữ đúng thói quen ghi chép của Đại.
 
 > ⚠️ Nhưng phải cẩn thận: **nhận diện nhóm bằng tên là không đáng tin** — Đại đổi tên liên tục
 > (521 lần trong 30 ngày). Mọi thao tác thật vẫn phải dùng **mã số**, tên chỉ để đọc cho người hiểu.
+> Và khi hệ thống sửa tên, nó phải **giữ nguyên phần `x/y`** — không được ghi đè mất thông tin Đại
+> đã ghi.
 
 ---
 
@@ -239,10 +289,13 @@ không trả lời được.
 *Vẫn là câu chặn đường số một.* Không có nó thì không định nghĩa được "nhóm kém" — và mọi ngưỡng
 đều là đoán.
 
-**C2.** ✅ **ĐÃ TRẢ LỜI MỘT PHẦN (30/09/2026).** `X9` = nhóm đã tắt trong tháng 9;
+**C2.** ✅ **ĐÃ TRẢ LỜI (30/09/2026).**
+`x/y` = *(số lượt mua hoặc lượt thanh toán)* / *(ngưỡng chi tiêu sẽ tắt khi chạm tới)*.
+`X9` = nhóm đã tắt trong tháng 9; sang tháng 10 dùng `X10`.
 `X9-26` = đã tắt tháng 9/2026, **chỉ dùng cho nhóm có từ 1 trở lên** ở *"Người liên hệ nhắn tin
 mới"* hoặc *"Lượt bắt đầu cuộc trò chuyện qua tin nhắn"*.
-⏳ **Còn thiếu: phần `x/y` ở đầu tên nghĩa là gì?**
+Bật lại: **campaign** giữ `X` + thêm chữ `v` nhỏ; **ad set** và **ad** xoá dấu `X`.
+⏳ **Còn 4 điểm nhỏ cần làm rõ** — xem mục 8 phần "còn treo".
 
 **C3.** **27.000đ là con số ở đâu ra?** Đại tự chọn, hay đó là mức ngân sách tối thiểu Meta cho phép?
 Và ý nghĩa của nó: "tắt mềm" đúng không?
@@ -273,5 +326,21 @@ Ba điều chỉnh so với kế hoạch ban đầu:
 3. **Mốc báo cáo 12h gần như vô dụng** — Đại chỉ đụng tới quảng cáo 5 lần trong 30 ngày vào giờ đó.
    Đáng cân nhắc chuyển mốc 12h sang giờ khác, hoặc đổi nội dung mốc 12h cho khác đi.
 
+4. **Có thêm một tính năng mới, do chính Đại yêu cầu: tự đặt ký hiệu vào tên nhóm.** Khi hệ thống
+   tắt/bật nhóm hộ Đại, nó **tự thêm `X<tháng>` hoặc chữ `v`** theo đúng quy tắc ở mục 5. Việc này
+   phải làm **rất cẩn thận**: sửa tên là ghi đè lên thứ Đại đang dùng để làm việc hằng ngày. Nguyên
+   tắc bắt buộc: **giữ nguyên phần `x/y`**, chỉ đụng phần ký hiệu ở cuối.
+
 Và một điều nữa: **Đại can thiệp ở cấp từng quảng cáo (1.541 lần) nhiều hơn cấp nhóm (797 lần)**.
 Nếu hệ thống chỉ nhìn tới cấp nhóm thì nó sẽ bỏ sót hơn một nửa công việc thật của Đại.
+
+---
+
+## 9. CÒN TREO — 4 ĐIỂM CẦN ĐẠI LÀM RÕ TRƯỚC KHI DỰNG NẤC 2
+
+1. **`y` trong tên và con số 400.000đ quan hệ thế nào?** Tên nhóm có `120`, `160`, `200`, `450`,
+   `500`, `550`… nhưng ví dụ Đại đưa lại là `400.000`. Vậy ngưỡng là **riêng từng nhóm** hay
+   **chung một mức 400.000**?
+2. **Ngưỡng tính từ lúc nào?** Tổng chi tiêu **cả tháng dương lịch**, hay từ **lúc tạo nhóm**?
+3. **`x` lấy số lượt mua hay lượt thanh toán?** Đại nói "hoặc" — vậy lấy cái nào, hay lấy cái lớn hơn?
+4. **Chữ `v` chính xác là ký tự gì?** Chữ `v` thường, hay `ᵛ` viết nhỏ (superscript)?
