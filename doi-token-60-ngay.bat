@@ -10,7 +10,7 @@ REM thi hom sau bao cao se loi. Da gap that ngay 14/09/2026: token chi
 REM song 1 gio 44 phut ma bai kiem tra van bao DAT.
 REM
 REM TRUOC KHI BAM FILE NAY, trong .env phai co du 3 dong:
-REM   META_ADS_ACCESS_TOKEN=<token ngan han vua lay>
+REM   META_ADS_ACCESS_TOKEN = token ngan han vua lay
 REM   META_APP_ID=...
 REM   META_APP_SECRET=...
 REM
@@ -48,7 +48,7 @@ if not defined PYTHON_EXE (
 
 echo.
 echo ============================================
-echo  DOI TOKEN NGAN HAN -> TOKEN 60 NGAY
+echo  DOI TOKEN NGAN HAN -^> TOKEN 60 NGAY
 echo ============================================
 echo.
 echo Python : %PYTHON_EXE%
