@@ -204,15 +204,32 @@ tương đối dứt khoát.
 Nói cách khác: **Đại dùng tên nhóm như một cuốn nhật ký nhẹ** — nhìn tên là biết nhóm đó đã tắt
 chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 
-### 5.2. Phần `x/y` — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026)
+### 5.2. Phần `x/y` — ✅ ĐÃ RÕ, VÀ ĐÃ KIỂM CHỨNG BẰNG DỮ LIỆU THẬT
 
 | Phần | Nghĩa |
 |---|---|
-| **`x`** | **số lượt mua** (hoặc lượt thanh toán) đã đạt được |
-| **`y`** | **ngưỡng chi tiêu** mà Đại định tắt khi chi tiêu chạm tới |
+| **`x`** | **số lượt mua** đã đạt được |
+| **`y`** | **ngưỡng chi phí cho mỗi lượt mua** (CPR) — mức trần Đại chấp nhận cho nhóm đó |
 
-Ví dụ Đại đưa: ad set chi **400.000đ cho tổng cả tháng** và đạt **6 lượt mua** → đã đến lúc tắt,
-vì chi tiêu chạm ngưỡng trần cho phép.
+Đại giải thích (30/09/2026): *"140 là gấp đôi số tiền đang chi tiêu hiện tại"* — với nhóm **chưa ra
+đơn nào** thì chưa có CPR, nên ngưỡng lấy bằng **2 × số tiền đã chi**.
+
+**Kiểm chứng bằng dữ liệu thật** (đối chiếu tên nhóm với chi tiêu và số đơn tháng 9/2026):
+
+| Tên nhóm | Chi phí mỗi đơn thực tế |
+|---|---|
+| `…/400` | 401.000đ |
+| `…/380` | 381.000đ |
+| `…/450` | 448.000đ · 453.000đ · 445.000đ · 444.000đ |
+| `…/550` | 553.000đ |
+| `…/500` | 504.000đ |
+| `…/120` | 118.000đ |
+
+- **81/88 nhóm khớp trong sai số 50.000đ (92%)** · 87/88 trong sai số 100.000đ.
+- **`x` khớp đúng số lượt mua ở 297/308 nhóm (96%).**
+
+⇒ Quy tắc của Đại **đúng và nhất quán**. `y` là **ngưỡng riêng từng nhóm**, không phải một mức
+chung — và nó chính là **ngưỡng CPR mà Đại chấp nhận**.
 
 Đuôi tên nhóm đếm được **34 kiểu khác nhau** trong 30 ngày:
 
@@ -336,11 +353,39 @@ Nếu hệ thống chỉ nhìn tới cấp nhóm thì nó sẽ bỏ sót hơn m�
 
 ---
 
-## 9. CÒN TREO — 4 ĐIỂM CẦN ĐẠI LÀM RÕ TRƯỚC KHI DỰNG NẤC 2
+## 9. BỐN ĐIỂM TỪNG TREO — ✅ ĐÃ GIẢI QUYẾT HẾT (30/09/2026, 11h20)
 
-1. **`y` trong tên và con số 400.000đ quan hệ thế nào?** Tên nhóm có `120`, `160`, `200`, `450`,
-   `500`, `550`… nhưng ví dụ Đại đưa lại là `400.000`. Vậy ngưỡng là **riêng từng nhóm** hay
-   **chung một mức 400.000**?
-2. **Ngưỡng tính từ lúc nào?** Tổng chi tiêu **cả tháng dương lịch**, hay từ **lúc tạo nhóm**?
-3. **`x` lấy số lượt mua hay lượt thanh toán?** Đại nói "hoặc" — vậy lấy cái nào, hay lấy cái lớn hơn?
-4. **Chữ `v` chính xác là ký tự gì?** Chữ `v` thường, hay `ᵛ` viết nhỏ (superscript)?
+| # | Điểm từng treo | Đại trả lời | Kiểm chứng |
+|---|---|---|---|
+| 1 | `y` riêng từng nhóm hay chung một mức? | **Riêng từng nhóm.** Ví dụ: chi 70.000đ mà chưa ra người liên hệ/tin nhắn nào → tắt, ghi `0/140 X9` (140 = gấp đôi chi tiêu) | ✅ Dữ liệu thật: `y` khớp **chi phí mỗi đơn** ở **81/88 nhóm** (sai số ≤50k) |
+| 2 | Ngưỡng tính từ lúc nào? | **Tổng chi tiêu cả tháng.** *"Tôi thường xem chi tiêu một nhóm theo cả tháng rồi mới quyết định tắt. Nhóm chạy hôm nay tôi cũng xem chỉ số toàn tháng. Cứ đến ngưỡng là tắt."* | ✅ |
+| 3 | `x` lấy lượt mua hay lượt thanh toán? | **Lượt mua** — *"vì tôi đang tính theo đó"* | ✅ `x` khớp số lượt mua ở **297/308 nhóm** |
+| 4 | Chữ `v` là ký tự gì? | **Chữ `v` thường**, chỉ để khi tìm lại thì hiểu *"chiến dịch này đã được bật lại sau khi tắt trước đó"* | ✅ |
+
+### Bảng quy tắc đầy đủ về tên nhóm — CHỐT
+
+```
+<tên nhóm>  <x>/<y>  X<tháng>[-<năm>]  [v]
+```
+
+| Thành phần | Nghĩa | Ví dụ |
+|---|---|---|
+| `x` | **số lượt mua** hiện có | `6` |
+| `y` | **ngưỡng chi phí mỗi lượt mua** (nghìn đồng) — mức trần Đại chấp nhận | `450` |
+| `X<tháng>` | nhóm **đã tắt trong tháng đó** | `X9`, `X10` |
+| `-<năm>` | thêm 2 số cuối của năm — **chỉ dùng khi nhóm có ≥1** người liên hệ mới hoặc lượt bắt đầu trò chuyện | `X9-26` |
+| `v` (chữ thường) | nhóm **đã được bật lại** sau khi tắt | `X9 v` |
+
+**Quy tắc tắt:** chi phí mỗi lượt mua **chạm ngưỡng `y`** ⇒ tắt.
+Với nhóm **chưa ra đơn**: `y` = **2 × số tiền đã chi** (vì chưa có CPR để tính).
+
+**Quy tắc bật lại:** trong ngày đó hoặc ngày hôm sau có thêm kết quả, **kéo chi phí mỗi lượt mua
+xuống dưới 400.000đ**.
+
+**Ký hiệu khi bật lại — khác nhau ở ba cấp:**
+
+| Cấp | Ký hiệu |
+|---|---|
+| **Campaign** | giữ `X` + thêm chữ `v` thường |
+| **Ad set** | xoá dấu `X` |
+| **Ad** | giống ad set — xoá dấu `X` |
