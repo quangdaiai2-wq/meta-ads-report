@@ -55,7 +55,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | # | Hạng mục | Chi tiết |
 |---|---|---|
 | 1 | Kéo code từ GitHub | Về `D:\Buddy Work AI\2026-09-14-07-50-57` |
-| 2 | Token Meta 60 ngày | Hết hạn **** (xem mục 2 bên dưới — KHÁC máy nhà) |
+| 2 | Token Meta 60 ngày | Hết hạn **** (xem mục 2 bên dưới — KHÁC máy nhà). **Đổi ngày 30/09/2026: nay CÓ quyền ghi `ads_management`** |
 | 3 | Bot Telegram riêng | `@boongbonbap_QuangDai_bot` ("Bot Báo Cáo Company👍") |
 | 4 | 3 lịch tự động | Đã xác minh độc lập bằng cách đọc lịch trong Windows |
 | 5 | Chạy bù + đánh thức máy | Đã bật, và "Allow wake timers" đã chuyển sang Enable |
@@ -72,18 +72,18 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   `docs/superpowers/specs/2026-09-29-dinh-nghia-ai-agent-facebook-design.md` (+ bản `.html`).
   Đại chốt: đích là **"tự hành có trần"**, làm **cả ba việc theo thứ tự 1 → 2 → 3**.
   **Việc #1 (bản định nghĩa) và #2 (nấc 1) đã xong.** Còn **việc #3** — xem mục dưới.
-- ⏳ **Việc #3 — agent mới tự hành (nấc 2 → 3). CHƯA BẮT ĐẦU.** Đang chờ hai thứ từ Đại:
-  (a) **mỗi đơn lãi bao nhiêu** — không có thì không định nghĩa được "camp kém";
-  (b) **token Meta có quyền `ads_management`** — token hiện chỉ có `ads_read`, đo thật 29/09/2026.
+- ⏳ **Việc #3 — agent mới tự hành (nấc 2 → 3). CHƯA BẮT ĐẦU.** Còn chờ ĐẠI **một** thứ:
+  (a) ⏳ **mỗi đơn lãi bao nhiêu** — không có thì không định nghĩa được "camp kém";
+  (b) ✅ **ĐÃ XONG 30/09/2026** — Đại lấy token mới, **đã có quyền `ads_management`**,
+      hạn  (còn 60 ngày). Xem mục "ĐANG CHỜ ĐẠI" bên dưới.
   Chi tiết ở §3.3 và §7 của bản định nghĩa.
-  👉 **Đã có sẵn công cụ cho việc (b)** (làm 30/09/2026): `HUONG-DAN-LAY-TOKEN-QUYEN-GHI.md`
-  (hướng dẫn từng bước cho Đại), `kiem-tra-quyen-ghi.py` + `.bat` (kiểm quyền ghi),
-  `doi-token-60-ngay.bat` (đổi token 60 ngày). App cần chọn trong Graph API Explorer:
-  tên **`MCP ADS`**, App ID ``.
+  👉 **Công cụ đã có sẵn:** `HUONG-DAN-LAY-TOKEN-QUYEN-GHI.md`,
+  `kiem-tra-quyen-ghi.py` + `.bat`, `doi-token-60-ngay.bat`. App cần chọn trong Graph API
+  Explorer: tên **`MCP ADS`**, App ID ``.
   ⚠️ **Bài học đã trả giá:** KHÔNG thể kiểm quyền ghi bằng một lệnh vô hại. Đã thử 4 cách ngày
   30/09/2026 (lệnh rỗng, object không tồn tại, tên rỗng, ghi lại đúng tên cũ) — **cả 4 đều vô
   giá trị**, vì Meta cố ý gộp mọi nguyên nhân vào một câu trả lời. Cách duy nhất để chắc là
-  **ghi thật một lần** trên chiến dịch Đại đã muốn tắt.
+  **ghi thật một lần** trên chiến dịch Đại đã muốn tắt. **Việc này CHƯA LÀM.**
 - ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)**,
   **GĐ4 (trả lời câu hỏi)**, **GĐ5 (tự xử lý lỗi)** và **nấc 1 (đề xuất)**, rồi thêm
   `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`).
@@ -143,7 +143,7 @@ ngắn hạn sang token 60 ngày):
 | Máy | Token hết hạn |
 |---|---|
 | Máy nhà | **10/11/2026** |
-| Máy công ty | **** |
+| Máy công ty | **** (đổi 30/09/2026 — nay có quyền ghi) |
 
 ⇒ **Không còn chuyện "cả hai máy cùng ngừng hoạt động"** như tài liệu cũ ghi.
 Máy nhà sẽ hết hạn trước 3 ngày. Thực ra điều này tốt hơn: khi máy nhà báo lỗi, bạn còn
@@ -799,7 +799,7 @@ có sự cố. Nay mỗi mốc chỉ báo một lần (`da_bao_bo_qua`).
 🔑 TOKEN META
 - Máy: 
 - Còn sống: 44 ngày
-- Hết hạn: 
+- Hết hạn:  lúc 09:36
 - Việc cần làm: chưa cần làm gì.
 - Hệ thống KHÔNG tự gia hạn được — Meta không cho (đã thử 29/09/2026).
 ```
@@ -943,7 +943,7 @@ Tên đã kiểm chứng (nằm trong `report.py`):
 | **14/09/2026 12:00** | Ba mốc tự chạy đầu tiên của máy công ty (12h, 17h, 22h) — ⚠️ **đã sửa:** nhật ký máy công ty chỉ có 12h và 17h, **mốc 22h có 0 dòng** (xem mục "BẢN SỬA NGÀY 28/09/2026" ở trên) |
 | **18/09/2026** | Token GitHub cũ `buddy-web-sync` hết hạn (không ảnh hưởng dự án này) |
 | **10/11/2026** | ⚠️ Token Meta **máy nhà** hết hạn |
-| **** | ⚠️ Token Meta **máy công ty** hết hạn |
+| **** | ⚠️ Token Meta **máy công ty** hết hạn (đổi từ 13/11 sau khi lấy token mới 30/09) |
 
 ---
 
