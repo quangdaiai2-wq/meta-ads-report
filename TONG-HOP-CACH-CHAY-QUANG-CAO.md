@@ -211,18 +211,27 @@ chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 | **`x`** | **số lượt mua** đã đạt được |
 | **`y`** | **ngưỡng chi phí cho mỗi lượt mua** (CPR) — mức trần Đại chấp nhận cho nhóm đó |
 
-#### Cách Đại ĐẶT `y` — khi nhóm chưa ra lượt mua nào
+#### Cách Đại ĐẶT `y` — đầy đủ bốn tình huống
 
 | Tình huống | Công thức |
 |---|---|
 | Nhóm **không ra tin nhắn / liên hệ nào** | `y` = **2 × số tiền đã chi** |
 | Nhóm **có tin nhắn nhưng 0 lượt mua** | `y` = **số tiền đã chi + 50.000** |
+| Nhóm **đã có lượt mua, chi phí trung bình chạm 400.000đ/lượt mua** | `y` = **chi phí trung bình mỗi lượt mua + 50.000** |
 | Đại quên, chi tiêu đã vượt `y` | đặt lại `y` = **chi tiêu mới + 50.000** |
+
+**Vì sao luôn cộng thêm 50.000:** sau khi tắt, nhóm vẫn **chi tiêu thêm một ít** trước khi dừng hẳn.
+Cộng trước 50.000 để con số ghi trên tên vẫn đúng sau khi nhóm dừng.
 
 Ví dụ Đại đưa:
 - Chi 70.000đ mà **không ra tin nhắn nào** → ghi `0/140 X9` (140 = 2 × 70).
 - Chi 300.000đ, **có tin nhắn nhưng chưa ra lượt mua** → ghi `0/350 X9` (300 + 50).
+- Chi **8.000.000đ, ra 20 lượt mua** → chi phí trung bình = 8.000.000 ÷ 20 = **400.000đ/lượt mua**
+  → chạm ngưỡng, tắt → ghi **`20/450 X9-26`** (400 + 50).
 - Quên, chi tiêu đã vượt 350 → ghi `0/450 X9` (400 + 50).
+
+**Điểm mấu chốt:** `y` **không phải lúc nào cũng là "số tiền đã chi"**. Với nhóm **đã ra lượt mua**,
+`y` là **chi phí trung bình mỗi lượt mua cả tháng** — cộng thêm 50.000.
 
 #### Kiểm chứng bằng dữ liệu thật — 217 nhóm `0/y X9`
 
