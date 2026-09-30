@@ -2,7 +2,7 @@
 REM ============================================
 REM CHAY BO KIEM THU TU DONG
 REM ============================================
-REM File nay lam MOT viec: chay 435 bai kiem tra cua chuong trinh
+REM File nay lam MOT viec: chay 487 bai kiem tra cua chuong trinh
 REM de biet code con dung hay khong.
 REM
 REM Dac diem quan trong:

@@ -23,6 +23,7 @@ from pathlib import Path
 from dashboard import save_dashboard
 import ai
 import bat_thuong
+import de_xuat
 import lich_su
 
 
@@ -857,6 +858,12 @@ def build_report(env, stats, period_text):
     Cac CANH BAO (token sap het han, so lieu bat thuong) KHONG nam trong ham nay.
     main() gan chung len DAU tin nhan, nen doi mau bao cao khong lam mat canh bao.
 
+    KHONG nhan them tham so nao. Day la rang buoc CO Y, da co bai kiem thu khoa
+    lai (test_khong_nhan_them_tham_so). Cac thu duoc gan them vao tin nhan -
+    canh bao, va dong nhac de xuat - deu gan o TANG GOI trong main(), khong
+    truyen vao day. Nho vay doi mau bao cao khong the lam mat chung.
+    Xem dong_nhac_de_xuat() ngay duoi.
+
     KHONG them dong trong vao giua cac dong: mau nay da chot, Telegram hien
     lien mach va gon.
     """
@@ -877,6 +884,25 @@ def build_report(env, stats, period_text):
         f"- Bình luận về bài viết: {totals['comment']}",
     ]
     return "\n".join(lines)
+
+
+def dong_nhac_de_xuat(ds_de_xuat):
+    """Dong nhac o CUOI tin nhan khi AI co de xuat. Khong co -> tra ve chuoi rong.
+
+    Tach rieng khoi build_report() vi hai ly do:
+      1. build_report() phai giu dung ba tham so - rang buoc co y, xem docstring
+         cua no. Cach ghi o TANG GOI nay giong het cach cac canh bao dang duoc gan.
+      2. Ham thuan, kiem thu duoc ma khong phai chay ca main().
+
+    Tra ve dung MOT dong, hoac chuoi rong. KHONG BAO GIO nem loi.
+    """
+    # Kiem KIEU truoc khi dem. Neu chi goi len() thi chuoi "chuoi" dai 5 ky tu
+    # se bi coi la "5 de xuat" - sai ma khong he nem loi, rat kho phat hien.
+    if not isinstance(ds_de_xuat, (list, tuple)):
+        return ""
+    if len(ds_de_xuat) <= 0:
+        return ""
+    return f"💡 Có {len(ds_de_xuat)} đề xuất — xem file HTML."
 
 
 def send_telegram(env, text):
@@ -1073,6 +1099,7 @@ def main():
     # Chi bao cao TRON ngay moi co so ky truoc de so sanh.
     nhan_dinh = None
     loi_ai = None
+    de_xuat_tho = []
     tron_ngay = la_bao_cao_tron_ngay(slot, danh_sach_moc)
     try:
         ky_truoc = None
@@ -1080,7 +1107,7 @@ def main():
             ky_truoc = lich_su.lay_ky_truoc(
                 LOG_DIR / "lich-su.json", until, ai.SO_NGAY_KY_TRUOC
             )
-        nhan_dinh, loi_ai = ai.viet_nhan_dinh(
+        nhan_dinh, de_xuat_tho, loi_ai = ai.viet_nhan_dinh_va_de_xuat(
             stats, ky_truoc, tao_boi_canh(env, period_text, tron_ngay), env=env
         )
         if loi_ai:
@@ -1089,8 +1116,25 @@ def main():
             log("AI da viet xong phan nhan dinh")
     except Exception as e:
         nhan_dinh = None
+        de_xuat_tho = []
         loi_ai = str(e)
         log(f"AI viet nhan dinh that bai (ngoai du kien): {e}")
+
+    # --- RAO KIEM DE XUAT: AI de xuat, CODE quyet dinh ---
+    # AI chi duoc tra ve ma chien dich va cau ly do. Ten va so tien do CODE dien
+    # tu stats (xem de_xuat.py). Dat trong try: rao kiem loi cung KHONG duoc lam
+    # mat bao cao - giong het cach boc phan nhan dinh o tren.
+    ds_de_xuat = []
+    if de_xuat_tho:
+        try:
+            ds_de_xuat, bi_loai = de_xuat.kiem(de_xuat_tho, stats, env)
+            for d, ly_do in bi_loai:
+                log(f"DE XUAT BI LOAI: {ly_do}")
+            if ds_de_xuat:
+                log(f"Co {len(ds_de_xuat)} de xuat hop le")
+        except Exception as e:
+            ds_de_xuat = []
+            log(f"Rao kiem de xuat loi (bo qua de xuat): {e}")
 
     # --- Canh bao SO LIEU BAT THUONG (ban thiet ke muc 7.3) ---
     # Dat SAU khi da luu lich su: cua so 7 ngay la 7 ngay TRUOC ky bao cao, nen
@@ -1106,6 +1150,11 @@ def main():
         log(f"CANH BAO so bat thuong: {'; '.join(ly_do_bt)}")
 
     report = build_report(env, stats, period_text)
+
+    # --- Dong nhac de xuat, gan o TANG GOI (giong cach cac canh bao duoc gan) ---
+    dong_de_xuat = dong_nhac_de_xuat(ds_de_xuat)
+    if dong_de_xuat:
+        report = report + "\n" + dong_de_xuat
 
     # --- Canh bao SOM neu token Meta sap het han ---
     # Dat LEN DAU bao cao de de thay, khong bi lan vao cuoi tin nhan.
@@ -1127,7 +1176,7 @@ def main():
     try:
         dashboard_path = save_dashboard(
             stats, since, until, period_text,
-            nhan_dinh=nhan_dinh, loi_ai=loi_ai,
+            nhan_dinh=nhan_dinh, loi_ai=loi_ai, de_xuat=ds_de_xuat,
         )
         print()
         print(f"DA TAO DASHBOARD: {dashboard_path}")
@@ -1155,7 +1204,8 @@ def main():
         fname = f"baocao_{slot}h_{now.strftime('%d-%m-%Y')}.html"
         caption = (
             f"📊 Bản đầy đủ (HTML) — {period_text}\n"
-            "Tải về, mở bằng trình duyệt: có phần nhận định và hai bảng xếp hạng camp."
+            "Tải về, mở bằng trình duyệt: có phần nhận định, mục đề xuất "
+            "và hai bảng xếp hạng camp."
         )
         dok, derr = send_telegram_document(env, dashboard_path, fname, caption)
         if dok:

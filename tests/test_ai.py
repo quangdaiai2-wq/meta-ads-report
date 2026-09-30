@@ -938,5 +938,142 @@ class TestNganSachThoiGianTraLoi(unittest.TestCase):
         self.assertGreaterEqual(ai.TOI_DA_TOKEN_TRA_LOI, 4000)
 
 
+# ============================================================================
+# PHAN DE XUAT (nac 1)
+# ============================================================================
+
+
+class TestBocJson(unittest.TestCase):
+    """Boc JSON chiu loi. Gemini hay boc trong ```json va hay them cau dan."""
+
+    def test_boc_json_truc_tiep(self):
+        self.assertEqual({"a": 1}, ai.boc_json('{"a": 1}'))
+
+    def test_boc_json_trong_khoi_ma(self):
+        self.assertEqual({"a": 1}, ai.boc_json('```json\n{"a": 1}\n```'))
+
+    def test_boc_json_trong_khoi_ma_khong_ghi_json(self):
+        self.assertEqual({"a": 1}, ai.boc_json('```\n{"a": 1}\n```'))
+
+    def test_boc_json_co_cau_dan_truoc(self):
+        self.assertEqual(
+            {"a": 1}, ai.boc_json('Đây là kết quả: {"a": 1} cảm ơn bạn'))
+
+    def test_boc_json_hong_tra_ve_none(self):
+        for rac in ('{abc', 'khong phai json', '', None, 123, '[1, 2]', '{}'):
+            with self.subTest(rac=rac):
+                kq = ai.boc_json(rac)
+                # '{}' la JSON hop le nhung rong -> tra ve dict rong, khong phai None
+                if rac == '{}':
+                    self.assertEqual({}, kq)
+                else:
+                    self.assertIsNone(kq)
+
+    def test_boc_json_nhieu_khoi_lay_khoi_dau_dung_duoc(self):
+        t = '```json\n{hong\n```\n```json\n{"a": 2}\n```'
+        self.assertEqual({"a": 2}, ai.boc_json(t))
+
+
+class TestVietNhanDinhVaDeXuat(unittest.TestCase):
+
+    def _gia(self, text):
+        def fn(url, payload, timeout):
+            return {"candidates": [{"content": {"parts": [{"text": text}]}}]}
+        return fn
+
+    def _goi(self, text, env=None):
+        return ai.viet_nhan_dinh_va_de_xuat(
+            STATS, KY_TRUOC_CO_SO, "x",
+            env=env or {"GEMINI_API_KEY": "k"}, goi_mang_fn=self._gia(text))
+
+    def test_json_hop_le_tach_duoc_hai_phan(self):
+        t = ('{"nhan_dinh": "Hai camp dang dot tien.", '
+             '"de_xuat": [{"id": "333", "viec": "tam_dung", "ly_do": "0 don"}]}')
+        nhan_dinh, ds, loi = self._goi(t)
+        self.assertEqual("Hai camp dang dot tien.", nhan_dinh)
+        self.assertEqual(1, len(ds))
+        self.assertEqual("333", ds[0]["id"])
+        self.assertIsNone(loi)
+
+    def test_json_hop_le_de_xuat_rong_la_binh_thuong(self):
+        nhan_dinh, ds, loi = self._goi('{"nhan_dinh": "Moi thu deu on.", "de_xuat": []}')
+        self.assertEqual("Moi thu deu on.", nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIsNone(loi)
+
+    def test_de_xuat_khong_phai_danh_sach_thi_coi_nhu_rong(self):
+        nhan_dinh, ds, loi = self._goi('{"nhan_dinh": "ok", "de_xuat": "khong phai list"}')
+        self.assertEqual("ok", nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIsNone(loi)
+
+    def test_AI_tra_chu_thuong_van_giu_nhan_dinh(self):
+        nhan_dinh, ds, loi = self._goi("Chi phi moi don dang tang manh.")
+        self.assertEqual("Chi phi moi don dang tang manh.", nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIsNone(loi)
+
+    def test_AI_tra_JSON_hong_thi_KHONG_hien_JSON_do(self):
+        nhan_dinh, ds, loi = self._goi('{"nhan_dinh": "Chi phi... bi cat giua dong')
+        self.assertIsNone(nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIn("JSON hong", loi)
+
+    def test_JSON_thieu_nhan_dinh_thi_thu_model_ke_tiep(self):
+        nhan_dinh, ds, loi = self._goi('{"de_xuat": []}')
+        self.assertIsNone(nhan_dinh)
+        self.assertIn("thieu truong nhan_dinh", loi)
+
+    def test_AI_loi_thi_tra_ve_loi_chu_khong_nem(self):
+        def gia(url, payload, timeout):
+            raise OSError("mat mang")
+
+        nhan_dinh, ds, loi = ai.viet_nhan_dinh_va_de_xuat(
+            STATS, KY_TRUOC_CO_SO, "x",
+            env={"GEMINI_API_KEY": "k"}, goi_mang_fn=gia)
+        self.assertIsNone(nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIn("mat mang", loi)
+
+    def test_khong_co_chia_khoa_thi_bao_loi_ro(self):
+        nhan_dinh, ds, loi = ai.viet_nhan_dinh_va_de_xuat(
+            STATS, KY_TRUOC_CO_SO, "x", env={}, goi_mang_fn=self._gia("x"))
+        self.assertIsNone(nhan_dinh)
+        self.assertEqual([], ds)
+        self.assertIn("GEMINI_API_KEY", loi)
+
+    def test_bang_camp_co_ma_chien_dich(self):
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("ma 111", p)
+        self.assertIn("ma 333", p)
+
+    def test_camp_0_don_len_truoc(self):
+        """Camp chi tien ma khong ra don phai nam TRUOC trong cau lenh."""
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        vi_tri_camp_c = p.index("ma 333")     # camp C: 0 don
+        vi_tri_camp_a = p.index("ma 111")     # camp A: 9 don
+        self.assertLess(vi_tri_camp_c, vi_tri_camp_a)
+
+    def test_cau_lenh_yeu_cau_tra_json(self):
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("nhan_dinh", p)
+        self.assertIn("de_xuat", p)
+        self.assertIn("tam_dung", p)
+
+    def test_cau_lenh_van_bat_buoc_so_do_code_tinh(self):
+        """Rang buoc cu KHONG duoc mat khi doi cau lenh sang JSON."""
+        p = ai.soan_prompt(STATS, KY_TRUOC_CO_SO, "x")
+        self.assertIn("Không tự tính", p)
+        self.assertIn("CÓ DẤU", p)
+
+    def test_so_camp_gui_kem_bi_cat_dung_muc(self):
+        nhieu = {"all": [
+            {"id": str(i), "name": f"camp {i}", "spend": 100000.0, "purchase": 1}
+            for i in range(ai.TOI_DA_CAMP_GUI_AI + 15)
+        ]}
+        p = ai.soan_prompt(nhieu, None, "x")
+        self.assertEqual(ai.TOI_DA_CAMP_GUI_AI, p.count("- ma "))
+
+
 if __name__ == "__main__":
     unittest.main()

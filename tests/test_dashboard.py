@@ -245,5 +245,70 @@ class TestSaveDashboard(unittest.TestCase):
             self.assertIn("het han muc", p.read_text(encoding="utf-8"))
 
 
+DE_XUAT_MAU = [{
+    "id": "120250350059260509",
+    "ten": "2026 - 09 - 11 - dainq - Scale - Online MESS - LTT",
+    "spend": 858562.0,
+    "purchase": 0,
+    "viec": "tam_dung",
+    "ly_do": "Chi 858.562 d trong 4 ngay ma khong ra don nao.",
+}]
+
+
+class TestKhoiDeXuatTrongHTML(unittest.TestCase):
+
+    def _html(self, de_xuat):
+        return dashboard.build_html(_stats(), None, None, "29/09/2026",
+                                    de_xuat=de_xuat)
+
+    def test_co_khoi_de_xuat_khi_co(self):
+        html = self._html(DE_XUAT_MAU)
+        self.assertIn("Đề xuất", html)
+        self.assertIn("analysis suggest", html)
+        self.assertIn("120250350059260509", html)
+        self.assertIn("858.562", html)
+
+    def test_noi_ro_chua_thuc_hien_gi(self):
+        """Dieu quan trong nhat voi Dai: phai noi ro AI CHUA lam gi."""
+        html = self._html(DE_XUAT_MAU)
+        self.assertIn("Chưa có gì được thực hiện", html)
+
+    def test_khong_co_khoi_de_xuat_khi_rong(self):
+        for rong in ([], None):
+            with self.subTest(rong=rong):
+                html = self._html(rong)
+                self.assertNotIn("analysis suggest", html)
+                self.assertNotIn("Đề xuất</div>", html)
+
+    def test_khong_co_de_xuat_thi_trang_van_day_du(self):
+        html = self._html(None)
+        self.assertIn("Báo cáo Meta Ads", html)
+        self.assertIn("8.198.223", html)
+
+    def test_ten_camp_duoc_escape(self):
+        xau = [dict(DE_XUAT_MAU[0], ten='<script>alert(1)</script>')]
+        html = self._html(xau)
+        self.assertNotIn("<script>alert(1)</script>", html)
+        self.assertIn("&lt;script&gt;", html)
+
+    def test_ly_do_duoc_escape(self):
+        xau = [dict(DE_XUAT_MAU[0], ly_do='<b>dam</b>')]
+        html = self._html(xau)
+        self.assertIn("&lt;b&gt;dam&lt;/b&gt;", html)
+
+    def test_thieu_truong_khong_nem_loi(self):
+        for tho in ([{}], [{"id": "1"}], [{"ten": "x", "spend": None}]):
+            with self.subTest(tho=tho):
+                html = self._html(tho)
+                self.assertIn("Báo cáo Meta Ads", html)
+
+    def test_de_xuat_di_qua_duoc_save_dashboard(self):
+        with tempfile.TemporaryDirectory() as tm:
+            p = Path(tm) / "ra.html"
+            dashboard.save_dashboard(_stats(), None, None, "29/09/2026",
+                                     de_xuat=DE_XUAT_MAU, out_path=p)
+            self.assertIn("120250350059260509", p.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

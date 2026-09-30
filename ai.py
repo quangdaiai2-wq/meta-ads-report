@@ -15,6 +15,7 @@ Nguyen tac bat buoc:
 Nha cung cap: Gemini. Chia khoa doc tu khoa GEMINI_API_KEY trong .env.
 """
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -46,6 +47,14 @@ CHO_GIUA_HAI_LAN = 5
 
 # So ngay lay lam ky so sanh (chi dung cho bao cao TRON ngay).
 SO_NGAY_KY_TRUOC = 7
+
+# So chien dich toi da gui kem trong cau lenh.
+#
+# Truoc 29/09/2026 con so nay viet cung la 20 trong soan_prompt(). Tach ra day
+# de thay duoc, va vi tu nac 1 tro di AI phai NHIN THAY chien dich nao dang chi
+# tien ma khong ra don - khong the de no bi cat mat. Tai khoan that dang co
+# 16-19 chien dich nen chua bao gio bi cat; 30 la muc phong xa.
+TOI_DA_CAMP_GUI_AI = 30
 
 # Model RIENG cho phan hoi dap. Ly do: tran mien phi cua Gemini tinh rieng cho
 # tung model (quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier, do
@@ -137,18 +146,36 @@ KY_TRUOC_BANG_0 = "(ky truoc bang 0)"
 # khi nguoi doc bao cao can chu co dau cho de doc. Gap khoang 50/50 nen phai
 # ghi thanh quy tac ro rang, khong the dua vao may man.
 HUONG_DAN = (
-    "Bạn là người viết báo cáo quảng cáo cho một chủ shop Việt Nam.\n"
-    "Hãy viết 3 đến 5 câu tiếng Việt nhận xét về số liệu trong BẢNG dưới đây.\n"
+    "Bạn là người phân tích báo cáo quảng cáo cho một chủ shop Việt Nam.\n"
+    "\n"
+    "Hãy trả về ĐÚNG MỘT khối JSON, không thêm chữ nào khác ngoài JSON, theo mẫu:\n"
+    '{"nhan_dinh": "...", "de_xuat": [{"id": "...", "viec": "tam_dung", "ly_do": "..."}]}\n'
+    "\n"
+    'PHẦN "nhan_dinh" — 3 đến 5 câu tiếng Việt CÓ DẤU đầy đủ, như người Việt đọc '
+    "hằng ngày. Tuyệt đối không viết kiểu không dấu.\n"
+    "- Đây là phần NHẬN XÉT, KHÔNG phải kể lại số. Đừng liệt kê lại các con số "
+    "trong bảng — người đọc đã nhìn thấy bảng rồi.\n"
+    "- Phải chỉ ra được: chiến dịch nào đang chi tiền mà không ra đơn, chi phí "
+    "mỗi đơn đang tốt lên hay xấu đi, và điều gì đáng lo nhất trong kỳ này.\n"
+    "- Câu ngắn, dễ hiểu, tránh từ chuyên môn. Người đọc không biết kỹ thuật.\n"
+    "\n"
+    'PHẦN "de_xuat" — danh sách việc nên làm. Mỗi việc gồm ĐÚNG ba trường:\n'
+    '- "id": chép NGUYÊN mã chiến dịch ghi trong BẢNG. TUYỆT ĐỐI không tự bịa mã.\n'
+    '- "viec": chỉ được dùng đúng chuỗi "tam_dung". Không dùng giá trị nào khác.\n'
+    '- "ly_do": một câu ngắn, số lấy nguyên từ BẢNG.\n'
     "\n"
     "Quy tắc bắt buộc:\n"
-    "- Viết tiếng Việt CÓ DẤU đầy đủ, như người Việt đọc hằng ngày. "
-    "Tuyệt đối không viết kiểu không dấu.\n"
     "- Mọi con số bạn viết ra PHẢI chép nguyên từ BẢNG. Không tự tính, không "
     "ước lượng, không làm tròn, không suy ra số nào khác.\n"
     "- Cột 'chenh lech' trong bảng đã được tính sẵn. Chép nguyên, đừng tự tính lại.\n"
     "- Nếu bảng ghi 'khong so sanh' thì chỉ mô tả, TUYỆT ĐỐI không so sánh.\n"
-    "- Câu ngắn, dễ hiểu, tránh từ chuyên môn. Người đọc không biết kỹ thuật.\n"
-    "- Chỉ trả về phần nhận xét, không chào hỏi, không giải thích bạn là ai.\n"
+    '- Chỉ đề xuất "tam_dung" cho chiến dịch có chi tiêu LỚN HƠN 0 và số đơn '
+    "BẰNG 0. Chiến dịch đã có đơn thì KHÔNG được đề xuất tắt.\n"
+    "- Nếu tên chiến dịch cho thấy nó mới tạo trong 1-2 ngày gần đây thì KHÔNG "
+    "đề xuất tắt — nó chưa đủ thời gian ra đơn.\n"
+    "- Tối đa 3 đề xuất. Không có chiến dịch nào như vậy thì để danh sách rỗng: "
+    '"de_xuat": []\n'
+    "- Chỉ trả về JSON. Không chào hỏi, không giải thích, không bọc trong dấu ```.\n"
 )
 
 # Cau lenh cho phan HOI DAP (khac phan viet bao cao o tren).
@@ -236,15 +263,23 @@ def soan_prompt(stats, ky_truoc, boi_canh):
     if camps:
         lines.append("")
         lines.append(
-            "--- TUNG CAMPAIGN (ten | chi tieu | luot mua | chi phi moi don) ---"
+            "--- TUNG CAMPAIGN (ma | ten | chi tieu | luot mua | chi phi moi don) ---"
         )
-        for c in camps[:20]:
+        # Camp 0 don len TRUOC. Ly do: tai khoan co the co nhieu chien dich hon
+        # muc bi cat, va chien dich dang chi tien ma khong ra don chinh la cai
+        # can chu y nhat - khong the de no bi cat mat khoi cau lenh.
+        sap_xep = sorted(camps, key=lambda c: (
+            0 if int(c.get("purchase") or 0) == 0 else 1,
+            -float(c.get("spend") or 0),
+        ))
+        for c in sap_xep[:TOI_DA_CAMP_GUI_AI]:
             cpr = c.get("cpr")
             # Chi phi moi don duoc code tinh san (report.pack). Chua co don thi
             # ghi ro "chua co don" - KHONG ghi 0, vi 0 trong nhu re nhat.
             gia = f"{fmt_tien(cpr)} d" if cpr else "chua co don"
             lines.append(
-                f"- {c.get('name', '?')} | {fmt_tien(c.get('spend', 0))} d "
+                f"- ma {c.get('id', '?')} | {c.get('name', '?')} "
+                f"| chi {fmt_tien(c.get('spend', 0))} d "
                 f"| {c.get('purchase', 0)} don | chi phi moi don: {gia}"
             )
     return "\n".join(lines)
@@ -407,6 +442,126 @@ def viet_nhan_dinh(stats, ky_truoc=None, boi_canh="", env=None, goi_mang_fn=None
     if not loi_da_gap:
         return None, "chua goi duoc AI"
     return None, " | ".join(loi_da_gap)
+
+
+# ============================================================================
+# PHAN DE XUAT (nac 1)
+# ============================================================================
+# Khac phan viet bao cao o tren: cau lenh yeu cau AI tra ve JSON hai phan -
+# mot doan nhan dinh, va mot danh sach de xuat.
+#
+# Nguyen tac khong doi: CODE tinh, AI chep. AI chi duoc tra ve `id` va cau ly do;
+# ten va so tien do de_xuat.kiem() dien tu stats. Nho vay AI khong the bia so.
+
+
+def boc_json(text):
+    """Boc khoi JSON tu cau tra loi cua AI. Hong gi -> tra ve None.
+
+    Ba cach thu, theo thu tu:
+      1. json.loads truc tiep
+      2. boc khoi ```json ... ``` hoac ``` ... ```
+      3. lay tu dau { dau tien den } cuoi cung
+
+    Tra ve dict, hoac None neu hong het. KHONG BAO GIO nem loi.
+
+    Vi sao phai co ba cach: Gemini hay boc JSON trong ```json, va hay them cau
+    dan phia truoc. Da gap that o du an nay voi doc_cau_tra_loi() - cau truc
+    JSON cua Gemini doi giua cac lan.
+    """
+    if not isinstance(text, str):
+        return None
+    t = text.strip()
+    if not t:
+        return None
+
+    # Cach 1: JSON sach, khong bi boc gi
+    try:
+        kq = json.loads(t)
+        if isinstance(kq, dict):
+            return kq
+    except (ValueError, TypeError):
+        pass
+
+    # Cach 2: boc khoi ```json ... ``` hoac ``` ... ```
+    for khoi in re.findall(r"```(?:json)?\s*(.*?)```", t, re.S):
+        try:
+            kq = json.loads(khoi.strip())
+            if isinstance(kq, dict):
+                return kq
+        except (ValueError, TypeError):
+            continue
+
+    # Cach 3: tu { dau tien den } cuoi cung
+    dau = t.find("{")
+    cuoi = t.rfind("}")
+    if dau != -1 and cuoi > dau:
+        try:
+            kq = json.loads(t[dau:cuoi + 1])
+            if isinstance(kq, dict):
+                return kq
+        except (ValueError, TypeError):
+            pass
+
+    return None
+
+
+def viet_nhan_dinh_va_de_xuat(stats, ky_truoc=None, boi_canh="", env=None,
+                              goi_mang_fn=None):
+    """Viet nhan dinh VA de xuat. Tra ve (nhan_dinh, de_xuat_tho, loi).
+
+    `de_xuat_tho` la danh sach THO - AI tra ve gi thi giu nguyen. Viec loc
+    thuoc ve de_xuat.kiem(), KHONG thuoc ham nay. Tach vay de phan loc kiem
+    thu duoc ma khong can goi AI.
+
+    Suy giam em - KHONG BAO GIO nem loi:
+
+      | Tinh huong                     | Tra ve                        |
+      |--------------------------------|-------------------------------|
+      | JSON hop le                    | (nhan_dinh, ds_de_xuat, None) |
+      | JSON hop le, de_xuat rong      | (nhan_dinh, [], None)         |
+      | Chu thuong, khong phai JSON    | (nguyen doan chu, [], None)   |
+      | JSON hong (bat dau bang {)     | (None, [], ly do)             |
+      | AI loi mang / het han muc      | (None, [], ly do)             |
+
+    Dong thu tu quan trong nhat: JSON hong thi KHONG duoc dem nguyen chuoi do
+    hien len bao cao - Dai se doc mot dong toan dau ngoac. Tha mat phan nhan
+    dinh con hon hien mot dong vo nghia.
+    """
+    try:
+        prompt = soan_prompt(stats, ky_truoc, boi_canh)
+    except Exception as e:
+        return None, [], f"khong soan duoc cau lenh cho AI: {e}"
+
+    loi_da_gap = []
+    for model in chon_model_bao_cao(env):
+        chu, loi = goi_gemini(env, prompt, goi_mang_fn=goi_mang_fn, model=model)
+        if loi:
+            loi_da_gap.append(f"{model}: {loi}")
+            continue
+
+        du_lieu = boc_json(chu)
+        if du_lieu is not None:
+            nhan_dinh = str(du_lieu.get("nhan_dinh", "") or "").strip()
+            ds = du_lieu.get("de_xuat")
+            ds = ds if isinstance(ds, list) else []
+            if not nhan_dinh:
+                # JSON dung nhung thieu phan nhan dinh -> coi nhu loi, thu model khac.
+                loi_da_gap.append(f"{model}: JSON thieu truong nhan_dinh")
+                continue
+            return nhan_dinh, ds, None
+
+        # Khong phai JSON. Neu chuoi TRONG NHU JSON (bat dau bang {) thi do la
+        # JSON hong -> khong dung lam nhan dinh.
+        if chu.lstrip().startswith("{"):
+            loi_da_gap.append(f"{model}: AI tra ve JSON hong")
+            continue
+
+        # Chu thuong -> van dung duoc lam phan nhan dinh.
+        return chu, [], None
+
+    if not loi_da_gap:
+        return None, [], "chua goi duoc AI"
+    return None, [], " | ".join(loi_da_gap)
 
 
 # ============================================================================

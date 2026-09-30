@@ -96,6 +96,39 @@ Chìa khoá AI lấy ở đâu: xem **`HUONG-DAN-LAY-CHIA-KHOA-AI.md`**.
 > (không gọi mạng, không tốn lượt). Hết trần thì báo cáo vẫn gửi, chỉ thiếu phần nhận định,
 > hôm sau tự có lại.
 
+### 🆕 Mục ĐỀ XUẤT — AI chỉ ra camp nên tạm dừng (từ 30/09/2026)
+
+Ngoài phần Nhận định, file HTML nay có thêm khung **Đề xuất** (viền đỏ, ngay dưới Nhận định).
+Nó chỉ đích danh những chiến dịch **đang chi tiền mà không ra đơn nào**, kèm số tiền và lý do.
+
+Tin nhắn Telegram cũng có **thêm đúng một dòng** ở cuối: *"💡 Có 3 đề xuất — xem file HTML."*
+Không có đề xuất nào thì **không thêm dòng nào** — tin nhắn vẫn đúng 11 dòng như cũ.
+
+**Điều quan trọng nhất phải nhớ: AI CHỈ ĐỀ XUẤT, CHƯA LÀM GÌ CẢ.** Không có chiến dịch nào bị tắt,
+không có ngân sách nào bị đổi. Đại tự vào Facebook xử lý. Trong khung Đề xuất có ghi rõ câu này.
+
+**Ba lớp bảo vệ, để AI không thể nói bậy:**
+
+1. **AI chỉ được trả về MÃ chiến dịch và câu lý do.** Tên và số tiền hiện ra là do **code** lấy từ
+   sổ số liệu — không phải do AI viết. Nên AI **không thể bịa số**, kể cả khi nó muốn.
+2. **Rào kiểm bằng code loại bỏ đề xuất sai.** Đề xuất bị bỏ nếu: mã không có thật; chiến dịch đó
+   **đã có đơn**; hoặc số tiền chi **dưới ngưỡng**. Ngưỡng mặc định là **200.000đ**.
+3. **AI lỗi thì báo cáo vẫn gửi đầy đủ** — chỉ thiếu khung Đề xuất.
+
+**Muốn đổi ngưỡng hoặc số đề xuất?** Mở `.env` bằng `mo-file-env.bat`, sửa hai dòng:
+
+```
+DE_XUAT_NGUONG_CHI=200000     # chỉ đề xuất camp đã chi từ mức này trở lên mà 0 đơn
+DE_XUAT_TOI_DA=3              # số đề xuất tối đa mỗi báo cáo
+```
+
+> 📌 **Vì sao mặc định 200.000đ:** đo trên số liệu thật ngày 28–29/09/2026 — mức 200.000 cho ra
+> **3–4 đề xuất mỗi ngày**, còn mức 500.000 chỉ còn 1–3. Muốn thấy hết mọi camp 0 đơn thì đặt 0.
+
+> ⚠️ **Đọc đề xuất bằng mắt trước khi tin.** Camp mới tạo trong 1–2 ngày cũng có thể đang 0 đơn vì
+> chưa đủ thời gian ra đơn, chứ không phải vì kém. Câu lệnh đã dặn AI đừng đề xuất những camp đó,
+> nhưng **Đại vẫn là người quyết định cuối cùng**.
+
 ### 🆕 Nhắn tin hỏi bot (từ 29/09/2026)
 
 Ngoài việc tự gửi báo cáo, bot còn **trả lời khi bạn nhắn hỏi**. Hỏi bằng tiếng Việt bình thường:
@@ -346,8 +379,8 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 
 > 🆕 **Giao diện làm lại từ 29/09/2026.** Nền **tối** là mặc định, có **nút đổi sang nền sáng** ở
 > góc phải trên (bấm một lần, lần sau mở lại vẫn nhớ). Phần **Nhận định** của AI nay nằm trong file
-> này. Bố cục: ba số lớn (chi tiêu · lượt mua · chi phí mỗi đơn) → khung Nhận định → các chỉ số phụ
-> → hai bảng xếp hạng camp → bộ lọc ở chân trang.
+> này. Bố cục: ba số lớn (chi tiêu · lượt mua · chi phí mỗi đơn) → khung Nhận định → khung Đề xuất
+> → các chỉ số phụ → hai bảng xếp hạng camp → bộ lọc ở chân trang.
 
 **Cách xem — 2 cách:**
 
@@ -365,6 +398,8 @@ Mỗi lần script chạy, nó **tự tạo thêm 1 file `dashboard.html`** và 
 
 - **Ba số lớn**: Số tiền đã chi tiêu · Lượt mua · Chi phí mỗi đơn.
 - **Khung Nhận định** do AI viết (3–5 câu). Nếu AI lỗi thì khung này ghi rõ lý do.
+- **Khung Đề xuất** (viền đỏ, từ 30/09/2026): những camp đang chi tiền mà 0 đơn. **AI chỉ đề xuất,
+  chưa tắt gì cả.** Không có đề xuất nào thì khung này không hiện.
 - **5 chỉ số phụ**: Bắt đầu trò chuyện, Người liên hệ mới, Đơn đặt hàng, Lượt thanh toán, Bình luận.
 - **2 bảng xếp hạng**: 🟢 Camp hiệu quả (top 5) và 🔴 Camp kém hiệu quả (top 5).
   **Một camp chỉ xuất hiện ở MỘT trong hai bảng** (sửa 28/09/2026). Nên nếu tài khoản ít camp,

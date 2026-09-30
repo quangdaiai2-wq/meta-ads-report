@@ -1,10 +1,12 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 29/09/2026 — **Đổi mẫu báo cáo**: tin nhắn Telegram nay chỉ còn
-**tiêu đề + tài khoản + TÓM TẮT**; phần NHẬN ĐỊNH và hai bảng xếp hạng camp chuyển vào **file HTML**;
-file HTML **làm lại giao diện** (nền tối, có nút đổi sang nền sáng). `435/435` kiểm thử đạt.
-Trước đó cùng ngày: **Giai đoạn 5 xong** (tự xử lý lỗi) và kết luận **token Meta KHÔNG tự gia hạn
-được**.
+**Cập nhật lần cuối:** 30/09/2026 — **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
+camp đang chi tiền mà 0 đơn) và tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất.
+**AI chỉ đề xuất, chưa thực hiện gì.** `487/487` kiểm thử đạt. Đại cũng đã **duyệt bản định nghĩa
+AI Agent** và chốt đích là "tự hành có trần".
+Trước đó (29/09): **Giai đoạn 5 xong** (tự xử lý lỗi), đổi mẫu báo cáo (tin nhắn Telegram còn
+**tiêu đề + tài khoản + TÓM TẮT**, phần NHẬN ĐỊNH và hai bảng xếp hạng chuyển vào **file HTML**),
+và kết luận **token Meta KHÔNG tự gia hạn được**.
 
 > ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo, rồi
 > thêm `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và
@@ -45,6 +47,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 7 | Nhận định do AI viết (GĐ3) | Có so sánh với kỳ trước |
 | 8 | Hỏi bot, bot trả lời số liệu (GĐ4) | Bốn công cụ đọc sổ lịch sử |
 | 9 | **Tự xử lý lỗi (GĐ5)** | Tự chờ rồi thử lại khi Meta chặn tạm; cảnh báo khi số liệu trông bất thường; không thử lại lỗi vĩnh viễn; không gửi tin cảnh báo lặp lại |
+| 10 | **Nấc 1 — AI ĐỀ XUẤT (30/09/2026)** | Báo cáo có thêm khung **Đề xuất**: chỉ đích danh camp đang chi tiền mà 0 đơn. **AI chỉ đề xuất, không tự làm gì.** Tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất. `487/487` kiểm thử đạt |
 
 ### Đã hoàn thành (trên máy công ty — ngày 14/09/2026)
 
@@ -59,16 +62,22 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 
 ### Chưa làm
 
-- 🆕 **Bản định nghĩa AI Agent — ĐANG CHỜ ĐẠI DUYỆT** (viết 29/09/2026, chiều).
-  Đại yêu cầu "xây dựng đúng định nghĩa AI Agent cho Facebook" và chốt đích là **tự hành có trần**.
-  Bản đầy đủ ở `docs/superpowers/specs/2026-09-29-dinh-nghia-ai-agent-facebook-design.md`
-  (+ bản `.html` đọc cho dễ). Commit local `bf4918b`, **chưa push**.
-  Nội dung chính: thang **4 nấc tự hành** (nấc 0 = hiện tại), **ba rào cản đã kiểm chứng**,
-  kiến trúc agent tách riêng, và danh sách câu hỏi cần Đại chốt.
-  ⚠️ **Đọc mục §3.3 và §7 trước khi làm gì tiếp** — có hai câu chặn đường (lãi mỗi đơn, token).
+- 🆕 **Nấc 1 đã thi công xong (30/09/2026)** — AI đề xuất tạm dừng camp, có rào kiểm bằng code.
+  Kế hoạch + kết quả kiểm chứng: `docs/superpowers/plans/2026-09-29-nac-1-de-xuat-tam-dung-camp.md`
+  (**đọc mục "Kế hoạch này ĐÃ ĐƯỢC KIỂM CHỨNG" ở đầu file** — có hai lỗi thật của kế hoạch
+  do bước dựng thử bắt được). Hai khoá cấu hình mới trong `.env`: `DE_XUAT_NGUONG_CHI=200000`,
+  `DE_XUAT_TOI_DA=3`. Sao lưu `.env` cũ ở `.env.bak-truoc-nac1`.
+- 📄 **Bản định nghĩa AI Agent — ĐÃ ĐƯỢC ĐẠI DUYỆT (30/09/2026).** Ở
+  `docs/superpowers/specs/2026-09-29-dinh-nghia-ai-agent-facebook-design.md` (+ bản `.html`).
+  Đại chốt: đích là **"tự hành có trần"**, làm **cả ba việc theo thứ tự 1 → 2 → 3**.
+  **Việc #1 (bản định nghĩa) và #2 (nấc 1) đã xong.** Còn **việc #3** — xem mục dưới.
+- ⏳ **Việc #3 — agent mới tự hành (nấc 2 → 3). CHƯA BẮT ĐẦU.** Đang chờ hai thứ từ Đại:
+  (a) **mỗi đơn lãi bao nhiêu** — không có thì không định nghĩa được "camp kém";
+  (b) **token Meta có quyền `ads_management`** — token hiện chỉ có `ads_read`, đo thật 29/09/2026.
+  Chi tiết ở §3.3 và §7 của bản định nghĩa.
 - ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)**,
-  **GĐ4 (trả lời câu hỏi)** và **GĐ5 (tự xử lý lỗi)**, rồi thêm `GEMINI_API_KEY` vào `.env`
-  (`.env` không đi theo `git pull`).
+  **GĐ4 (trả lời câu hỏi)**, **GĐ5 (tự xử lý lỗi)** và **nấc 1 (đề xuất)**, rồi thêm
+  `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`).
   👉 **Hướng dẫn từng bước: xem file `HUONG-DAN-MAY-NHA.md`**
 - ✅ **Cả sáu giai đoạn của bản thiết kế đã xong.** Giai đoạn 0 (thử tự gia hạn token) đã làm ngày
   29/09/2026 và cho kết quả **không khả thi** — xem mục "Token Meta — điều đã kiểm chứng" bên dưới.

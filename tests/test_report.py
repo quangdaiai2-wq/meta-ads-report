@@ -980,5 +980,55 @@ class TestDocHanTokenChiTiet(unittest.TestCase):
             report.doc_han_token_chi_tiet = goc
 
 
+class TestDongNhacDeXuat(unittest.TestCase):
+    """Dong nhac de xuat gan o TANG GOI, khong nhan vao build_report.
+
+    Vi sao tach: build_report phai giu dung ba tham so (xem
+    test_khong_nhan_them_tham_so). Cach gan nay giong het cach cac canh bao
+    dang duoc gan trong main().
+    """
+
+    def test_co_de_xuat_thi_them_dung_1_dong(self):
+        dong = report.dong_nhac_de_xuat([{"id": "1"}, {"id": "2"}])
+        self.assertEqual(1, len(dong.splitlines()))
+        self.assertIn("2", dong)
+        self.assertIn("đề xuất", dong)
+
+    def test_khong_co_de_xuat_thi_tra_ve_rong(self):
+        for rong in ([], None):
+            with self.subTest(rong=rong):
+                self.assertEqual("", report.dong_nhac_de_xuat(rong))
+
+    def test_dau_vao_rac_khong_nem_loi(self):
+        for rac in ("chuoi", 123, {"a": 1}):
+            with self.subTest(rac=rac):
+                self.assertEqual("", report.dong_nhac_de_xuat(rac))
+
+    def test_build_report_giu_nguyen_11_dong_khi_khong_co_de_xuat(self):
+        """Mau 11 dong Dai chot phai nguyen ven."""
+        env = {"REPORT_ACCOUNT_NAME": "X"}
+        stats = {
+            "total_campaigns": 16,
+            "totals": {"spend": 0, "msg": 0, "contact": 0, "order": 0,
+                       "purchase": 0, "payment": 0, "comment": 0},
+        }
+        text = report.build_report(env, stats, "29/09/2026")
+        self.assertEqual(11, len(text.splitlines()))
+        self.assertNotIn("đề xuất", text)
+
+    def test_ghep_vao_tin_nhan_cho_ra_12_dong(self):
+        env = {"REPORT_ACCOUNT_NAME": "X"}
+        stats = {
+            "total_campaigns": 16,
+            "totals": {"spend": 0, "msg": 0, "contact": 0, "order": 0,
+                       "purchase": 0, "payment": 0, "comment": 0},
+        }
+        text = report.build_report(env, stats, "29/09/2026")
+        dong = report.dong_nhac_de_xuat([{"id": "1"}])
+        ghep = text + "\n" + dong
+        self.assertEqual(12, len(ghep.splitlines()))
+        self.assertTrue(ghep.endswith(dong))
+
+
 if __name__ == "__main__":
     unittest.main()

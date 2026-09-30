@@ -23,6 +23,19 @@ def money(v):
     return f"{int(round(float(v))):,}".replace(",", ".")
 
 
+def _so(v):
+    """Doc mot so an toan: None hoac chuoi rac -> 0.0.
+
+    Ly do: build_html la ham cong khai. Mot de xuat di dang (thieu truong, gia
+    tri None) KHONG duoc lam hong ca file bao cao - Dai se mat luon ca phan so
+    lieu chi vi mot dong de xuat loi.
+    """
+    try:
+        return float(v or 0)
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def esc(s):
     return escape(str(s or ""))
 
@@ -205,6 +218,13 @@ body {
 .analysis.warn { border-left-color: var(--mid); }
 .analysis.warn .analysis-label { color: var(--mid); }
 .analysis.warn p { font-size: 14px; color: var(--muted); }
+.analysis.suggest { border-left-color: var(--bad); }
+.analysis.suggest .analysis-label { color: var(--bad); }
+.suggest-item { font-size: 15.5px; margin-bottom: 12px; }
+.suggest-item:last-child { margin-bottom: 0; }
+.suggest-item .camp { font-weight: 620; }
+.suggest-item .meta { font-size: 13px; color: var(--muted); display: block; margin-top: 3px; }
+.suggest-hint { font-size: 13px; color: var(--faint); margin-top: 13px; }
 
 /* --- Luoi chi so phu --- */
 .stats {
@@ -316,13 +336,17 @@ _JS = """
 """
 
 
-def build_html(stats, since, until, period_text, nhan_dinh=None, loi_ai=None):
+def build_html(stats, since, until, period_text, nhan_dinh=None, loi_ai=None,
+               de_xuat=None):
     """Tao noi dung bao cao HTML.
 
     nhan_dinh: chu do AI viet (main() goi AI roi truyen vao). Nam trong file nay
                vi tu 29/09/2026 tin nhan Telegram chi con phan TOM TAT.
     loi_ai:    ly do AI khong viet duoc. Hien mot khoi ghi chu thay cho phan
                nhan dinh, de nguoi doc biet vi sao thieu.
+    de_xuat:   danh sach de xuat DA QUA RAO KIEM (de_xuat.kiem). Moi phan tu gom
+               id, ten, spend, purchase, viec, ly_do - ten va so do CODE dien,
+               khong phai AI. Rong hoac None thi khong hien khoi nay.
     """
     t = stats["totals"]
     good = stats["good"]
@@ -350,6 +374,37 @@ def build_html(stats, since, until, period_text, nhan_dinh=None, loi_ai=None):
         )
     else:
         phan_nhan_dinh = ""
+
+    # --- Khoi de xuat ---
+    # Chi hien khi co de xuat DA QUA RAO KIEM. Ten va so tien lay tu `d`, tuc la
+    # tu stats - KHONG phai tu AI. Xem de_xuat.py.
+    if de_xuat:
+        # Boc trong try: mot de xuat di dang khong duoc lam hong ca bao cao.
+        # Hong thi bo khoi de xuat, phan so lieu van nguyen ven.
+        try:
+            items = "".join(
+                '<div class="suggest-item">'
+                f'<span class="camp">{esc(d.get("ten", ""))}</span>'
+                f'<span class="meta">Mã {esc(d.get("id", ""))} · chi '
+                f'{money(_so(d.get("spend")))} VND · '
+                f'{int(_so(d.get("purchase")))} đơn — đề xuất tạm dừng</span>'
+                f'<span class="meta">{esc(d.get("ly_do", ""))}</span>'
+                "</div>"
+                for d in de_xuat
+                if isinstance(d, dict)
+            )
+            phan_de_xuat = (
+                '<div class="analysis suggest">'
+                '<div class="analysis-label">Đề xuất</div>'
+                + items
+                + '<div class="suggest-hint">Đây là đề xuất của AI dựa trên số liệu kỳ này. '
+                "Chưa có gì được thực hiện — Đại tự quyết định.</div>"
+                "</div>"
+            )
+        except Exception:
+            phan_de_xuat = ""
+    else:
+        phan_de_xuat = ""
 
     chi_so_phu = "".join([
         the_so("Bắt đầu trò chuyện", f"{t['msg']}"),
@@ -402,6 +457,8 @@ def build_html(stats, since, until, period_text, nhan_dinh=None, loi_ai=None):
   </div>
 
   {phan_nhan_dinh}
+
+  {phan_de_xuat}
 
   <div class="stats">{chi_so_phu}</div>
 
@@ -464,10 +521,10 @@ def build_html(stats, since, until, period_text, nhan_dinh=None, loi_ai=None):
 
 
 def save_dashboard(stats, since, until, period_text, nhan_dinh=None, loi_ai=None,
-                   out_path=None):
+                   de_xuat=None, out_path=None):
     """Ghi file bao cao HTML."""
     if out_path is None:
         out_path = Path(__file__).parent / "dashboard.html"
-    html = build_html(stats, since, until, period_text, nhan_dinh, loi_ai)
+    html = build_html(stats, since, until, period_text, nhan_dinh, loi_ai, de_xuat)
     Path(out_path).write_text(html, encoding="utf-8")
     return out_path
