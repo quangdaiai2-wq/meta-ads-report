@@ -76,6 +76,14 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   (a) **mỗi đơn lãi bao nhiêu** — không có thì không định nghĩa được "camp kém";
   (b) **token Meta có quyền `ads_management`** — token hiện chỉ có `ads_read`, đo thật 29/09/2026.
   Chi tiết ở §3.3 và §7 của bản định nghĩa.
+  👉 **Đã có sẵn công cụ cho việc (b)** (làm 30/09/2026): `HUONG-DAN-LAY-TOKEN-QUYEN-GHI.md`
+  (hướng dẫn từng bước cho Đại), `kiem-tra-quyen-ghi.py` + `.bat` (kiểm quyền ghi),
+  `doi-token-60-ngay.bat` (đổi token 60 ngày). App cần chọn trong Graph API Explorer:
+  tên **`MCP ADS`**, App ID ``.
+  ⚠️ **Bài học đã trả giá:** KHÔNG thể kiểm quyền ghi bằng một lệnh vô hại. Đã thử 4 cách ngày
+  30/09/2026 (lệnh rỗng, object không tồn tại, tên rỗng, ghi lại đúng tên cũ) — **cả 4 đều vô
+  giá trị**, vì Meta cố ý gộp mọi nguyên nhân vào một câu trả lời. Cách duy nhất để chắc là
+  **ghi thật một lần** trên chiến dịch Đại đã muốn tắt.
 - ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)**,
   **GĐ4 (trả lời câu hỏi)**, **GĐ5 (tự xử lý lỗi)** và **nấc 1 (đề xuất)**, rồi thêm
   `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`).
