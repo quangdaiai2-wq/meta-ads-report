@@ -171,9 +171,22 @@ tương đối dứt khoát.
 
 ---
 
-## 5. TÊN NHÓM LÀ MỘT BẢNG THÔNG TIN — CẦN ĐẠI GIẢI THÍCH
+## 5. TÊN NHÓM LÀ MỘT BẢNG THÔNG TIN — ĐẠI ĐÃ GIẢI THÍCH MỘT PHẦN
 
-Đuôi tên nhóm mà Đại dùng, đếm được **34 kiểu khác nhau**:
+### 5.1. Hậu tố `X9` và `X9-26` — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026)
+
+- **`X9`** = nhóm quảng cáo **đã bị tắt trong tháng 9**. Đại tự thêm vào tên để biết nhóm nào mình
+  đã tắt rồi — vì Facebook không hiện lịch sử đó ở chỗ dễ nhìn.
+- **`X9-26`** = đã tắt trong **tháng 9 năm 2026**. Ký hiệu này **chỉ dùng cho những nhóm có từ 1 trở
+  lên** ở hạng mục *"Người liên hệ nhắn tin mới"* **hoặc** *"Lượt bắt đầu cuộc trò chuyện qua tin
+  nhắn"*. Nhóm không có tương tác tin nhắn nào thì chỉ ghi `X9`, không ghi năm.
+
+Nói cách khác: **Đại dùng tên nhóm như một cuốn nhật ký nhẹ** — nhìn tên là biết nhóm đó đã tắt
+chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
+
+### 5.2. Phần đầu `x/y` — ⏳ CHƯA RÕ
+
+Đuôi tên nhóm mà Đại dùng, đếm được **34 kiểu khác nhau** trong 30 ngày:
 
 | Đuôi | Số lần gặp |
 |---|---|
@@ -186,12 +199,20 @@ tương đối dứt khoát.
 | `6/450 X9-26` | 34 |
 | `4/450 X9-26` | 32 |
 
-Đoán của tôi: **`x/y` = "số đơn / ngân sách"**, còn `X9` / `X9-26` là ký hiệu loại hoặc tài khoản.
-Nhưng **tôi không dám chắc** — và đây là thông tin nội bộ chỉ Đại biết.
+Phần `X9` / `X9-26` nay đã hiểu. **Còn phần `x/y` ở đầu thì chưa** — đoán của tôi là
+*số đơn / ngân sách*, nhưng chưa được xác nhận. Đã hỏi lại Đại.
 
-**Vì sao quan trọng:** nếu tên nhóm chứa sẵn số đơn và ngân sách, thì đó là **cách Đại tự ghi chú**
-để nhìn một cái là biết tình trạng nhóm. Hệ thống có thể học cách đọc — hoặc thậm chí đề xuất cập
-nhật tên nhóm giúp Đại. Nhưng nếu đoán sai thì mọi suy luận từ tên đều sai theo.
+### 5.3. Vì sao điều này quan trọng
+
+Tên nhóm chứa **thông tin vận hành do Đại tự ghi**. Nếu hệ thống đọc được, nó có thể:
+
+1. Biết nhóm nào Đại **đã tắt** mà không cần hỏi Meta.
+2. Biết nhóm nào **có phát sinh tin nhắn** — vì đó là nhóm Đại đánh dấu kỹ hơn.
+3. **Tự thêm ký hiệu giúp Đại** khi hệ thống tắt nhóm hộ — giữ đúng thói quen ghi chép của Đại,
+   thay vì để Đại phải nhớ mà thêm tay.
+
+> ⚠️ Nhưng phải cẩn thận: **nhận diện nhóm bằng tên là không đáng tin** — Đại đổi tên liên tục
+> (521 lần trong 30 ngày). Mọi thao tác thật vẫn phải dùng **mã số**, tên chỉ để đọc cho người hiểu.
 
 ---
 
@@ -218,7 +239,10 @@ không trả lời được.
 *Vẫn là câu chặn đường số một.* Không có nó thì không định nghĩa được "nhóm kém" — và mọi ngưỡng
 đều là đoán.
 
-**C2.** **`x/y X9` trong tên nhóm nghĩa là gì?** `X9` là gì? `-26` là gì?
+**C2.** ✅ **ĐÃ TRẢ LỜI MỘT PHẦN (30/09/2026).** `X9` = nhóm đã tắt trong tháng 9;
+`X9-26` = đã tắt tháng 9/2026, **chỉ dùng cho nhóm có từ 1 trở lên** ở *"Người liên hệ nhắn tin
+mới"* hoặc *"Lượt bắt đầu cuộc trò chuyện qua tin nhắn"*.
+⏳ **Còn thiếu: phần `x/y` ở đầu tên nghĩa là gì?**
 
 **C3.** **27.000đ là con số ở đâu ra?** Đại tự chọn, hay đó là mức ngân sách tối thiểu Meta cho phép?
 Và ý nghĩa của nó: "tắt mềm" đúng không?
