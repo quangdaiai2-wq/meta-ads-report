@@ -8,9 +8,10 @@ Trước đó (29/09): **Giai đoạn 5 xong** (tự xử lý lỗi), đổi m�
 **tiêu đề + tài khoản + TÓM TẮT**, phần NHẬN ĐỊNH và hai bảng xếp hạng chuyển vào **file HTML**),
 và kết luận **token Meta KHÔNG tự gia hạn được**.
 
-> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo, rồi
-> thêm `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`). Xem `HUONG-DAN-MAY-NHA.md` và
-> `HUONG-DAN-LAY-CHIA-KHOA-AI.md`.
+> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo +
+> **nấc 1 (mục Đề xuất)**, rồi thêm `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`) và
+> **thêm hai khoá `DE_XUAT_NGUONG_CHI`, `DE_XUAT_TOI_DA`** (thiếu cũng chạy, vì code có mặc định).
+> Xem `HUONG-DAN-MAY-NHA.md`, `HUONG-DAN-LAY-CHIA-KHOA-AI.md` và `HUONG-DAN-CAI-LAI-MAY-NHA.md`.
 
 ---
 
@@ -42,7 +43,7 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 | 2 | Người trực (từ 28/09/2026) | Một lịch `NguoiTruc` chạy `nguoi_truc.py` khi đăng nhập. Ba lịch `BaoCaoMetaAds_08/12/17` đã bị bỏ |
 | 3 | Chạy bù khi lỡ giờ | Đã bật `StartWhenAvailable` cho cả 3 lịch |
 | 4 | Dashboard HTML | Tự tạo lại mỗi lần chạy |
-| 5 | Đẩy code lên GitHub | Nhánh `main`, kho riêng tư. **Mốc mới nhất 29/09/2026: `5415c39`** (gồm GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo) |
+| 5 | Đẩy code lên GitHub | Nhánh `main`, kho riêng tư. **Mốc mới nhất 30/09/2026: `3254949`** (gồm GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo + **nấc 1 đề xuất**) |
 | 6 | Cảnh báo lỗi qua Telegram | Tự gửi tin khi có sự cố |
 | 7 | Nhận định do AI viết (GĐ3) | Có so sánh với kỳ trước |
 | 8 | Hỏi bot, bot trả lời số liệu (GĐ4) | Bốn công cụ đọc sổ lịch sử |
