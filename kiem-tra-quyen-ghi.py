@@ -149,7 +149,9 @@ def main():
     acc = env.get("META_AD_ACCOUNT_ID", "").strip()
     ten_tk, trang_thai = "(khong doc duoc)", None
     if acc:
-        du_lieu, loi, ma = goi_graph(acc, {
+        # Tai khoan quang cao tren Graph API phai co tien to "act_".
+        # Thieu tien to se bao HTTP 400 "object does not exist" du token dung.
+        du_lieu, loi, ma = goi_graph("act_" + acc, {
             "access_token": token, "fields": "name,account_status"})
         if du_lieu:
             ten_tk = du_lieu.get("name", "?")
