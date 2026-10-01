@@ -1024,6 +1024,63 @@ class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
         self.assertNotIn("chưa có trong phiên này", self.gui[0])
         self.assertIn("tiến trình báo cáo gửi", self.gui[0])
 
+    # --- Bao cao theo yeu cau qua Telegram (01/10/2026) ---
+
+    def test_nhan_dien_yeu_cau_bao_cao(self):
+        import agent
+        for chu in ("báo cáo", "báo cáo hôm qua", "bao cao", "báo cáo hôm nay",
+                    "gui bao cao hom qua", "BÁO CÁO HÔM QUA"):
+            self.assertTrue(agent._la_yeu_cau_bao_cao(chu), chu)
+        for chu in ("báo cáo hôm qua thế nào?", "báo cáo tháng 9",
+                    "hôm qua có bao nhiêu đơn", "còn sống không?", ""):
+            self.assertFalse(agent._la_yeu_cau_bao_cao(chu), chu)
+
+    def test_moc_mac_dinh_la_bao_cao_HOM_QUA(self):
+        import agent
+        t = datetime(2026, 10, 1, 13, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent._moc_cho_bao_cao("báo cáo", t, [8, 12, 17]), 8)
+        self.assertEqual(agent._moc_cho_bao_cao("báo cáo hôm qua", t, [8, 12, 17]), 8)
+
+    def test_moc_hom_nay_lay_moc_DA_QUA(self):
+        import agent
+        t = datetime(2026, 10, 1, 13, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent._moc_cho_bao_cao("báo cáo hôm nay", t, [8, 12, 17]), 12)
+        t2 = datetime(2026, 10, 1, 9, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent._moc_cho_bao_cao("báo cáo hôm nay", t2, [8, 12, 17]), 8)
+
+    def test_yeu_cau_bao_cao_CHAY_report_py_co_FORCE(self):
+        import agent
+        da_chay = []
+
+        class Kq:
+            returncode = 0
+
+        cu = agent.subprocess.run
+        self.addCleanup(setattr, agent.subprocess, "run", cu)
+        agent.subprocess.run = lambda *a, **k: (da_chay.append(a[0]), Kq())[1]
+
+        self._xu_ly(self._tin("báo cáo hôm qua"))
+        self.assertEqual(len(da_chay), 1, "phai chay report.py dung MOT lan")
+        lenh = [str(x) for x in da_chay[0]]
+        self.assertIn("report.py", " ".join(lenh))
+        self.assertIn("--slot", lenh)
+        self.assertIn("--force", lenh, "Dai yeu cau thi phai gui, du da gui hom nay")
+        self.assertEqual(len(self.gui), 1, "phai bao Dai la dang lay bao cao")
+
+    def test_yeu_cau_bao_cao_loi_thi_bao_RO(self):
+        import agent
+
+        class Kq:
+            returncode = 2
+
+        cu = agent.subprocess.run
+        self.addCleanup(setattr, agent.subprocess, "run", cu)
+        agent.subprocess.run = lambda *a, **k: Kq()
+
+        self._xu_ly(self._tin("báo cáo"))
+        self.assertEqual(len(self.gui), 2, "mot tin bao dang lay + mot tin bao loi")
+        self.assertIn("lỗi", self.gui[-1])
+
     def test_tin_tu_nguoi_la_bi_bo_qua(self):
         self._xu_ly(self._tin("tat 120250506886650509", chat=999))
         self.assertEqual(self.gui, [])

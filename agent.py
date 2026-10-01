@@ -12,6 +12,8 @@ Mac dinh la CHE DO TAP SU (AGENT_TAP_SU=true): agent CHI NOI, khong gui lenh
 nao len Meta. Dai doc vai ngay, doi chieu, roi moi tat tap su.
 """
 import argparse
+import os
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -255,6 +257,81 @@ def _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, tin_nhan_id):
                             bay_gio, thong_bao)
 
 
+def _la_yeu_cau_bao_cao(text):
+    """Tin nay la YEU CAU GUI BAO CAO, khong phai cau hoi so lieu.
+
+    Vi sao phai phan biet: "bao cao hom qua" = xin GUI FILE; con
+    "bao cao hom qua the nao?" = CAU HOI (de AI tra loi). Phan biet bang
+    tu khoa hoi, va bang viec chi cho phep vai tu chi ngay thang theo sau.
+    """
+    chu = lenh_telegram.bo_dau(text)
+    if not chu:
+        return False
+    if "?" in chu or "bao nhieu" in chu or "the nao" in chu or "ra sao" in chu:
+        return False
+    phan = chu.split()
+    # Cho phep cach noi "gui bao cao ..." / "lay bao cao ..." / "cho toi bao cao ..."
+    if (len(phan) >= 3 and phan[0] in ("gui", "lay", "xem", "cho", "muon")
+            and phan[1] == "bao" and phan[2] == "cao"):
+        phan = phan[1:]
+    if len(phan) < 2 or phan[0] != "bao" or phan[1] != "cao":
+        return False
+    # Sau "bao cao" chi duoc la cac tu chi ngay thang / loi xin. "bao cao thang 9"
+    # thi KHONG phai yeu cau gui file -> de AI tra loi.
+    return set(phan[2:]) <= {
+        "hom", "qua", "nay", "ngay", "toi", "cho", "cua", "lai", "di", "giup",
+    }
+
+
+def _moc_cho_bao_cao(text, bay_gio, danh_sach_moc):
+    """Chon moc gio de gui bao cao.
+
+    Mac dinh = moc NHO NHAT (thuong la 8) — theo dung quy uoc cua report.py:
+    moc 8 la "bao cao ve NGAY HOM TRUOC", tuc mot ngay TRON VEN.
+    "hom nay" thi lay moc lon nhat DA QUA.
+    """
+    moc = sorted(danh_sach_moc) or [8]
+    if "hom nay" in lenh_telegram.bo_dau(text) or "nay" in lenh_telegram.bo_dau(text).split():
+        da_qua = [m for m in moc if m <= bay_gio.hour]
+        return max(da_qua) if da_qua else min(moc)
+    return min(moc)
+
+
+def _gui_bao_cao_theo_yeu_cau(env, noi_dung, bay_gio):
+    """Dai yeu cau -> chay report.py; CHINH NO gui tin bao cao + file HTML.
+
+    Dung lai report.py chu KHONG tu dung bao cao: nho vay so lieu, bo loc,
+    phan nhan dinh AI va file HTML GIONG HET bao cao theo moc gio.
+
+    Dung `--force`: Dai da yeu cau thi phai gui, du moc do da gui hom nay.
+    """
+    danh_sach_moc = report.doc_moc_tu_env(env)
+    slot = _moc_cho_bao_cao(noi_dung, bay_gio, danh_sach_moc)
+    nguoi_truc.gui_tin_nhan(
+        env, f"\u23f3 \u0110ang l\u1ea5y b\u00e1o c\u00e1o m\u1ed1c {slot}h... kho\u1ea3ng 20\u201330 gi\u00e2y.")
+    lenh = [sys.executable, str(GOC / "report.py"), "--slot", str(slot), "--force"]
+    moi_truong = dict(os.environ)
+    moi_truong["PYTHONIOENCODING"] = "utf-8"
+    khong_cua_so = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        kq = subprocess.run(
+            lenh, cwd=str(GOC), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", env=moi_truong,
+            timeout=CHO_BAO_CAO_TOI_DA, creationflags=khong_cua_so,
+        )
+    except Exception as e:
+        nguoi_truc.gui_tin_nhan(env, f"\u26a0\ufe0f Kh\u00f4ng ch\u1ea1y \u0111\u01b0\u1ee3c b\u00e1o c\u00e1o: {e}")
+        report.log(f"AGENT: loi khi gui bao cao theo yeu cau: {type(e).__name__}: {e}")
+        return
+    if kq.returncode == 0:
+        report.log(f"AGENT: da gui bao cao moc {slot}h theo yeu cau cua Dai")
+        return
+    nguoi_truc.gui_tin_nhan(
+        env, f"\u26a0\ufe0f B\u00e1o c\u00e1o m\u1ed1c {slot}h l\u1ed7i (m\u00e3 {kq.returncode}). "
+             f"Xem logs\\baocao.log.")
+    report.log(f"AGENT: bao cao theo yeu cau THAT BAI moc {slot}h, ma {kq.returncode}")
+
+
 def _nghe_telegram(env, cau_hinh, bay_gio, thong_bao, tt_tg):
     """Doc tin Telegram moi va xu ly. ĐÂY LÀ NƠI DUY NHẤT đọc tin của bot.
 
@@ -343,6 +420,11 @@ def _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin):
     # vao hang doi" — mà hàng đợi này không còn ai đọc nữa.
     if lenh_telegram.la_hoan_tac(noi_dung) or lenh_telegram.la_lenh(noi_dung):
         _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, None)
+        return
+
+    # YEU CAU GUI BAO CAO -> chay report.py; no tu gui tin + FILE HTML.
+    if _la_yeu_cau_bao_cao(noi_dung):
+        _gui_bao_cao_theo_yeu_cau(env, noi_dung, bay_gio)
         return
 
     # Cau hoi -> dung lai DUNG ham cua nguoi truc (ham thuan, da co kiem thu).
@@ -483,6 +565,9 @@ NHIP_NHANH_GIAY = 15
 # khi ngay do THIEU ban ghi tron ngay — nen khong ton gi va khong giẫm chan
 # bao cao theo khung gio (bao cao ghi truoc thi agent thoi).
 KHOANG_THU_LICH_SU = 60 * 60
+
+# Cho toi da khi chay report.py theo yeu cau cua Dai (giay).
+CHO_BAO_CAO_TOI_DA = 600
 
 
 def _an_toan_stdout():
