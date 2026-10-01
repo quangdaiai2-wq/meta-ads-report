@@ -1075,5 +1075,126 @@ class TestVietNhanDinhVaDeXuat(unittest.TestCase):
         self.assertEqual(ai.TOI_DA_CAMP_GUI_AI, p.count("- ma "))
 
 
+
+
+class TestNhaCungCapNous(unittest.TestCase):
+    """Nha cung cap AI thu hai: Nous (OpenAI-compatible). Them 01/10/2026.
+
+    Vi sao phai co lop nay: API cua Nous noi chuyen bang KIEU OPENAI, con toan bo
+    ai.py doc KIEU GEMINI. Chi doi qua lai o mot cho. Neu doi sai thi phan hoi dap
+    (co vong lap cong cu) se hong trong im lang - dung kieu loi te nhat.
+    """
+
+    def test_mac_dinh_VAN_LA_GEMINI(self):
+        self.assertEqual(ai.nha_cung_cap({}), "gemini")
+        self.assertEqual(ai.nha_cung_cap(None), "gemini")
+        self.assertEqual(ai.nha_cung_cap({"AI_NHA_CUNG_CAP": ""}), "gemini")
+
+    def test_chon_duoc_nous(self):
+        self.assertEqual(ai.nha_cung_cap({"AI_NHA_CUNG_CAP": "nous"}), "nous")
+        self.assertEqual(ai.nha_cung_cap({"AI_NHA_CUNG_CAP": " NOUS "}), "nous")
+
+    def test_model_nous_doi_duoc_bang_env(self):
+        self.assertEqual(ai.model_nous({}), ai.MODEL_NOUS_MAC_DINH)
+        self.assertEqual(ai.model_nous({"NOUS_MODEL": "openai/gpt-4o-mini"}),
+                         "openai/gpt-4o-mini")
+
+    def test_danh_sach_model_doi_theo_nha_cung_cap(self):
+        gem = ai.chon_model_bao_cao({})
+        nous = ai.chon_model_bao_cao({"AI_NHA_CUNG_CAP": "nous"})
+        self.assertTrue(all(m.startswith("gemini") for m in gem), gem)
+        self.assertTrue(all("/" in m for m in nous), nous)
+        self.assertEqual(ai._chon_model_hoi_dap({"AI_NHA_CUNG_CAP": "nous"}),
+                         nous)
+
+    # ---- Doi payload Gemini -> OpenAI ----
+
+    def test_doi_text_co_ban(self):
+        p = {"contents": [{"role": "user", "parts": [{"text": "Xin chao"}]}]}
+        ra = ai._gemini_sang_openai(p, "m")
+        self.assertEqual(ra["model"], "m")
+        self.assertEqual(ra["messages"],
+                         [{"role": "user", "content": "Xin chao"}])
+
+    def test_doi_cong_cu_va_HA_THAP_kieu_tham_so(self):
+        p = {"contents": [], "tools": [{"functionDeclarations": [{
+            "name": "lay_mot_ngay", "description": "x",
+            "parameters": {"type": "OBJECT", "properties": {
+                "ngay": {"type": "STRING"}}}}]}]}
+        ra = ai._gemini_sang_openai(p, "m")
+        f = ra["tools"][0]
+        self.assertEqual(f["type"], "function")
+        self.assertEqual(f["function"]["name"], "lay_mot_ngay")
+        self.assertEqual(f["function"]["parameters"]["type"], "object")
+        self.assertEqual(f["function"]["parameters"]["properties"]["ngay"]["type"],
+                         "string")
+
+    def test_doi_maxOutputTokens_sang_max_tokens(self):
+        p = {"contents": [], "generationConfig": {"maxOutputTokens": 900}}
+        self.assertEqual(ai._gemini_sang_openai(p, "m")["max_tokens"], 900)
+
+    def test_doi_vai_model_thanh_assistant(self):
+        p = {"contents": [{"role": "model", "parts": [{"text": "Da"}]}]}
+        ra = ai._gemini_sang_openai(p, "m")
+        self.assertEqual(ra["messages"][0]["role"], "assistant")
+
+    def test_hoi_thoai_cong_cu_GHEP_DUNG_tool_call_id(self):
+        """Cho de sai nhat: Gemini chi co TEN cong cu, OpenAI can tool_call_id."""
+        p = {"contents": [
+            {"role": "user", "parts": [{"text": "may don?"}]},
+            {"role": "model", "parts": [{"functionCall": {
+                "name": "lay_mot_ngay", "args": {"ngay": "2026-09-30"}}}]},
+            {"role": "user", "parts": [{"functionResponse": {
+                "name": "lay_mot_ngay", "response": {"purchase": 25}}}]},
+        ]}
+        ra = ai._gemini_sang_openai(p, "m")
+        self.assertEqual([m["role"] for m in ra["messages"]],
+                         ["user", "assistant", "tool"])
+        goi = ra["messages"][1]["tool_calls"][0]
+        self.assertEqual(goi["function"]["name"], "lay_mot_ngay")
+        self.assertEqual(json.loads(goi["function"]["arguments"])["ngay"],
+                         "2026-09-30")
+        self.assertEqual(ra["messages"][2]["tool_call_id"], goi["id"],
+                         "tool_call_id PHAI khop id cua lan goi")
+
+    # ---- Doi ket qua OpenAI -> Gemini ----
+
+    def test_doi_ket_qua_chu(self):
+        kq = {"choices": [{"message": {"content": "25 don"},
+                             "finish_reason": "stop"}]}
+        ra = ai._openai_sang_gemini(kq)
+        self.assertEqual(ra["candidates"][0]["content"]["parts"][0]["text"], "25 don")
+        self.assertEqual(ra["candidates"][0]["finishReason"], "STOP")
+
+    def test_doi_ket_qua_xin_goi_cong_cu(self):
+        kq = {"choices": [{"message": {"content": None, "tool_calls": [{
+            "id": "call_1", "type": "function", "function": {
+                "name": "lay_mot_ngay",
+                "arguments": "{\"ngay\": \"2026-09-15\"}"}}]},
+            "finish_reason": "tool_calls"}]}
+        ra = ai._openai_sang_gemini(kq)
+        fc = ra["candidates"][0]["content"]["parts"][0]["functionCall"]
+        self.assertEqual(fc["name"], "lay_mot_ngay")
+        self.assertEqual(fc["args"], {"ngay": "2026-09-15"},
+                         "arguments phai duoc giai tu chuoi JSON")
+
+    def test_cat_vi_het_token_van_nhan_ra(self):
+        """OpenAI bao "length"; phan kiem tra san co doi thanh MAX_TOKENS."""
+        kq = {"choices": [{"message": {"content": "abc"},
+                             "finish_reason": "length"}]}
+        ra = ai._openai_sang_gemini(kq)
+        self.assertEqual(ra["candidates"][0]["finishReason"], "MAX_TOKENS")
+
+    def test_ket_qua_hong_tra_ve_None_khong_nem(self):
+        for xau in (None, {}, {"choices": []}, {"choices": [{}]},
+                    "chuoi", {"choices": [{"message": {}}]}):
+            self.assertIsNone(ai._openai_sang_gemini(xau), repr(xau))
+
+    def test_thieu_NOUS_API_KEY_thi_bao_ro(self):
+        chu, loi = ai.goi_gemini({"AI_NHA_CUNG_CAP": "nous"}, "hi", timeout=5)
+        self.assertIsNone(chu)
+        self.assertIn("NOUS_API_KEY", loi)
+
+
 if __name__ == "__main__":
     unittest.main()

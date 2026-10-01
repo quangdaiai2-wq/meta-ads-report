@@ -28,6 +28,56 @@ MODEL_MAC_DINH = "gemini-3.6-flash"
 
 BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
+# ===================== NHA CUNG CAP AI THU HAI ======================
+# Tu 01/10/2026 Dai co API cua Nous Research (Nous Portal) va muon dung no
+# thay Gemini den 30/10/2026.
+#
+# API cua Nous LA OPENAI-COMPATIBLE (da doc tai lieu chinh thuc
+# portal.nousresearch.com/api-docs): goi POST /chat/completions, xac thuc
+# bang header Authorization: Bearer sk-nous-...
+#
+# CACH LAM: KHONG viet lai phan doc ket qua. Chi DOI QUA LAI o dung mot cho
+# (`_gemini_sang_openai` va `_openai_sang_gemini`), nen toan bo phan con lai
+# cua ai.py — ke ca vong lap cong cu — khong phai sua dong nao.
+#
+# MAC DINH VAN LA GEMINI. Chi khi .env ghi AI_NHA_CUNG_CAP=nous thi moi doi.
+NHA_CUNG_CAP_MAC_DINH = "gemini"
+BASE_OPENAI = "https://inference-api.nousresearch.com/v1"
+# TEN MODEL: tai lieu cua Nous ghi "Hermes-4-70B" nhung model do DA BI KHAI TU
+# (goi that ngay 01/10/2026: HTTP 404 "This model has been retired"). API cua Nous
+# thuc chat la mot CONG noi toi 423 model (OpenAI, Anthropic, Google, Qwen...).
+#
+# Chon `google/gemini-2.5-flash` lam mac dinh vi DAY LA CUNG HO MODEL ma du an
+# dang dung va da tinh chinh prompt cho no => doi nha cung cap ma KHONG doi hanh vi.
+# Khac biet duy nhat: tinh tien theo token tu so du Nous, khong bi tran 20 luot/ngay.
+# Doi model thi sua khoa NOUS_MODEL trong .env, khong phai sua code.
+MODEL_NOUS_MAC_DINH = "google/gemini-2.5-flash"
+# Du phong KHAC HO model, de neu ho Google co su co thi van co duong chay.
+MODEL_NOUS_DU_PHONG = "openai/gpt-4o-mini"
+
+
+def nha_cung_cap(env):
+    """Ten nha cung cap AI dang dung. Mac dinh la gemini."""
+    return (str((env or {}).get("AI_NHA_CUNG_CAP", "")).strip().lower()
+            or NHA_CUNG_CAP_MAC_DINH)
+
+
+def model_nous(env):
+    """Ten model Hermes se goi."""
+    env = env or {}
+    return (str(env.get("NOUS_MODEL", "")).strip()
+            or str(env.get("AI_MODEL", "")).strip()
+            or MODEL_NOUS_MAC_DINH)
+
+
+def _ds_model_nous(env):
+    """Model chinh truoc, model nho hon lam du phong khi qua tai."""
+    chinh = model_nous(env)
+    ds = [chinh]
+    if MODEL_NOUS_DU_PHONG not in ds:
+        ds.append(MODEL_NOUS_DU_PHONG)
+    return ds
+
 # Thoi gian toi da cho mot lan goi AI (giay). Bao cao khong duoc tre vi AI.
 TIMEOUT = 60
 
@@ -334,6 +384,153 @@ def _goi_mang_that(url, payload, timeout):
         return json.loads(resp.read().decode("utf-8"))
 
 
+# ============ DOI QUA LAI GIUA KIEU GEMINI VA KIEU OPENAI ============
+# Gemini:  contents[].parts[].text / .functionCall / .functionResponse
+#          tools = [{"functionDeclarations": [{"name","description","parameters"}]}]
+# OpenAI:  messages[].content / .tool_calls / role="tool"
+#          tools = [{"type":"function","function":{...}}]
+
+
+def _kieu_sang_openai(node):
+    """Doi kieu tham so Gemini ("STRING") sang kieu OpenAI ("string"), ca cay."""
+    if isinstance(node, dict):
+        return {k: (str(v).lower() if k == "type" else _kieu_sang_openai(v))
+                for k, v in node.items()}
+    if isinstance(node, list):
+        return [_kieu_sang_openai(x) for x in node]
+    return node
+
+
+def _cong_cu_sang_openai(tools):
+    """Khai bao cong cu kieu Gemini -> kieu OpenAI."""
+    ra = []
+    for t in tools or []:
+        for fd in (t.get("functionDeclarations") or []):
+            ra.append({"type": "function", "function": {
+                "name": fd.get("name"),
+                "description": fd.get("description", ""),
+                "parameters": _kieu_sang_openai(
+                    fd.get("parameters") or {"type": "object", "properties": {}}),
+            }})
+    return ra
+
+
+def _gemini_sang_openai(payload, model):
+    """Doi payload kieu Gemini sang payload kieu OpenAI (chat/completions)."""
+    msgs = []
+    ten_sang_id = {}
+    dem = [0]
+    for c in (payload.get("contents") or []):
+        vai = c.get("role") or "user"
+        role = "assistant" if vai == "model" else vai
+        texts, calls, resps = [], [], []
+        for ph in (c.get("parts") or []):
+            if ph.get("text"):
+                texts.append(ph["text"])
+            elif "functionCall" in ph:
+                fc = ph["functionCall"] or {}
+                dem[0] += 1
+                cid = "call_%d" % dem[0]
+                ten_sang_id[fc.get("name")] = cid
+                calls.append({"id": cid, "type": "function", "function": {
+                    "name": fc.get("name"),
+                    "arguments": json.dumps(fc.get("args") or {},
+                                            ensure_ascii=False)}})
+            elif "functionResponse" in ph:
+                fr = ph["functionResponse"] or {}
+                resps.append({"role": "tool",
+                              "tool_call_id": ten_sang_id.get(
+                                  fr.get("name"), "call_1"),
+                              "content": json.dumps(fr.get("response") or {},
+                                                     ensure_ascii=False)})
+        if texts or calls:
+            m = {"role": role,
+                 "content": "\n".join(texts) if texts else None}
+            if calls:
+                m["tool_calls"] = calls
+            msgs.append(m)
+        msgs.extend(resps)
+    ra = {"model": model, "messages": msgs}
+    if payload.get("tools"):
+        ra["tools"] = _cong_cu_sang_openai(payload["tools"])
+    cfg = payload.get("generationConfig") or {}
+    if cfg.get("maxOutputTokens"):
+        ra["max_tokens"] = int(cfg["maxOutputTokens"])
+    return ra
+
+
+def _openai_sang_gemini(du_lieu):
+    """Doi cau tra loi kieu OpenAI sang kieu Gemini, de phan con lai khong phai sua."""
+    try:
+        chon = (du_lieu.get("choices") or [])[0]
+        m = chon.get("message") or {}
+    except (AttributeError, IndexError, TypeError):
+        return None
+    parts = []
+    if m.get("content"):
+        parts.append({"text": m["content"]})
+    for tc in (m.get("tool_calls") or []):
+        fn = tc.get("function") or {}
+        try:
+            args = json.loads(fn.get("arguments") or "{}")
+        except (ValueError, TypeError):
+            args = {}
+        parts.append({"functionCall": {"name": fn.get("name"), "args": args}})
+    if not parts:
+        return None
+    # OpenAI bao "length" khi bi cat vi het tran token. Doi thanh MAX_TOKENS de
+    # phan kiem tra san co trong goi_gemini_cong_cu() van hoat dong.
+    xong = ("MAX_TOKENS"
+            if str(chon.get("finish_reason") or "").lower() == "length"
+            else "STOP")
+    return {"candidates": [{"content": {"role": "model", "parts": parts},
+                            "finishReason": xong}]}
+
+
+def _goi_openai_that(url, payload, timeout, key):
+    """Goi nha cung cap OpenAI-compatible (Nous). Khac Gemini o header xac thuc."""
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json",
+                 "Authorization": "Bearer " + key},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _goi_nous_than(env, payload_them, model, timeout, goi_mang_fn):
+    """Goi Nous/Hermes. Doi kieu o day, tra ve dung kieu Gemini nhu cu."""
+    key = str(env.get("NOUS_API_KEY", "")).strip()
+    if not key:
+        return None, "thieu NOUS_API_KEY trong .env"
+    base = str(env.get("NOUS_BASE_URL", "")).strip() or BASE_OPENAI
+    model = str(model or "").strip() or model_nous(env)
+    payload = _gemini_sang_openai(payload_them, model)
+    url = base.rstrip("/") + "/chat/completions"
+    goi = goi_mang_fn or (lambda u, pl, t: _goi_openai_that(u, pl, t, key))
+
+    for lan in range(SO_LAN_THU_LAI + 1):
+        try:
+            du_lieu = goi(url, payload, timeout or TIMEOUT)
+        except urllib.error.HTTPError as e:
+            loi = f"HTTP {e.code}"
+            if e.code in MA_LOI_TAM_THOI and lan < SO_LAN_THU_LAI:
+                time.sleep(CHO_GIUA_HAI_LAN)
+                continue
+            return None, loi
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            if lan < SO_LAN_THU_LAI:
+                time.sleep(CHO_GIUA_HAI_LAN)
+                continue
+            return None, f"loi mang hoac het thoi gian cho: {e}"
+        except Exception as e:
+            return None, str(e)
+        doi = _openai_sang_gemini(du_lieu)
+        if doi is None:
+            return None, "Nous tra ve rong hoac sai cau truc"
+        return doi, None
+    return None, "da thu lai nhieu lan nhung van loi"
+
 def _goi_gemini_than(env, payload_them, model, timeout, goi_mang_fn):
     """Goi Gemini voi phan payload tuy y. Tra ve (du_lieu_json, loi).
 
@@ -343,6 +540,10 @@ def _goi_gemini_than(env, payload_them, model, timeout, goi_mang_fn):
     nguyen `content` cua model, khong chi doc phan chu.
     """
     env = env or {}
+    # Doi nha cung cap o DUY NHAT cho nay. Moi thu phia sau van la kieu Gemini.
+    if nha_cung_cap(env) == "nous":
+        return _goi_nous_than(env, payload_them, model, timeout, goi_mang_fn)
+
     key = str(env.get("GEMINI_API_KEY", "")).strip()
     if not key:
         return None, "thieu GEMINI_API_KEY trong .env"
@@ -390,7 +591,10 @@ def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None, model=None):
     KHONG BAO GIO nem loi ra ngoai: moi loi deu tra ve qua kenh `loi`.
     """
     env = env or {}
-    model = str(model or env.get("GEMINI_MODEL", "")).strip() or MODEL_MAC_DINH
+    if nha_cung_cap(env) == "nous":
+        model = str(model or "").strip() or model_nous(env)
+    else:
+        model = str(model or env.get("GEMINI_MODEL", "")).strip() or MODEL_MAC_DINH
     du_lieu, loi = _goi_gemini_than(
         env, {"contents": [{"parts": [{"text": prompt}]}]},
         model, timeout, goi_mang_fn,
@@ -406,6 +610,8 @@ def goi_gemini(env, prompt, timeout=None, goi_mang_fn=None, model=None):
 def chon_model_bao_cao(env):
     """Danh sach model se thu cho phan NHAN DINH, theo thu tu. Chinh truoc, du phong sau."""
     env = env or {}
+    if nha_cung_cap(env) == "nous":
+        return _ds_model_nous(env)
     chinh = str(env.get("GEMINI_MODEL", "")).strip() or MODEL_MAC_DINH
     du_phong = (str(env.get("GEMINI_MODEL_BAO_CAO_DU_PHONG", "")).strip()
                 or MODEL_BAO_CAO_DU_PHONG_MAC_DINH)
@@ -610,6 +816,8 @@ def boc_content(content):
 def _chon_model_hoi_dap(env):
     """Danh sach model se thu, theo thu tu. Model chinh truoc, du phong sau."""
     env = env or {}
+    if nha_cung_cap(env) == "nous":
+        return _ds_model_nous(env)
     chinh = str(env.get("GEMINI_MODEL_HOI_DAP", "")).strip() or MODEL_HOI_DAP_MAC_DINH
     du_phong = (str(env.get("GEMINI_MODEL_HOI_DAP_DU_PHONG", "")).strip()
                 or MODEL_HOI_DAP_DU_PHONG_MAC_DINH)
