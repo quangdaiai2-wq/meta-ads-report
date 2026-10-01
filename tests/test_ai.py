@@ -98,6 +98,34 @@ class TestBangSoSanh(unittest.TestCase):
         b = ai.bang_so_sanh(STATS, KY_TRUOC_RONG)
         self.assertIn("(khong so sanh)", b)
 
+    def test_PHAI_co_dong_chi_phi_moi_don(self):
+        """Loi that 01/10/2026: bang cu thieu dong nay.
+
+        Ngay 30/09 moi dong khac deu GIAM (chi tieu -63%, tin nhan -60%, don
+        hang -52%) nen AI viet "chi phi moi don khong may tich cuc, hieu qua
+        kem" — trong khi chi phi moi don GIAM 22%, tuc moi don RE HON.
+        Mot dong thieu lam ca ban nhan dinh sai.
+        """
+        b = ai.bang_so_sanh(
+            {"totals": {"spend": 6756895, "purchase": 25}},
+            {"tong": {"spend": 18122527, "purchase": 52}, "so_ngay": 1})
+        self.assertIn("chi phi moi don (dong)", b)
+        self.assertIn("270.276", b)
+        self.assertIn("348.510", b)
+        self.assertIn("RE HON (tot len)", b)
+
+    def test_chi_phi_moi_don_dat_hon_thi_ghi_ro_chieu_xau(self):
+        b = ai.bang_so_sanh(
+            {"totals": {"spend": 500000, "purchase": 1}},
+            {"tong": {"spend": 100000, "purchase": 1}, "so_ngay": 1})
+        self.assertIn("DAT HON (xau di)", b)
+
+    def test_chua_co_don_thi_khong_so_sanh_chi_phi(self):
+        b = ai.bang_so_sanh(
+            {"totals": {"spend": 100000, "purchase": 0}},
+            {"tong": {"spend": 100000, "purchase": 5}, "so_ngay": 1})
+        self.assertIn("(chua co don)", b)
+
 
 class TestSoanPrompt(unittest.TestCase):
     def test_co_bang_so_lieu(self):

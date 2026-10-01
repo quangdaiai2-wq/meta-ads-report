@@ -85,6 +85,10 @@ def _soan_ban_ghi(de_xuat, che_do, rao_an_toan, da_gui=False, tin_nhan_id=None):
             "ngan_sach_ngay_vnd": dt.get("ngan_sach_ngay_vnd"),
         },
         "ly_do": de_xuat.get("ly_do"),
+        # Truong hop (1/2/3) va ten moi sau khi tat. Luu vao so de luc Dai bam
+        # nut thi biet phai dat ten gi — khong tinh lai (so lieu da doi).
+        "truong_hop": de_xuat.get("truong_hop"),
+        "ten_moi": de_xuat.get("ten_moi"),
         "rao_an_toan": rao_an_toan,
         "da_gui_len_meta": bool(da_gui),
         "tin_nhan_id": tin_nhan_id,
@@ -615,20 +619,32 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
     agent_ky_uc.ghi(ban_ghi_moi)
 
     import agent_cong_cu_ghi
+
+    # THU TU: tat QUANG CAO truoc, roi moi tat nhom + ha ngan sach + doi ten.
+    # Giong dung thu tu trong so thao tac that cua Dai.
+    # Moi lan ghi len Meta phai cach nhau CHO_GIUA_HAI_LAN_GHI giay — Meta chan
+    # "(#613) rate limit" neu ghi qua nhanh (da gap that 01/10/2026).
+    tat_qc_ok, tat_qc_ly, ct_qc = agent_cong_cu_ghi.tat_quang_cao(
+        env, ma, ten_nhom=(ban_ghi.get("doi_tuong") or {}).get("ten"))
+
     thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tam_dung_va_ha_ngan_sach(
-        env, ma, agent_rao.NGAN_SACH_HA)
+        env, ma, agent_rao.NGAN_SACH_HA, ten_moi=ban_ghi.get("ten_moi"))
     agent_ky_uc.cap_nhat_phan_hoi(ma, kq["noi_dung"], ket_qua)
 
     dau = "✅" if thanh_cong else "❌"
-    _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join([
+    dong = [
         f"{dau} ĐÃ TẮT NHÓM {ma}",
         "",
         f"Nhóm: {(ban_ghi.get('doi_tuong') or {}).get('ten')}",
         f"Kết quả: {ket_qua}",
-        "",
-        "Bấm nút bên dưới nếu muốn BẬT LẠI (chỉ trong 24 giờ).",
-    ]), nut=agent_xin_phep.nut_hoan_tac(ma) if thanh_cong else None)
-    report.log(f"AGENT: tat nhom {ma} — {ket_qua}")
+    ]
+    if ban_ghi.get("ten_moi"):
+        dong.append(f"Tên mới: {ban_ghi.get('ten_moi')}")
+    dong.append(f"Quảng cáo bên trong: {'đã tắt' if tat_qc_ok else 'LỖI — ' + tat_qc_ly}")
+    dong += ["", "Bấm nút bên dưới nếu muốn BẬT LẠI (chỉ trong 24 giờ)."]
+    _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join(dong),
+                 nut=agent_xin_phep.nut_hoan_tac(ma) if thanh_cong else None)
+    report.log(f"AGENT: tat nhom {ma} — {ket_qua} | quang cao: {tat_qc_ly}")
     return 1
 
 

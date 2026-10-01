@@ -214,25 +214,96 @@ class C_MucTieu(unittest.TestCase):
         return agent_muc_tieu.xet([nhom(ten=ten, trang_thai=trang_thai)],
                                   {ID: dong(spend, mua, tin)}, {ID: dong(spend, mua, tin)})
 
-    def test_0_mua_65k_chua_de_xuat(self):
-        self.assertEqual(self._xet(65000, 0, 1), [])
+    def test_th1_65k_chua_de_xuat(self):
+        """TH1 (khong tin nhan) duoi nguong 70.000 => khong de xuat."""
+        self.assertEqual(self._xet(65000, 0, 0), [])
 
-    def test_0_mua_70k_co_tin_thi_de_xuat(self):
-        self.assertEqual(len(self._xet(70000, 0, 1)), 1)
+    def test_th1_70k_thi_de_xuat(self):
+        """TH1 dung nguong 70.000 => de xuat, truong_hop = 1."""
+        r = self._xet(70000, 0, 0)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["truong_hop"], 1)
 
-    def test_0_mua_khong_tin_75k_chua_de_xuat(self):
-        self.assertEqual(self._xet(75000, 0, 0), [])
+    def test_th2_70k_CO_TIN_chua_de_xuat(self):
+        """Doi 01/10/2026: co tin nhan thi nguong la 290.000, KHONG phai 70.000.
 
-    def test_0_mua_khong_tin_80k_thi_de_xuat(self):
-        self.assertEqual(len(self._xet(80000, 0, 0)), 1)
+        Day chinh la thay doi lon nhat cua luat moi — truoc day nhom co tin nhan
+        bi bao tu 70.000d, nay phai doi toi 290.000d.
+        """
+        self.assertEqual(self._xet(70000, 0, 1), [])
 
-    def test_1_mua_500k_thi_de_xuat(self):
+    def test_th2_289k_chua_de_xuat(self):
+        self.assertEqual(self._xet(289999, 0, 1), [])
+
+    def test_th2_290k_thi_de_xuat(self):
+        r = self._xet(290000, 0, 1)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["truong_hop"], 2)
+
+    def test_th2_tinh_CA_chi_so_lien_he(self):
+        """'Nguoi lien he nhan tin moi' cung tinh la tin nhan (truoc day bo sot)."""
+        d = {"spend": "290000", "actions": [
+            {"action_type": agent_muc_tieu.TEN_LIEN_HE, "value": "3"}]}
+        r = agent_muc_tieu.xet([nhom()], {ID: d}, {ID: d})
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["truong_hop"], 2)
+
+    def test_th3_1_mua_500k_thi_de_xuat(self):
         r = self._xet(500000, 1, 3)
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0]["chi_phi_moi_luot"], 500000)
+        self.assertEqual(r[0]["truong_hop"], 3)
 
-    def test_2_mua_700k_thi_KHONG_de_xuat(self):
+    def test_th3_1_mua_389k_chua_de_xuat(self):
+        self.assertEqual(self._xet(389999, 1, 3), [])
+
+    def test_th3_2_mua_700k_thi_KHONG_de_xuat(self):
+        """700.000 / 2 don = 350.000 moi don — duoi moc 390.000."""
         self.assertEqual(self._xet(700000, 2, 3), [])
+
+    def test_th3_khong_can_tin_nhan(self):
+        """Da ra don la tin hieu manh nhat — khong co tin nhan VAN vao TH3."""
+        r = self._xet(500000, 1, 0)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["truong_hop"], 3)
+
+    def test_th3_thang_KHONG_phai_hom_nay(self):
+        """TH3 xet gia moi luot mua TINH THEO THANG, khong theo ngay."""
+        r = agent_muc_tieu.xet([nhom()], {ID: dong(10000, 0, 0)}, {ID: dong(500000, 1, 0)})
+        self.assertEqual(len(r), 1, "phai lay so THANG")
+        self.assertEqual(r[0]["chi_phi_moi_luot"], 500000)
+
+    def test_bo_hau_to_cu(self):
+        """Cat 'x/y X<n>' cu ra khoi ten — de tat lan hai khong chong ten."""
+        for vao, ra in [
+            ("2026 - 09 - 30 - dainq - Scale - Online 0/160 X9",
+             "2026 - 09 - 30 - dainq - Scale - Online"),
+            ("2026 - 08 - 11 - dainq - Scale - Online A3 0/300 X8-26 TN",
+             "2026 - 08 - 11 - dainq - Scale - Online A3"),
+            ("2026 - 02 - 05 - dainq - Scale - Online 221225 12/495 X2",
+             "2026 - 02 - 05 - dainq - Scale - Online 221225"),
+            ("2026 - 09 - 30 - dainq - Scale - Online",
+             "2026 - 09 - 30 - dainq - Scale - Online"),
+        ]:
+            self.assertEqual(agent_muc_tieu.bo_hau_to_cu(vao), ra, vao)
+
+    def test_ten_moi_ba_truong_hop(self):
+        goc = "2026 - 09 - 30 - dainq - Scale - Online"
+        t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 70000, 0, t), goc + " 0/140 X10")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 85000, 0, t), goc + " 0/170 X10",
+                         "TH1 ghi GAP DOI so dang chi, khong phai gap doi nguong")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 2, 290000, 0, t), goc + " 0/350 X10 TN")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 390000, 1, t), goc + " 1/450 X10")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 780000, 2, t), goc + " 2/450 X10")
+
+    def test_ten_moi_tat_lan_hai_khong_chong_ten(self):
+        goc = "2026 - 09 - 30 - dainq - Scale - Online"
+        t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
+        lan1 = agent_muc_tieu.ten_moi(goc, 1, 70000, 0, t)
+        lan2 = agent_muc_tieu.ten_moi(lan1, 1, 70000, 0, t)
+        self.assertEqual(lan1, lan2)
+        self.assertEqual(lan2.count("0/140"), 1, lan2)
 
     def test_nhom_khong_ACTIVE_thi_bo_qua(self):
         self.assertEqual(self._xet(500000, 1, 3, trang_thai="PAUSED"), [])

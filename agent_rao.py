@@ -21,7 +21,7 @@ GIO_VN = timezone(timedelta(hours=7))
 # viet hoa (THC295THM295), hoac co "new - dainq".
 RE_MA_CONTENT = re.compile(r"^[A-Z]{2,}\d")
 
-MOC_CPR = 400000          # chi phi moi luot mua toi da (moc CO DINH, khong doi)
+MOC_CPR = 390000          # nguong gia moi luot mua cua TH3 (Dai chot 01/10/2026)
 NGAN_SACH_HA = 27000      # ngan sach ha ve khi tat
 # Tran hanh dong. 0 = KHONG GIOI HAN.
 # Doi 01/10/2026 theo yeu cau cua Dai: "khong gioi han so lan bao".

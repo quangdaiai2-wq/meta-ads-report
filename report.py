@@ -153,8 +153,9 @@ def tao_boi_canh(env, period_text, tron_ngay):
     ten = (env or {}).get("REPORT_ACCOUNT_NAME", "?")
     if tron_ngay:
         return (
-            f"Tai khoan {ten}. Day la bao cao TRON ngay {period_text}. "
-            "Co the so sanh voi so ky truoc."
+            f"Tai khoan {ten}. Day la bao cao TRON ngay {period_text}, "
+            "so voi NGAY HOM TRUOC do (cung do dai 1 ngay). "
+            "Cot 'ky truoc' trong bang la so cua dung mot ngay lien truoc."
         )
     return (
         f"Tai khoan {ten}. Day la bao cao MOT PHAN cua ngay {period_text} "

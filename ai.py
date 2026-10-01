@@ -96,7 +96,15 @@ SO_LAN_THU_LAI = 2
 CHO_GIUA_HAI_LAN = 5
 
 # So ngay lay lam ky so sanh (chi dung cho bao cao TRON ngay).
-SO_NGAY_KY_TRUOC = 7
+#
+# DOI 01/10/2026: 7 -> 1, theo yeu cau cua Dai.
+# Vi sao: bao cao moc 8h bao TRON ngay HOM QUA (1 ngay). Dem so voi 7 ngay
+# truoc do thi mau so luon gap 7 lan tu so => cot chenh lech LUON ra khoang -80%,
+# bat ke Dai lam an tot len hay xau di. Da kiem chung that ngay 30/09:
+#   cach cu  -> "chi tieu giam 82%, hieu qua chua tot"
+#   cach dung -> chi tieu giam 63% NHUNG moi don RE HON 22,7% (tot len)
+# Dai chot: so ngay HOM QUA voi ngay HOM TRUOC.
+SO_NGAY_KY_TRUOC = 1
 
 # So chien dich toi da gui kem trong cau lenh.
 #
@@ -218,6 +226,11 @@ HUONG_DAN = (
     "- Mọi con số bạn viết ra PHẢI chép nguyên từ BẢNG. Không tự tính, không "
     "ước lượng, không làm tròn, không suy ra số nào khác.\n"
     "- Cột 'chenh lech' trong bảng đã được tính sẵn. Chép nguyên, đừng tự tính lại.\n"
+    "- Dòng 'chi phi moi don' ghi rõ '=> RE HON (tot len)' hoặc "
+    "'=> DAT HON (xau di)'. Phải nói ĐÚNG chiều đó. Chi tiêu giảm KHÔNG có "
+    "nghĩa là kém đi — nếu chi phí mỗi đơn giảm thì đó là TỐT LÊN, phải nói rõ.\n"
+    "- Nhiều chỉ số cùng giảm là bình thường khi Đại chủ động cắt bớt chiến "
+    "dịch. Đừng vì thế mà kết luận 'kém hiệu quả' khi chi phí mỗi đơn đang rẻ đi.\n"
     "- Nếu bảng ghi 'khong so sanh' thì chỉ mô tả, TUYỆT ĐỐI không so sánh.\n"
     '- Chỉ đề xuất "tam_dung" cho chiến dịch có chi tiêu LỚN HƠN 0 và số đơn '
     "BẰNG 0. Chiến dịch đã có đơn thì KHÔNG được đề xuất tắt.\n"
@@ -266,6 +279,14 @@ def _fmt_so(v, kieu):
     return fmt_tien(v) if kieu == "tien" else str(int(v or 0))
 
 
+def chi_phi_moi_don(tong):
+    """Chi phi moi luot mua tu mot khoi 'tong'. Chua co luot mua -> None."""
+    t = tong or {}
+    mua = float(t.get("purchase") or 0)
+    chi = float(t.get("spend") or 0)
+    return (chi / mua) if mua > 0 else None
+
+
 def bang_so_sanh(stats, ky_truoc):
     """Dung bang so sanh - CODE tinh, AI chi doc.
 
@@ -295,6 +316,38 @@ def bang_so_sanh(stats, ky_truoc):
             )
         else:
             lines.append(f"{ten} | {nay} | {cu} | {KY_TRUOC_BANG_0}")
+
+    # --- CHI PHI MOI DON: chi so Dai quan tam nhat, phai nam RIENG mot dong ---
+    #
+    # Vi sao khong ghep vao TEN_CHI_SO: no KHONG nam trong `totals` ma la so
+    # SUY RA (chi tieu / luot mua).
+    #
+    # LOI THAT 01/10/2026: bang cu thieu dong nay. Ngay 30/09 moi dong khac deu
+    # GIAM (chi tieu -63%, tin nhan -60%, don hang -52%) nen AI viet "chi phi
+    # moi don khong may tich cuc, hieu qua kem" — trong khi chi phi moi don
+    # GIAM 22%, tuc la moi don RE HON. Mot dong thieu lam ca ban nhan dinh sai.
+    cpr_nay = chi_phi_moi_don(hien_tai)
+    if not co_ky_truoc:
+        lines.append(f"chi phi moi don (dong) | {_fmt_so(cpr_nay or 0, 'tien')} "
+                     f"| (khong co) | {KHONG_SO_SANH}")
+    else:
+        cpr_cu = chi_phi_moi_don(truoc)
+        if cpr_nay is None or cpr_cu is None:
+            lines.append(f"chi phi moi don (dong) | "
+                         f"{_fmt_so(cpr_nay or 0, 'tien') if cpr_nay else '(chua co don)'} "
+                         f"| {_fmt_so(cpr_cu or 0, 'tien') if cpr_cu else '(chua co don)'} "
+                         f"| {KHONG_SO_SANH}")
+        else:
+            chenh = cpr_nay - cpr_cu
+            phan_tram = chenh / cpr_cu * 100
+            dau = "+" if chenh >= 0 else "-"
+            # Noi RO chieu nao la tot, de AI khong phai suy dien.
+            chieu = "RE HON (tot len)" if chenh < 0 else "DAT HON (xau di)"
+            lines.append(
+                f"chi phi moi don (dong) | {_fmt_so(cpr_nay, 'tien')} "
+                f"| {_fmt_so(cpr_cu, 'tien')} | {dau}{_fmt_so(abs(chenh), 'tien')} "
+                f"({dau}{abs(phan_tram):.0f}%) => {chieu}"
+            )
     return "\n".join(lines)
 
 
