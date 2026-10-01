@@ -524,7 +524,8 @@ def tra_loi_han_token(env, now=None, doc_han_fn=None):
 
 
 def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
-                     now=None, tra_loi_ai_fn=None, doc_han_fn=None):
+                     now=None, tra_loi_ai_fn=None, doc_han_fn=None,
+                     nhan="Người trực"):
     """Soan cau tra loi cho mot tin nhan tu Dai.
 
     Giai doan 2 tra loi cau hoi suc khoe. Giai doan 4 tra loi them cau hoi ve
@@ -548,7 +549,7 @@ def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
             if lan_gui_cuoi else "chưa có trong phiên này"
         )
         return "\n".join([
-            "✅ Người trực đang chạy.",
+            f"✅ {nhan} đang chạy.",
             f"- Máy: {env.get('REPORT_ACCOUNT_NAME', '?')}",
             f"- Đã chạy liên tục: {_thoi_gian_da_chay((now - bat_dau).total_seconds())}",
             f"- Mốc giờ của máy này: {moc_txt}",
@@ -652,8 +653,6 @@ class NguoiTruc:
         self.moc_hong_vinh_vien = set()
         # Cac moc da bao "bo qua" roi, de khong ghi nhat ky lap moi 30 giay.
         self.da_bao_bo_qua = set()
-        self.da_xa_tin_ton_dong = False
-        self.offset = None
 
     def _da_gui_hom_nay(self, now):
         """Tap hop cac moc da gui thanh cong hom nay, theo so tren dia."""
@@ -715,127 +714,16 @@ class NguoiTruc:
                 f"NGUOI TRUC: gui moc {moc}h THAT BAI (lan thu {so_lan}/{MAX_LAN_THU_MOI_MOC})"
             )
 
-    def doc_va_chuyen_tiep_tin_ton_dong(self):
-        """Doc het tin dang cho, CHUYEN TIEP lenh/nut bam cho agent, roi moi bo phan con lai.
-
-        LOI THAT da gap (30/09/2026): nguoi truc bi tat luc 15:21 (ma thoat
-        Ctrl+C). Dai bam nut trong luc no khong chay. Den khi bat lai, cach cu
-        (`xa_tin_ton_dong`) XOA SACH moi tin dang cho => lan bam do MAT IM LANG,
-        khong ai biet, va Dai tuong agent hong.
-
-        Cach nay khac: doc het tin dang cho TRUOC, giu lai dung nhung tin co the
-        hanh dong duoc (lenh cua Dai, lan bam nut), roi moi bo phan con lai
-        (cac cau hoi cu thi khong tra loi nua — dung nhu truoc).
-        """
-        chat_id_dai = self.env.get("TELEGRAM_CHAT_ID", "")
-        ds, loi = self.lay_tin(self.env, None)
-        if loi:
-            report.log(f"NGUOI TRUC: chua doc duoc tin ton dong: {loi}")
-            return
-        so_chuyen = 0
-        for tin in ds or []:
-            try:
-                if isinstance(tin, dict) and "callback_query" in tin:
-                    if tin_tu_dai_nut_bam(tin, chat_id_dai) and agent_ky_uc.ghi_lenh(
-                            du_lieu_nut_bam(tin), tin_nhan_id=ma_tin_nhan_nut_bam(tin)):
-                        so_chuyen += 1
-                    continue
-                if not tin_tu_dai(tin, chat_id_dai):
-                    continue
-                cau_hoi = noi_dung_tin(tin)
-                if lenh_telegram.la_lenh(cau_hoi) and agent_ky_uc.ghi_lenh(cau_hoi):
-                    so_chuyen += 1
-            except Exception as e:
-                report.log(f"NGUOI TRUC: loi khi doc tin ton dong: {e}")
-        self.offset = offset_moi_tu_ket_qua(ds or [])
-        self.da_xa_tin_ton_dong = True
-        report.log(f"NGUOI TRUC: doc {len(ds or [])} tin ton dong, "
-                   f"chuyen tiep {so_chuyen} lenh/nut bam cho agent")
-
-    def nghe_telegram(self):
-        """Doc tin nhan Telegram moi va xu ly.
-
-        Vong dau tien chi XU LY TIN TON DONG, khong tra loi - neu khong bot se
-        tra loi mot loat tin nhan cu. NHUNG van phai CHUYEN TIEP lenh/nut bam
-        trong do cho agent, khong duoc xoa sach.
-
-        Goi qua self.xa_tin / self.lay_tin (khong goi thang ham) de kiem thu
-        thay duoc, khong phai goi mang that.
-        """
-        if not self.da_xa_tin_ton_dong:
-            self.doc_va_chuyen_tiep_tin_ton_dong()
-            return
-
-        ds, loi = self.lay_tin(self.env, self.offset)
-        if loi:
-            report.log(f"NGUOI TRUC: khong lay duoc tin nhan Telegram: {loi}")
-            return
-        if not ds:
-            return
-
-        self.offset = offset_moi_tu_ket_qua(ds)
-        for tin in ds:
-            try:
-                self.xu_ly_tin(tin)
-            except Exception as e:
-                report.log(f"NGUOI TRUC: loi khi xu ly mot tin nhan: {e}")
-
-    def xu_ly_nut_bam(self, tin, chat_id_dai):
-        """Nhan mot lan BAM NUT cua Dai va chuyen tiep cho agent.
-
-        Cung mot ly do nhu lenh go tay: chi MOT tien trinh duoc doc tin
-        Telegram, nen phai chuyen tiep qua hang doi thay vi tu xu ly.
-        Phai tra loi Telegram ngay, khong thi nut quay mai tren man hinh Dai.
-        """
-        if not tin_tu_dai_nut_bam(tin, chat_id_dai):
-            report.log("NGUOI TRUC: bo qua nut bam tu nguoi la")
-            return
-        du_lieu = du_lieu_nut_bam(tin)
-        ok = agent_ky_uc.ghi_lenh(du_lieu, tin_nhan_id=ma_tin_nhan_nut_bam(tin))
-        tra_loi_nut_bam(self.env, ma_lan_bam(tin),
-                        "Đã ghi nhận, agent xử lý ngay." if ok
-                        else "Không ghi được lệnh, xem logs\\baocao.log.")
-        report.log(f"NGUOI TRUC: nut bam {du_lieu!r} -> "
-                   f"{'da chuyen tiep cho agent' if ok else 'LOI ghi hang doi'}")
-
-    def xu_ly_tin(self, tin):
-        """Xu ly mot update. Tin tu nguoi la bi bo qua va ghi nhat ky."""
-        chat_id_dai = self.env.get("TELEGRAM_CHAT_ID", "")
-        if isinstance(tin, dict) and "callback_query" in tin:
-            self.xu_ly_nut_bam(tin, chat_id_dai)
-            return
-        if not tin_tu_dai(tin, chat_id_dai):
-            try:
-                chat_id_la = tin["message"]["chat"]["id"]
-            except (KeyError, TypeError):
-                chat_id_la = "?"
-            report.log(f"NGUOI TRUC: bo qua tin tu chat_id la ({chat_id_la})")
-            return
-
-        cau_hoi = noi_dung_tin(tin)
-        now = self.dong_ho()
-        tra_loi = tra_loi_tin_nhan(
-            cau_hoi=cau_hoi,
-            env=self.env,
-            danh_sach_moc=self.danh_sach_moc,
-            bat_dau=self.bat_dau,
-            lan_gui_cuoi=self.lan_gui_cuoi,
-            da_gui=self._da_gui_hom_nay(now),
-            now=now,
-            tra_loi_ai_fn=self.tra_loi_ai_fn,
-            doc_han_fn=self.doc_han_fn,
-        )
-        if self.che_do_thu:
-            report.log(f"NGUOI TRUC [THU]: se tra loi: {tra_loi.splitlines()[0]}")
-            return
-        if self.gui_tin(tra_loi):
-            report.log("NGUOI TRUC: da tra loi mot tin nhan")
-
     def mot_vong(self):
-        """Mot vong lap: canh moc gio, nghe Telegram, ghi nhip tim."""
+        """Mot vong lap: canh moc gio, ghi nhip tim.
+
+        KHONG doc tin Telegram nua (tu 01/10/2026). Ly do: `getUpdates` cua
+        Telegram chi giao moi tin cho MOT noi goi. Tu khi `agent.py` nhan viec
+        doc tin thi noi truc doc nua la HAI ben nuot tin cua nhau — im lang,
+        khong bao loi. Xem docs/superpowers/plans/2026-10-01-agent-so-huu-telegram.md
+        """
         now = self.dong_ho()
         self.canh_moc(now)
-        self.nghe_telegram()
         self.so_vong += 1
         if self.so_vong % NHIP_TIM_MOI_VONG == 0:
             report.log(f"NGUOI TRUC: nhip tim - dang song, vong {self.so_vong}")

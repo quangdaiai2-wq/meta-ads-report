@@ -217,53 +217,147 @@ def _lam_hoan_tac(env, cau_hinh, ma, noi_dung, tin_nhan_id, bay_gio, thong_bao):
     return 1
 
 
-def _xu_ly_tra_loi(env, cau_hinh, bay_gio, thong_bao):
-    """Doc lenh Dai da gui (tien trinh bao cao chuyen tiep) va lam theo.
+def _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, tin_nhan_id):
+    """Mot lenh cua Dai: HOAN TAC / DONG Y / BO QUA.
 
-    KHONG tu goi getUpdates. Ly do: tien trinh bao cao (`nguoi_truc.py`) va
-    agent dung CHUNG mot bot Telegram, ma `getUpdates` chi giao moi tin cho MOT
-    nguoi goi — ai xac nhan truoc thi nguoi kia khong bao gio thay tin do nua.
-    Nen `nguoi_truc.py` nhan tin cua Dai, thay lenh "tat <ma>" thi ghi vao
-    `logs/agent-lenh.json`; agent doc file do o vong chay ke tiep.
+    Dung chung cho ca NUT BAM lan LENH GO TAY — mot duong xu ly duy nhat, nen
+    khong the co chuyen nut bam lam duoc ma go tay thi khong.
+    Tra ve so viec da lam (0 hoac 1).
     """
-    ds_lenh = agent_ky_uc.doc_lenh()
-    if not ds_lenh:
-        return 0
     dang_cho = {str((r.get("doi_tuong") or {}).get("id") or ""): r
                 for r in agent_ky_uc.hang_cho(bay_gio)}
-    da_lam = 0
-    for lenh in ds_lenh:
-        noi_dung = lenh.get("noi_dung") if isinstance(lenh, dict) else None
-        ma_tin = lenh.get("tin_nhan_id") if isinstance(lenh, dict) else None
 
-        # HOAN TAC phai kiem TRUOC: nhom duoc hoan tac KHONG con nam trong danh
-        # sach "dang cho", nen neu dua vao doc_tra_loi(dang_cho) se bao khong khop.
-        if lenh_telegram.la_hoan_tac(noi_dung):
-            ma_hoan = lenh_telegram.ma_trong_lenh(noi_dung)
-            if ma_hoan:
-                da_lam += _lam_hoan_tac(env, cau_hinh, ma_hoan, noi_dung, ma_tin,
-                                        bay_gio, thong_bao)
-            continue
+    # HOAN TAC phai kiem TRUOC: nhom duoc hoan tac KHONG con nam trong danh sach
+    # "dang cho", nen neu dua vao doc_tra_loi(dang_cho) se bao khong khop.
+    if lenh_telegram.la_hoan_tac(noi_dung):
+        ma_hoan = lenh_telegram.ma_trong_lenh(noi_dung)
+        if ma_hoan:
+            return _lam_hoan_tac(env, cau_hinh, ma_hoan, noi_dung, tin_nhan_id,
+                                 bay_gio, thong_bao)
+        return 0
 
-        ket_qua, ma = agent_xin_phep.doc_tra_loi(noi_dung, set(dang_cho))
-        if ket_qua not in ("dong_y", "tu_choi") or ma not in dang_cho:
-            continue
-        ban_ghi = dang_cho[ma]
-        if ket_qua == "tu_choi":
-            agent_ky_uc.cap_nhat_phan_hoi(ma, noi_dung, "Đại nói bỏ qua")
-            _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join([
-                "\u23ed ĐÃ BỎ QUA — không làm gì",
-                "",
-                f"Nhóm: {(ban_ghi.get('doi_tuong') or {}).get('ten')}",
-                "",
-                "Agent sẽ không đề xuất lại nhóm này trong 24 giờ.",
-            ]))
-            report.log(f"AGENT: Dai bo qua nhom {ma}")
-            continue
-        da_lam += _lam_theo_dong_y(env, cau_hinh, ban_ghi, {"noi_dung": noi_dung},
-                                   bay_gio, thong_bao)
-    agent_ky_uc.xoa_lenh()
-    return da_lam
+    ket_qua, ma = agent_xin_phep.doc_tra_loi(noi_dung, set(dang_cho))
+    if ket_qua not in ("dong_y", "tu_choi") or ma not in dang_cho:
+        return 0
+    ban_ghi = dang_cho[ma]
+    if ket_qua == "tu_choi":
+        agent_ky_uc.cap_nhat_phan_hoi(ma, noi_dung, "Đại nói bỏ qua")
+        _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join([
+            "\u23ed ĐÃ BỎ QUA — không làm gì",
+            "",
+            f"Nhóm: {(ban_ghi.get('doi_tuong') or {}).get('ten')}",
+            "",
+            "Agent sẽ không đề xuất lại nhóm này trong 24 giờ.",
+        ]))
+        report.log(f"AGENT: Dai bo qua nhom {ma}")
+        return 0
+    return _lam_theo_dong_y(env, cau_hinh, ban_ghi, {"noi_dung": noi_dung},
+                            bay_gio, thong_bao)
+
+
+def _nghe_telegram(env, cau_hinh, bay_gio, thong_bao, tt_tg):
+    """Doc tin Telegram moi va xu ly. ĐÂY LÀ NƠI DUY NHẤT đọc tin của bot.
+
+    Vi sao agent phai tu doc: `getUpdates` của Telegram chỉ giao mỗi tin cho MỘT
+    nơi gọi. Trước đây `nguoi_truc.py` đọc rồi chuyển tiếp qua
+    `logs/agent-lenh.json` — chạy được, nhưng thừa một mắt xích và chính nó sinh ra
+    hai lỗi thật ngày 30/09/2026. Từ 01/10/2026 agent đọc trực tiếp.
+    """
+    if not tt_tg["da_doc_ton_dong"]:
+        _doc_tin_ton_dong(env, cau_hinh, bay_gio, thong_bao, tt_tg)
+        return
+    ds, loi = nguoi_truc.lay_tin_moi(env, tt_tg["offset"])
+    if loi:
+        report.log(f"AGENT: khong lay duoc tin Telegram: {loi}")
+        return
+    if not ds:
+        return
+    tt_tg["offset"] = nguoi_truc.offset_moi_tu_ket_qua(ds)
+    for tin in ds:
+        try:
+            _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin)
+        except Exception as e:
+            # MOT tin hong KHONG duoc giet ca vong lap (bai hoc that 30/09/2026).
+            report.log(f"AGENT: loi khi xu ly mot tin Telegram: {e}")
+
+
+def _doc_tin_ton_dong(env, cau_hinh, bay_gio, thong_bao, tt_tg):
+    """Lan dau khoi dong: doc het tin dang cho, XU LY lenh/nut bam, BO cau hoi cu.
+
+    Vi sao khong tra loi cau hoi cu: bot se tra loi mot loat tin nhan cu mot luc,
+    roi loan. Nhung LENH va NUT BAM thi PHAI xu ly — bo di là mất việc Đại đã làm
+    (lỗi thật đã gặp 30/09/2026).
+    """
+    chat_id_dai = env.get("TELEGRAM_CHAT_ID", "")
+    ds, loi = nguoi_truc.lay_tin_moi(env, None)
+    if loi:
+        report.log(f"AGENT: chua doc duoc tin ton dong: {loi}")
+        return
+    so_viec = 0
+    for tin in ds or []:
+        try:
+            if isinstance(tin, dict) and "callback_query" in tin:
+                if nguoi_truc.tin_tu_dai_nut_bam(tin, chat_id_dai):
+                    _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin)
+                    so_viec += 1
+                continue
+            if not nguoi_truc.tin_tu_dai(tin, chat_id_dai):
+                continue
+            noi_dung = nguoi_truc.noi_dung_tin(tin)
+            if lenh_telegram.la_hoan_tac(noi_dung) or lenh_telegram.la_lenh(noi_dung):
+                _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin)
+                so_viec += 1
+        except Exception as e:
+            report.log(f"AGENT: loi khi doc tin ton dong: {e}")
+    tt_tg["offset"] = nguoi_truc.offset_moi_tu_ket_qua(ds or [])
+    tt_tg["da_doc_ton_dong"] = True
+    report.log(f"AGENT: doc {len(ds or [])} tin ton dong, xu ly {so_viec} lenh/nut bam")
+
+
+def _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin):
+    """Mot update Telegram: nut bam / lenh go tay / cau hoi."""
+    chat_id_dai = env.get("TELEGRAM_CHAT_ID", "")
+
+    if isinstance(tin, dict) and "callback_query" in tin:
+        if not nguoi_truc.tin_tu_dai_nut_bam(tin, chat_id_dai):
+            report.log("AGENT: bo qua nut bam tu nguoi la")
+            return
+        # Phai tra loi Telegram NGAY, khong thi nut quay mai tren man hinh Dai.
+        nguoi_truc.tra_loi_nut_bam(env, nguoi_truc.ma_lan_bam(tin))
+        _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao,
+                       nguoi_truc.du_lieu_nut_bam(tin),
+                       nguoi_truc.ma_tin_nhan_nut_bam(tin))
+        return
+
+    if not nguoi_truc.tin_tu_dai(tin, chat_id_dai):
+        try:
+            chat_id_la = tin["message"]["chat"]["id"]
+        except (KeyError, TypeError):
+            chat_id_la = "?"
+        report.log(f"AGENT: bo qua tin tu chat_id la ({chat_id_la})")
+        return
+
+    noi_dung = nguoi_truc.noi_dung_tin(tin)
+
+    # LENH phai kiem TRUOC khi goi tra_loi_tin_nhan: ham do co nhanh "ghi lenh
+    # vao hang doi" — mà hàng đợi này không còn ai đọc nữa.
+    if lenh_telegram.la_hoan_tac(noi_dung) or lenh_telegram.la_lenh(noi_dung):
+        _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, None)
+        return
+
+    # Cau hoi -> dung lai DUNG ham cua nguoi truc (ham thuan, da co kiem thu).
+    tra_loi = nguoi_truc.tra_loi_tin_nhan(
+        cau_hoi=noi_dung,
+        env=env,
+        danh_sach_moc=report.doc_moc_tu_env(env),
+        bat_dau=tt_tg["bat_dau"],
+        lan_gui_cuoi=tt_tg["lan_gui_cuoi"],
+        da_gui=report.ds_moc_da_gui(bay_gio.strftime("%Y-%m-%d")),
+        now=bay_gio,
+        nhan="Agent (nấc 2)",
+    )
+    if nguoi_truc.gui_tin_nhan(env, tra_loi):
+        report.log("AGENT: da tra loi mot tin nhan")
 
 
 def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
@@ -376,8 +470,9 @@ def chay_mot_vong(env, cau_hinh, che_do_thu=False):
     if cau_hinh["AGENT_MUC"] != 2:
         report.log(f"AGENT: AGENT_MUC={cau_hinh['AGENT_MUC']} — nac 3 chua mo, dung o nac 2")
     thong_bao = _tao_thong_bao(env, che_do_thu)
-    if not che_do_thu:
-        _xu_ly_tra_loi(env, cau_hinh, bay_gio, thong_bao)
+    # KHONG doc Telegram o day. Chi vong lap CHAY LIEN TUC duoc doc tin —
+    # vi `getUpdates` chi giao moi tin cho MOT noi goi, doc o day nua la
+    # NUOT TIN cua tien trinh chinh dang chay.
     return _quet_va_de_xuat(env, cau_hinh, bay_gio, thong_bao, che_do_thu)
 
 
@@ -453,6 +548,10 @@ def main():
 
     lan_quet_ke = 0.0
     lan_thu_lich_su_ke = 0.0
+    # Trang thai doc Telegram: `offset` de Telegram biet da xac nhan toi dau;
+    # `da_doc_ton_dong` de lan dau khoi dong biet phai don tin cu truoc.
+    tt_tg = {"offset": None, "da_doc_ton_dong": False,
+             "bat_dau": _thoi_diem(), "lan_gui_cuoi": None}
     che_do_cu = che_do
     try:
         while True:
@@ -473,8 +572,8 @@ def main():
 
                 bay_gio = _thoi_diem()
                 thong_bao = _tao_thong_bao(env, False)
-                # 1. NGHE TRUOC, vong ngan — bam nut la xu ly gan nhu tuc thi
-                _xu_ly_tra_loi(env, cau_hinh, bay_gio, thong_bao)
+                # 1. NGHE Telegram, vong ngan — bam nut la xu ly gan nhu tuc thi
+                _nghe_telegram(env, cau_hinh, bay_gio, thong_bao, tt_tg)
                 # 2. GHI LICH SU cho ngay hom qua — 1 gio mot lan.
                 #    Chi goi Meta khi ngay do THIEU ban ghi tron ngay, nen chay
                 #    song song voi bao cao khong giẫm chan nhau. Sau nay khi bo

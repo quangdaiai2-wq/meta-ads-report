@@ -378,67 +378,25 @@ class TestDinhDangThoiGian(unittest.TestCase):
         )
 
 
-class TestXuLyTin(unittest.TestCase):
-    """Dung lai TrucGia da dinh nghia trong Task 2."""
-
-    def test_tin_tu_nguoi_la_thi_khong_tra_loi(self):
-        tg = TrucGia(luc(13))
-        tg.truc.xu_ly_tin({
-            "update_id": 1,
-            "message": {"chat": {"id": 999}, "text": "cho xin so lieu"},
-        })
-        self.assertEqual(tg.tin_da_gui, [])
-
-    def test_tin_tu_dai_hoi_con_song_thi_tra_loi(self):
-        tg = TrucGia(luc(13))
-        tg.truc.xu_ly_tin({
-            "update_id": 1,
-            "message": {"chat": {"id": 123}, "text": "còn sống không?"},
-        })
-        self.assertEqual(len(tg.tin_da_gui), 1)
-        self.assertIn("đang chạy", tg.tin_da_gui[0])
-
-    def test_tin_tu_dai_hoi_so_lieu_thi_goi_ai(self):
-        """Giai doan 4: cau hoi so lieu duoc lop AI tra loi, khong con bao 'chua co'."""
-        tg = TrucGia(luc(13), tra_loi_ai_fn=lambda c: ("Chi tieu 7.034.942 dong.", None))
-        tg.truc.xu_ly_tin({
-            "update_id": 1,
-            "message": {"chat": {"id": 123}, "text": "camp nào tệ nhất tuần này?"},
-        })
-        self.assertEqual(len(tg.tin_da_gui), 1)
-        self.assertIn("7.034.942", tg.tin_da_gui[0])
-
-    def test_tin_tu_dai_hoi_so_lieu_ai_loi_thi_noi_ro_ly_do(self):
-        tg = TrucGia(luc(13), tra_loi_ai_fn=lambda c: (None, "HTTP 429 - het han muc"))
-        tg.truc.xu_ly_tin({
-            "update_id": 1,
-            "message": {"chat": {"id": 123}, "text": "camp nào tệ nhất tuần này?"},
-        })
-        self.assertEqual(len(tg.tin_da_gui), 1)
-        self.assertIn("HTTP 429", tg.tin_da_gui[0])
-
-    def test_che_do_thu_thi_khong_gui_tin_ra_ngoai(self):
-        tg = TrucGia(luc(13), che_do_thu=True)
-        tg.truc.xu_ly_tin({
-            "update_id": 1,
-            "message": {"chat": {"id": 123}, "text": "còn sống không?"},
-        })
-        self.assertEqual(tg.tin_da_gui, [])
-
-
 class TestMotVong(unittest.TestCase):
-    """Ca mot vong lap. `nghe_telegram` vong dau chi xa tin ton dong."""
+    """Mot vong lap. TU 01/10/2026 nguoi truc KHONG doc Telegram nua — agent doc.
+
+    Vi sao phai co bai nay: neu ai do bat lai viec doc tin o day thi HAI tien
+    trinh se cung doc mot bot ⇒ tin cua nhau bi NUOT MAT, im lang, khong bao loi.
+    """
 
     def test_vong_dau_khong_gui_gi_khi_chua_toi_moc(self):
         tg = TrucGia(luc(7, 30))
         tg.truc.mot_vong()
         self.assertEqual(tg.gui_roi, [])
 
-    def test_vong_dau_xa_tin_ton_dong_roi_moi_nghe(self):
-        tg = TrucGia(luc(13))
-        self.assertFalse(tg.truc.da_xa_tin_ton_dong)
+    def test_mot_vong_KHONG_doc_telegram(self):
+        tg = TrucGia(luc(13), tin_cho_san=[{"update_id": 1, "message": {
+            "chat": {"id": 123}, "text": "con song khong?"}}])
         tg.truc.mot_vong()
-        self.assertTrue(tg.truc.da_xa_tin_ton_dong)
+        self.assertEqual(tg.so_lan_lay_tin, 0,
+                         "nguoi truc KHONG duoc doc tin Telegram nua")
+        self.assertEqual(tg.tin_da_gui, [])
 
     def test_nhip_tim_ghi_sau_dung_so_vong(self):
         tg = TrucGia(luc(13))
@@ -686,75 +644,6 @@ class TestLenhToken(unittest.TestCase):
             doc_han_fn=self._doc_gia(20),
         )
         self.assertIn("Người trực đang chạy", chu)
-
-
-class TestChuyenTiepTinTonDong(unittest.TestCase):
-    """LOI THAT ngay 30/09/2026: nguoi truc bi tat luc 15:21, Dai bam nut trong
-    luc no khong chay, den khi bat lai thi lan bam da bi XOA SACH — mat lenh im
-    lang va Dai tuong agent hong. Nay phai CHUYEN TIEP truoc khi bo."""
-
-    def setUp(self):
-        import os
-        import tempfile
-        from pathlib import Path
-
-        import agent_ky_uc
-        self.agent_ky_uc = agent_ky_uc
-        self.os = os
-        self.tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
-        self.tmp.close()
-        os.unlink(self.tmp.name)
-        self.cu = agent_ky_uc.LENH_PATH
-        agent_ky_uc.LENH_PATH = Path(self.tmp.name)
-
-    def tearDown(self):
-        self.agent_ky_uc.LENH_PATH = self.cu
-        if self.os.path.exists(self.tmp.name):
-            self.os.unlink(self.tmp.name)
-
-    def _chay(self, tin_cho_san):
-        tg = TrucGia(luc(13), tin_cho_san=tin_cho_san)
-        tg.truc.mot_vong()
-        return tg
-
-    def test_lan_bam_nut_ton_dong_duoc_chuyen_tiep(self):
-        self._chay([{"update_id": 1, "callback_query": {
-            "id": "cb1", "data": "tat:120250506886650509",
-            "message": {"message_id": 99, "chat": {"id": 123}}}}])
-        hang = self.agent_ky_uc.doc_lenh()
-        self.assertEqual(len(hang), 1, "lan bam nut bi mat")
-        self.assertEqual(hang[0]["noi_dung"], "tat:120250506886650509")
-        self.assertEqual(hang[0]["tin_nhan_id"], 99)
-
-    def test_lenh_go_tay_ton_dong_duoc_chuyen_tiep(self):
-        self._chay([{"update_id": 1, "message": {
-            "chat": {"id": 123}, "text": "tắt 120250506886650509"}}])
-        self.assertEqual(len(self.agent_ky_uc.doc_lenh()), 1)
-
-    def test_cau_hoi_cu_thi_KHONG_chuyen_tiep(self):
-        self._chay([{"update_id": 1, "message": {
-            "chat": {"id": 123}, "text": "doanh thu hôm nay thế nào"}}])
-        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
-
-    def test_tin_tu_nguoi_la_khong_chuyen_tiep(self):
-        self._chay([{"update_id": 1, "message": {
-            "chat": {"id": 999}, "text": "tắt 120250506886650509"}}])
-        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
-
-    def test_nut_bam_tu_nguoi_la_khong_chuyen_tiep(self):
-        self._chay([{"update_id": 1, "callback_query": {
-            "id": "cb1", "data": "tat:120250506886650509",
-            "message": {"message_id": 99, "chat": {"id": 999}}}}])
-        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
-
-    def test_van_danh_dau_da_doc_ton_dong(self):
-        tg = self._chay([])
-        self.assertTrue(tg.truc.da_xa_tin_ton_dong)
-
-    def test_tin_hong_khong_lam_sap(self):
-        self._chay([None, "chuoi", {}, {"update_id": 2},
-                    {"update_id": 3, "callback_query": None}])
-        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
 
 
 if __name__ == "__main__":

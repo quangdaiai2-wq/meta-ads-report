@@ -457,25 +457,24 @@ class G_LuongDaiDongY(_KhongGhiLog, unittest.TestCase):
     def test_tap_su_chi_ghi_so_khong_gui_meta(self):
         import agent
         self._dat_hang_cho()
-        agent_ky_uc.ghi_lenh(f"tắt {ID}")
         da_bao = []
-        so_viec = agent._xu_ly_tra_loi({}, {"AGENT_TAP_SU": True, "AGENT_MUC": 2},
-                                       datetime.now(GIO_VN), da_bao.append)
+        so_viec = agent._lam_theo_lenh({}, {"AGENT_TAP_SU": True, "AGENT_MUC": 2},
+                                       datetime.now(GIO_VN), da_bao.append,
+                                       f"tắt {ID}", None)
         self.assertEqual(so_viec, 0, "che do tap su khong duoc tinh la da lam")
         self.assertEqual(len(da_bao), 1)
         self.assertIn("TẬP SỰ", da_bao[0])
         rec = agent_ky_uc.doc()[-1]
         self.assertFalse(rec["da_gui_len_meta"])
         self.assertIn("TAP SU", rec["ket_qua"])
-        self.assertEqual(agent_ky_uc.doc_lenh(), [], "phai xoa hang doi sau khi xu ly")
 
     def test_dai_bo_qua_thi_khong_lam_gi(self):
         import agent
         self._dat_hang_cho()
-        agent_ky_uc.ghi_lenh(f"bỏ qua {ID}")
         da_bao = []
-        so_viec = agent._xu_ly_tra_loi({}, {"AGENT_TAP_SU": False, "AGENT_MUC": 2},
-                                       datetime.now(GIO_VN), da_bao.append)
+        so_viec = agent._lam_theo_lenh({}, {"AGENT_TAP_SU": False, "AGENT_MUC": 2},
+                                       datetime.now(GIO_VN), da_bao.append,
+                                       f"bỏ qua {ID}", None)
         self.assertEqual(so_viec, 0)
         # Dai chon 30/09/2026: doi tin cu thanh ket qua. Ban ghi nay khong co
         # tin_nhan_id nen phai gui tin moi, va phai noi ro la khong lam gi.
@@ -488,10 +487,10 @@ class G_LuongDaiDongY(_KhongGhiLog, unittest.TestCase):
     def test_lenh_sai_ma_nhom_thi_khong_lam_gi(self):
         import agent
         self._dat_hang_cho()
-        agent_ky_uc.ghi_lenh("tắt 999999999999")
         da_bao = []
-        agent._xu_ly_tra_loi({}, {"AGENT_TAP_SU": True, "AGENT_MUC": 2},
-                             datetime.now(GIO_VN), da_bao.append)
+        agent._lam_theo_lenh({}, {"AGENT_TAP_SU": True, "AGENT_MUC": 2},
+                             datetime.now(GIO_VN), da_bao.append,
+                             "tắt 999999999999", None)
         self.assertEqual(da_bao, [])
         self.assertIsNone(agent_ky_uc.doc()[-1]["dai_phan_hoi"])
 
@@ -547,41 +546,6 @@ class H_NutBam(_KhongGhiLog, unittest.TestCase):
             self.assertEqual(nguoi_truc.du_lieu_nut_bam(xau), "")
             self.assertIsNone(nguoi_truc.ma_tin_nhan_nut_bam(xau))
             self.assertIsNone(nguoi_truc.ma_lan_bam(xau))
-
-    def test_bam_nut_thi_chuyen_tiep_cho_agent(self):
-        class Gia:
-            def __init__(self, env):
-                self.env = env
-
-        da_tra_loi = []
-        cu = nguoi_truc.tra_loi_nut_bam
-        nguoi_truc.tra_loi_nut_bam = lambda env, cid, text="": da_tra_loi.append((cid, text))
-        try:
-            tin = {"callback_query": {"id": "cb1", "data": f"tat:{ID}",
-                                      "message": {"message_id": 99, "chat": {"id": 777}}}}
-            nguoi_truc.NguoiTruc.xu_ly_nut_bam(Gia({}), tin, 777)
-        finally:
-            nguoi_truc.tra_loi_nut_bam = cu
-        hang = agent_ky_uc.doc_lenh()
-        self.assertEqual(len(hang), 1)
-        self.assertEqual(hang[0]["noi_dung"], f"tat:{ID}")
-        self.assertEqual(hang[0]["tin_nhan_id"], 99, "phai nho tin nhan de sua ket qua")
-        self.assertEqual(len(da_tra_loi), 1, "phai tra loi Telegram, khong thi nut quay mai")
-
-    def test_bam_nut_tu_nguoi_la_thi_bo_qua(self):
-        class Gia:
-            def __init__(self, env):
-                self.env = env
-
-        cu = nguoi_truc.tra_loi_nut_bam
-        nguoi_truc.tra_loi_nut_bam = lambda env, cid, text="": None
-        try:
-            tin = {"callback_query": {"id": "cb1", "data": f"tat:{ID}",
-                                      "message": {"message_id": 99, "chat": {"id": 888}}}}
-            nguoi_truc.NguoiTruc.xu_ly_nut_bam(Gia({}), tin, 777)
-        finally:
-            nguoi_truc.tra_loi_nut_bam = cu
-        self.assertEqual(agent_ky_uc.doc_lenh(), [], "nguoi la khong duoc ra lenh")
 
     def test_bao_ket_qua_sua_tin_cu_khi_bam_nut(self):
         import agent
@@ -980,6 +944,122 @@ class L_AgentTuGhiLichSu(_KhongGhiLog, unittest.TestCase):
         self.assertFalse(da_ghi)
         self.assertIn("loi khi ghi so", ly)
         self.assertIn("RuntimeError", ly)
+
+
+class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
+    """Agent so huu Telegram (buoc 2-4 cua ke hoach chuyen nha, 01/10/2026).
+
+    Moi bai deu CHAN nguoi_truc.lay_tin_moi / gui_tin_nhan va chan ghi so
+    => KHONG goi mang, KHONG lam ban logs/nhat-ky-agent.json that.
+    """
+
+    def setUp(self):
+        super().setUp()
+        import agent
+
+        self.agent = agent
+        self.gui = []
+        self.nut_da_tra_loi = []
+
+        def _chan(obj, ten, moi):
+            cu = getattr(obj, ten)
+            self.addCleanup(setattr, obj, ten, cu)
+            setattr(obj, ten, moi)
+
+        _chan(nguoi_truc, "lay_tin_moi", lambda env, offset: ([], None))
+        _chan(nguoi_truc, "gui_tin_nhan",
+              lambda env, text: (self.gui.append(text), True)[1])
+        _chan(nguoi_truc, "tra_loi_nut_bam",
+              lambda env, cb, text="": (self.nut_da_tra_loi.append(cb), True)[1])
+        _chan(agent_ky_uc, "hang_cho", lambda bay_gio=None: [])
+        _chan(agent_ky_uc, "lan_tat_gan_nhat", lambda ma, bay_gio=None: None)
+        _chan(agent_ky_uc, "ghi", lambda ban_ghi: True)
+        _chan(agent_ky_uc, "cap_nhat_phan_hoi", lambda ma, nd, kq: True)
+
+        self.env = {"TELEGRAM_CHAT_ID": "123", "REPORT_ACCOUNT_NAME": "Test",
+                    "REPORT_SLOTS": "8,12,17"}
+        self.cau_hinh = dict(agent.MAC_DINH)
+        self.bay_gio = datetime(2026, 10, 1, 10, 0, tzinfo=GIO_VN)
+        self.tt = {"offset": None, "da_doc_ton_dong": True,
+                   "bat_dau": self.bay_gio, "lan_gui_cuoi": None}
+        self.thong_bao = lambda text: None
+
+    def _tin(self, text, chat=123):
+        return {"update_id": 1, "message": {"chat": {"id": chat}, "text": text}}
+
+    def _nut(self, data, chat=123):
+        return {"update_id": 2, "callback_query": {
+            "id": "cb1", "data": data,
+            "message": {"message_id": 9, "chat": {"id": chat}}}}
+
+    def _xu_ly(self, tin):
+        self.agent._xu_ly_mot_tin(self.env, self.cau_hinh, self.bay_gio,
+                                  self.thong_bao, self.tt, tin)
+
+    def test_lenh_go_tay_KHONG_di_vao_AI(self):
+        def no(*a, **k):
+            raise AssertionError("LENH khong duoc dua cho AI")
+        cu = nguoi_truc.tra_loi_tin_nhan
+        self.addCleanup(setattr, nguoi_truc, "tra_loi_tin_nhan", cu)
+        nguoi_truc.tra_loi_tin_nhan = no
+        self._xu_ly(self._tin("tat 120250506886650509"))
+        self.assertEqual(self.gui, [])
+
+    def test_cau_hoi_thi_tra_loi_va_gui_di(self):
+        self._xu_ly(self._tin("con song khong?"))
+        self.assertEqual(len(self.gui), 1, "phai gui dung mot cau tra loi")
+        self.assertIn("đang chạy", self.gui[0])
+
+    def test_cau_tra_loi_noi_ro_AGENT_tra_loi(self):
+        self._xu_ly(self._tin("con song khong?"))
+        self.assertIn("Agent", self.gui[0], "phai noi ro ai tra loi")
+
+    def test_tin_tu_nguoi_la_bi_bo_qua(self):
+        self._xu_ly(self._tin("tat 120250506886650509", chat=999))
+        self.assertEqual(self.gui, [])
+
+    def test_nut_bam_duoc_tra_loi_NGAY(self):
+        self._xu_ly(self._nut("tat:120250506886650509"))
+        self.assertEqual(self.nut_da_tra_loi, ["cb1"],
+                         "phai answerCallbackQuery ngay, khong thi nut quay mai")
+
+    def test_nut_bam_tu_nguoi_la_bi_bo_qua(self):
+        self._xu_ly(self._nut("tat:120250506886650509", chat=999))
+        self.assertEqual(self.nut_da_tra_loi, [])
+
+    def test_nghe_telegram_bo_qua_tin_hong_khong_nem(self):
+        nguoi_truc.lay_tin_moi = lambda env, offset: (
+            [None, "chuoi", {}, {"update_id": 5},
+             {"update_id": 6, "callback_query": None},
+             {"update_id": 7, "message": None}], None)
+        self.agent._nghe_telegram(self.env, self.cau_hinh, self.bay_gio,
+                                  self.thong_bao, self.tt)      # khong nem
+        self.assertEqual(self.gui, [])
+
+    def test_nghe_telegram_cap_nhat_offset(self):
+        nguoi_truc.lay_tin_moi = lambda env, offset: (
+            [{"update_id": 41}, {"update_id": 47}], None)
+        self.agent._nghe_telegram(self.env, self.cau_hinh, self.bay_gio,
+                                  self.thong_bao, self.tt)
+        self.assertEqual(self.tt["offset"], 48)
+
+    def test_tin_ton_dong_xu_ly_LENH_bo_CAU_HOI(self):
+        nguoi_truc.lay_tin_moi = lambda env, offset: ([
+            self._tin("tat 120250506886650509"),
+            self._tin("hom qua co bao nhieu don?"),
+        ], None)
+        self.tt["da_doc_ton_dong"] = False
+        self.agent._nghe_telegram(self.env, self.cau_hinh, self.bay_gio,
+                                  self.thong_bao, self.tt)
+        self.assertTrue(self.tt["da_doc_ton_dong"])
+        self.assertEqual(self.gui, [], "cau hoi CU khong duoc tra loi")
+
+    def test_nhan_mac_dinh_van_la_Nguoi_truc(self):
+        """Khong truyen `nhan` thi cau tra loi giu nguyen nhu truoc."""
+        chu = nguoi_truc.tra_loi_tin_nhan(
+            "con song khong?", {"REPORT_ACCOUNT_NAME": "Test"}, [8, 12, 17],
+            datetime(2026, 10, 1, 9, 0), None, set())
+        self.assertIn("Người trực đang chạy", chu)
 
 
 if __name__ == "__main__":
