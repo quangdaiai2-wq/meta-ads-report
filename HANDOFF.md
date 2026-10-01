@@ -1,7 +1,12 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **CHẠY NGẦM XONG** · **agent tự ghi lịch sử XONG**
-· **đã đẩy lên GitHub (`b8dfcab`)**. Bộ kiểm thử: **607/607 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **AGENT ĐÃ SỞ HỮU TELEGRAM** (bước 2–4 của kế hoạch
+chuyển nhà): agent tự đọc tin, tự trả lời câu hỏi, tự xử lý nút bấm; `nguoi_truc.py` **chỉ còn gửi báo cáo**.
+Kèm: **chạy ngầm xong** · **agent tự ghi lịch sử xong** · **đã đẩy GitHub (`4f87a10`)**.
+Bộ kiểm thử: **603/603 đạt**.
+🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
+khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
+📌 **Máy nhà:** `git pull` để nhận tới `4f87a10`.
 🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
 khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật (xem mục “Chưa làm”).
 📌 **Máy nhà:** `git pull` để nhận tới `b8dfcab` (nấc 2 + chạy ngầm + sửa lỗi khoá).
@@ -169,7 +174,24 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
     Cùng ngày 30/09: 08:00 chi tiêu 6.719.831đ → 10:43 thành 6.746.301đ (**+26.470đ, 0,4%**);
     lượt mua **không đổi**. ⇒ Sau này khi tắt báo cáo, sổ do agent ghi sẽ **sát thực tế hơn**.
   Bộ kiểm thử: **607/607 đạt** (thêm 8 bài).
-- 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ THI CÔNG BƯỚC 1 (01/10/2026); còn bước 2–6.**
+- ✅ **AGENT SỞ HỮU TELEGRAM — BƯỚC 2–4 CỦA KẾ HOẠCH CHUYỂN NHÀ (01/10/2026).**
+  Kế hoạch: `docs/superpowers/plans/2026-10-01-agent-so-huu-telegram.md`.
+  - `agent.py` **tự đọc Telegram** mỗi 15 giây (cả `message` và `callback_query`). Thêm 4 hàm:
+    `_nghe_telegram`, `_doc_tin_ton_dong`, `_xu_ly_mot_tin`, `_lam_theo_lenh`.
+  - `nguoi_truc.py` **thôi đọc Telegram** — bỏ 4 phương thức và 2 thuộc tính; `mot_vong()` giờ chỉ canh mốc giờ.
+    Các hàm thuần về Telegram **giữ nguyên** để agent dùng lại (không viết lại).
+  - `logs/agent-lenh.json` **hết việc** (không còn ai ghi). Hàng rào tạm ngày 30/09 đã gỡ bỏ.
+  - Nút bấm: trả lời Telegram **ngay** rồi mới xử lý. Lệnh gõ tay: xử lý trực tiếp, **không** đi vào AI.
+    Câu hỏi: dùng lại `nguoi_truc.tra_loi_tin_nhan`. Tin tồn đọng lúc khởi động: **xử lý
+    lệnh/nút bấm, bỏ câu hỏi cũ** (tránh trả lời một loạt tin cũ).
+  - `--thu` và `--mot-lan` **không** đọc Telegram (tránh nuốt tin của tiến trình chính).
+  - ✅ **Đã chạy thật (11:03:20):** `AGENT: doc 0 tin ton dong, xu ly 0 lenh/nut bam`.
+  - ⏳ **Còn bước 5–6:** tắt báo cáo theo khung giờ + gỡ lịch người trực. **CHƯA LÀM** vì kế
+    hoạch 30/09 mục 4 bắt buộc **chạy song song đối chiếu vài ngày** trước khi tắt.
+  - ⚠️ **Còn sót:** nhánh `la_lenh` trong `nguoi_truc.tra_loi_tin_nhan` vẫn ghi vào hàng đợi (nay
+    không ai đọc). Agent đã chặn lệnh TRƯỚC khi gọi hàm đó nên nhánh này không chạy — dọn lần sau.
+  Bộ kiểm thử: **603/603 đạt**.
+- 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ XONG BƯỚC 1–4 (01/10/2026); còn bước 5–6.**
   `docs/superpowers/plans/2026-09-30-chuyen-telegram-ve-agent.md`.
   Đại chốt hướng: agent tự **hỏi đáp + lấy thông tin** được, thì **bỏ hẳn báo cáo theo khung giờ**.
   ⚠️ **Đọc mục 4 trước khi làm bất cứ gì:** `logs/lich-su.json` do `report.py` ghi mỗi mốc báo cáo.
