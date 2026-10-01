@@ -289,39 +289,46 @@ def _la_yeu_cau_bao_cao(text):
     return True
 
 
-def _tao_ngay(nam, thang, ngay, bay_gio):
-    """date hop le, hoac None. Ngay o TUONG LAI thi lui mot nam.
-
-    Lui mot nam de "bao cao 15/12" hoi vao thang 10 van ra thang 12 NAM TRUOC
-    (nguoi ta khong hoi ve tuong lai).
-    """
+def _tao_ngay(nam, thang, ngay):
+    """date hop le, hoac None."""
     try:
-        d = date(nam, thang, ngay)
+        return date(nam, thang, ngay)
     except ValueError:
         return None
-    if nam == bay_gio.year and d > bay_gio.date():
-        try:
-            return date(nam - 1, thang, ngay)
-        except ValueError:
-            return None
-    return d
 
 
 def _ngay_duoc_neu(text, bay_gio):
-    """Ngay CU THE duoc neu trong tin (15/09, 15-09-2026, 2026-09-15). Khong co -> None.
+    """Ngay CU THE, phai DU ngay/thang/nam. Khong co -> None.
 
-    "hom qua" / "hom nay" tra ve None — hai cai do di duong MOC GIO.
+    Nhan: 20/09/2026 · 20-09-2026 · 2026-09-20.
+    KHONG nhan ngay thieu nam ("20/09") — doan nam rat de sai, nen
+    `_co_ngay_thieu_nam()` lo phan nhac Dai ghi ro.
+    "hom qua" / "hom nay" cung tra ve None — hai cai do di duong MOC GIO.
     """
     if not isinstance(text, str):
         return None
     m = re.search(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b", text)
     if m:
-        return _tao_ngay(int(m.group(1)), int(m.group(2)), int(m.group(3)), bay_gio)
-    m = re.search(r"\b(\d{1,2})[/\-.](\d{1,2})(?:[/\-.](\d{4}))?\b", text)
+        return _tao_ngay(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    m = re.search(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b", text)
     if m:
-        nam = int(m.group(3)) if m.group(3) else bay_gio.year
-        return _tao_ngay(nam, int(m.group(2)), int(m.group(1)), bay_gio)
+        return _tao_ngay(int(m.group(3)), int(m.group(2)), int(m.group(1)))
     return None
+
+
+def _co_ngay_thieu_nam(text):
+    """Tin co ngay kieu "20/09" (THIEU nam) khong — de nhac Dai ghi ro.
+
+    Phai loai truong hop ngay DU nam truoc: "20/09/2026" cung chua chuoi "20/09"
+    ben trong no, neu khong loai thi se nhac nham nguoi da ghi dung.
+    """
+    if not isinstance(text, str):
+        return False
+    if re.search(r"\b\d{1,2}[/\-.]\d{1,2}[/\-.]\d{4}\b", text):
+        return False
+    if re.search(r"\b\d{4}-\d{1,2}-\d{1,2}\b", text):
+        return False
+    return bool(re.search(r"\b\d{1,2}[/\-.]\d{1,2}\b", text))
 
 
 def _moc_cho_bao_cao(text, bay_gio, danh_sach_moc):
@@ -351,6 +358,20 @@ def _gui_bao_cao_theo_yeu_cau(env, noi_dung, bay_gio):
     - Luon dung `--force`: Dai da yeu cau thi phai gui, du hom nay da gui roi.
     """
     ngay = _ngay_duoc_neu(noi_dung, bay_gio)
+
+    # Ngay THIEU nam ("bao cao 20/09") -> nhac Dai ghi ro, KHONG doan bua.
+    if ngay is None and _co_ngay_thieu_nam(noi_dung):
+        nguoi_truc.gui_tin_nhan(env, "\u26a0\ufe0f \u0110\u1ea1i ghi r\u00f5 ng\u00e0y/th\u00e1ng/n\u0103m gi\u00fap t\u00f4i nh\u00e9.\n"
+                                     "V\u00ed d\u1ee5: b\u00e1o c\u00e1o 20/09/2026")
+        report.log("AGENT: yeu cau bao cao thieu nam -> da nhac Dai ghi ro")
+        return
+
+    # Ngay o TUONG LAI thi khong co so lieu.
+    if ngay is not None and ngay > bay_gio.date():
+        nguoi_truc.gui_tin_nhan(
+            env, f"\u26a0\ufe0f Ng\u00e0y {ngay.strftime('%d/%m/%Y')} ch\u01b0a t\u1edbi n\u00ean ch\u01b0a c\u00f3 s\u1ed1 li\u1ec7u.")
+        return
+
     if ngay is not None:
         mo_ta = f"ng\u00e0y {ngay.strftime('%d/%m/%Y')}"
         lenh = [sys.executable, str(GOC / "report.py"),

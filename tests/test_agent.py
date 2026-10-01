@@ -1081,14 +1081,46 @@ class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
         self.assertEqual(len(self.gui), 2, "mot tin bao dang lay + mot tin bao loi")
         self.assertIn("lỗi", self.gui[-1])
 
-    def test_ngay_duoc_neu_cac_dinh_dang(self):
+    def test_ngay_duoc_neu_PHAI_du_ngay_thang_nam(self):
         import agent
         t = datetime(2026, 10, 1, 11, 0, tzinfo=GIO_VN)
-        for chu in ("báo cáo 15/09", "báo cáo 15-09-2026", "báo cáo 2026-09-15"):
+        for chu in ("báo cáo 15/09/2026", "báo cáo 15-09-2026",
+                    "báo cáo 2026-09-15"):
             self.assertEqual(str(agent._ngay_duoc_neu(chu, t)), "2026-09-15", chu)
-        for chu in ("báo cáo hôm qua", "báo cáo", "báo cáo hôm nay",
-                    "báo cáo tháng 9"):
+        for chu in ("báo cáo 15/09", "báo cáo hôm qua", "báo cáo",
+                    "báo cáo hôm nay", "báo cáo tháng 9"):
             self.assertIsNone(agent._ngay_duoc_neu(chu, t), chu)
+
+    def test_ngay_thieu_nam_thi_nhan_ra_de_nhac(self):
+        import agent
+        self.assertTrue(agent._co_ngay_thieu_nam("báo cáo 20/09"))
+        self.assertFalse(agent._co_ngay_thieu_nam("báo cáo 20/09/2026"),
+                         "ngay du nam KHONG duoc coi la thieu nam")
+        self.assertFalse(agent._co_ngay_thieu_nam("báo cáo 2026-09-20"))
+        self.assertFalse(agent._co_ngay_thieu_nam("báo cáo hôm qua"))
+
+    def test_bao_cao_thieu_nam_thi_NHAC_chu_KHONG_chay(self):
+        import agent
+        da_chay = []
+        cu = agent.subprocess.run
+        self.addCleanup(setattr, agent.subprocess, "run", cu)
+        agent.subprocess.run = lambda *a, **k: da_chay.append(a[0])
+
+        self._xu_ly(self._tin("báo cáo 20/09"))
+        self.assertEqual(da_chay, [], "thieu nam thi KHONG duoc chay bua")
+        self.assertEqual(len(self.gui), 1)
+        self.assertIn("20/09/2026", self.gui[0], "phai noi ro dinh dang dung")
+
+    def test_bao_cao_ngay_TUONG_LAI_thi_bao_chua_toi(self):
+        import agent
+        da_chay = []
+        cu = agent.subprocess.run
+        self.addCleanup(setattr, agent.subprocess, "run", cu)
+        agent.subprocess.run = lambda *a, **k: da_chay.append(a[0])
+
+        self._xu_ly(self._tin("báo cáo 20/12/2026"))
+        self.assertEqual(da_chay, [], "ngay tuong lai thi khong co so lieu")
+        self.assertIn("chưa tới", self.gui[0])
 
     def test_bao_cao_ngay_CU_THE_thi_dung_co_NGAY(self):
         """Hoi ngay bat ky -> phai dung --ngay (lay tu Meta), KHONG dung --slot."""
@@ -1102,7 +1134,7 @@ class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
         self.addCleanup(setattr, agent.subprocess, "run", cu)
         agent.subprocess.run = lambda *a, **k: (da_chay.append(a[0]), Kq())[1]
 
-        self._xu_ly(self._tin("báo cáo 15/09"))
+        self._xu_ly(self._tin("báo cáo 15/09/2026"))
         lenh = [str(x) for x in da_chay[0]]
         self.assertIn("--ngay", lenh)
         self.assertIn("2026-09-15", lenh)
