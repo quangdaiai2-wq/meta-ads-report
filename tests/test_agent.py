@@ -1404,5 +1404,56 @@ class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
         self.assertIn("Người trực đang chạy", chu)
 
 
+class TestDocMoi(unittest.TestCase):
+    """Kiem tra ham doc_moi — doc lai toan bo .env moi vong lap.
+
+    LOI THAT 01/10/2026: ban cu chi doc lai phan AGENT_* trong vong lap,
+    vut khoa AI / TELEGRAM_* / META_*. Nen doi cac khoa do khong an ngay.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
+                                                suffix=".env", delete=False)
+        self.tmp.close()
+
+    def tearDown(self):
+        os.unlink(self.tmp.name)
+
+    def _viet(self, **khoa):
+        with open(self.tmp.name, "w", encoding="utf-8") as f:
+            for k, v in khoa.items():
+                f.write(f"{k}={v}\n")
+
+    def test_doc_moi_tra_ve_ca_env_va_cau_hinh(self):
+        import agent
+        self._viet(GEMINI_API_KEY="abc123", AGENT_TAP_SU="false",
+                   AGENT_NHIP_PHUT="15")
+        env, cau_hinh = agent.doc_moi(self.tmp.name)
+        self.assertIn("GEMINI_API_KEY", env)
+        self.assertEqual(env["GEMINI_API_KEY"], "abc123")
+        self.assertIn("AGENT_TAP_SU", cau_hinh)
+        self.assertFalse(cau_hinh["AGENT_TAP_SU"])
+        self.assertEqual(cau_hinh["AGENT_NHIP_PHUT"], 15)
+
+    def test_cau_hinh_khong_chua_khoa_ngoai_AGENT(self):
+        import agent
+        self._viet(META_ACCESS_TOKEN="tok", TELEGRAM_BOT_TOKEN="bot",
+                   AGENT_TAP_SU="true")
+        env, cau_hinh = agent.doc_moi(self.tmp.name)
+        self.assertIn("META_ACCESS_TOKEN", env)
+        self.assertNotIn("META_ACCESS_TOKEN", cau_hinh)
+        self.assertNotIn("TELEGRAM_BOT_TOKEN", cau_hinh)
+
+    def test_doi_gia_tri_trong_file_doc_lai_dung(self):
+        import agent
+        self._viet(AGENT_TAP_SU="true")
+        env1, ch1 = agent.doc_moi(self.tmp.name)
+        self.assertTrue(ch1["AGENT_TAP_SU"])
+
+        self._viet(AGENT_TAP_SU="false")
+        env2, ch2 = agent.doc_moi(self.tmp.name)
+        self.assertFalse(ch2["AGENT_TAP_SU"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

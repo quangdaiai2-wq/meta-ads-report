@@ -62,6 +62,25 @@ def doc_cau_hinh(env):
     return ra
 
 
+def doc_moi(duong_dan=None):
+    """Doc lai TOAN BO .env. Tra ve (env, cau_hinh).
+
+    LOI THAT da gap 01/10/2026 — vi sao ham nay phai ton tai:
+    Ban cu doc .env MOT LAN luc khoi dong, roi trong vong lap chi doc lai phan
+    `AGENT_*` (qua `doc_cau_hinh`) va VUT phan con lai. Nghia la:
+      - Doi `AGENT_TAP_SU` / `AGENT_NHIP_PHUT`  -> an ngay (dung nhu mong doi).
+      - Doi khoa AI, `TELEGRAM_*`, `META_*`     -> KHONG an, phai khoi dong lai.
+    Te hon: `khoi-dong-lai-agent.bat` ghi "doi .env khong can bam file nay" —
+    cau do SAI voi cac khoa ngoai `AGENT_*`, nen Dai se doi `.env` roi ngoi doi
+    mai khong thay gi khac.
+
+    Nay vong lap goi ham nay moi 15 giay => MOI khoa trong .env deu an ngay.
+    File .env nho, doc lai 15 giay mot lan khong dang ke.
+    """
+    env = report.load_env(duong_dan or ENV_PATH)
+    return env, doc_cau_hinh(env)
+
+
 def _thoi_diem():
     return datetime.now(GIO_VN)
 
@@ -738,8 +757,7 @@ def main():
     parser.add_argument("--thu", action="store_true", help="chay thu, khong gui gi")
     args = parser.parse_args()
 
-    env = report.load_env(ENV_PATH)
-    cau_hinh = doc_cau_hinh(env)
+    env, cau_hinh = doc_moi()
     nhip = max(1, cau_hinh["AGENT_NHIP_PHUT"])
     che_do = "TAP SU (chi noi)" if cau_hinh["AGENT_TAP_SU"] else "LAM THAT"
 
@@ -786,12 +804,12 @@ def main():
     try:
         while True:
             try:
-                # DOC LAI .env MOI VONG.
-                # Truoc day chi doc MOT LAN luc khoi dong, nen Dai doi
-                # AGENT_TAP_SU xong agent van chay theo gia tri cu — dung kieu
-                # "da doi ma khong thay gi khac", rat de tuong la hong.
-                # File .env nho, doc lai moi 15 giay khong dang ke.
-                cau_hinh = doc_cau_hinh(report.load_env(ENV_PATH))
+                # DOC LAI TOAN BO .env MOI VONG.
+                # Khong chi doc lai phan AGENT_* nhu ban cu: lam vay thi doi
+                # khoa AI / TELEGRAM_* / META_* se KHONG co tac dung cho toi khi
+                # khoi dong lai, ma `khoi-dong-lai-agent.bat` lai ghi la khong
+                # can. Xem docstring cua doc_moi().
+                env, cau_hinh = doc_moi()
                 nhip = max(1, cau_hinh["AGENT_NHIP_PHUT"])
                 che_do_moi = ("TAP SU (chi noi)" if cau_hinh["AGENT_TAP_SU"]
                               else "LAM THAT")
