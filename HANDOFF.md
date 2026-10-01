@@ -1,8 +1,11 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **BÁO CÁO NGÀY BẤT KỲ QUA TELEGRAM** (nhắn *“báo cáo 20/09/2026”*)
-· **agent sở hữu Telegram** · **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h (còn 8h, 17h)**
-· **đã đẩy GitHub (`9b64edc`)**. Bộ kiểm thử: **616/616 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **THÊM NHÀ CUNG CẤP AI THỨ HAI (Nous Research)** — chờ Đại dán chìa khoá
+· **báo cáo ngày bất kỳ** · **agent sở hữu Telegram** · **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h**
+· **đã đẩy GitHub (`3cf252c`)**. Bộ kiểm thử: **630/630 đạt**.
+🐛 **3 LỖI THẬT đã bắt và sửa hôm nay:** khoá không ghi PID (agent từ chối chạy gần 1 giờ) · câu trả lời
+*“Lần gửi gần nhất”* nói sai · **trần đề xuất bị tiêu tốn gấp đôi** (agent im lặng giữa ngày).
+📌 **Máy nhà:** `git pull` để nhận tới `3cf252c`.
 ✅ **Đại đã tự thử báo cáo ngày bất kỳ và thành công (11:44):** *“AGENT: da gui bao cao ngay 21/09/2026”*.
 🐛 **3 LỖI THẬT đã bắt và sửa hôm nay:** khoá không ghi PID (agent từ chối chạy gần 1 giờ) ·
 câu trả lời *“Lần gửi gần nhất”* nói sai · **trần đề xuất bị tiêu tốn gấp đôi** (agent im lặng giữa ngày).
@@ -213,7 +216,26 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   - Phân biệt **yêu cầu gửi file** với **câu hỏi**: *“báo cáo hôm qua”* = xin file;
     *“báo cáo hôm qua thế nào?”* · *“báo cáo tháng 9”* = câu hỏi → để AI trả lời.
   - ✅ **Đã kiểm chứng thật:** `report.py --slot 8 --force` → gửi được **cả tin lẫn file HTML**.
-  Bộ kiểm thử: **616/616 đạt**.
+  Bộ kiểm thử: **630/630 đạt**.
+- 🆕 **NHÀ CUNG CẤP AI THỨ HAI: NOUS RESEARCH (01/10/2026) — chờ Đại dán chìa khoá.**
+  Đại muốn dùng API Nous Portal thay Gemini tới **30/10/2026**. Đã khai thác thật:
+  - `GET https://inference-api.nousresearch.com/v1/models` → **HTTP 200, 423 model**.
+  - API là **cổng nối** tới nhiều họ model (OpenAI, Anthropic, Google, Qwen, Z.ai…).
+  - ⚠️ **Tài liệu ghi model `Hermes-4-70B` nhưng đÃ BỊ KHAI TỬ** — gọi thử trả 404
+    *“This model has been retired”*. **Không còn model Hermes nào** trong danh sách.
+  - Gọi lại bằng model đúng → **HTTP 401** (lỗi xác thực, không phải 404) ⇒ **đường ống đúng 100%**.
+  - **Cách làm:** API Nous dùng **kiểu OpenAI**, còn `ai.py` đọc **kiểu Gemini**. Chỉ đổi qua lại
+    ở **đúng một chỗ** (`_gemini_sang_openai` / `_openai_sang_gemini`) ⇒ toàn bộ phần còn lại,
+    **kể cả vòng lặp công cụ của phần hỏi đáp**, không phải sửa dòng nào.
+  - **Mặc định VẪN LÀ GEMINI** (`AI_NHA_CUNG_CAP=gemini`) ⇒ không làm hỏng gì trước khi Đại thử.
+  - Model mặc định: **`google/gemini-2.5-flash`** — **cùng họ model đang chạy** ⇒ đổi nhà cung cấp
+    mà **không đổi hành vi**; khác biệt là tính tiền theo số dư Nous thay vì bị trần 20 lượt/ngày.
+    Dự phòng: `openai/gpt-4o-mini` (khác họ, phòng khi họ Google có sự cố).
+  - ✅ **Đã thêm sẵn khối khai báo vào `.env`** (`.env` đã kiểm lại: 24 khoá, nguyên vẹn).
+    **Đại chỉ cần dán chìa khoá vào dòng `NOUS_API_KEY=`** rồi đổi `AI_NHA_CUNG_CAP=gemini` thành `=nous`.
+  - ⚠️ **Khi đổi xong phải khởi động lại agent** (agent nạp `ai.py` một lần lúc khởi động).
+    Riêng phần báo cáo thì **không cần** — người trực chạy `report.py` như tiến trình con nên đọc lại `.env` mỗi lần.
+  - ⏳ **CHƯA LÀM: 3–4 kiểu giao diện HTML.** Đại đã chốt phương án nhưng chưa thi công.
 - 🐛 **LỖI THẬT đã sửa (01/10/2026) — TRẦN ĐỀ XUẤT BỊ TIÊU TỐN GẤP ĐÔI.**
   Đại hỏi *“sao không thấy agent báo tắt nhóm nào?”*. Kiểm tra: **không hỏng**, nhưng có lỗi thật.
   - **Nguyên nhân:** MỘT lần xin phép sinh **HAI bản ghi** (bản đề xuất + bản lúc gửi lệnh
