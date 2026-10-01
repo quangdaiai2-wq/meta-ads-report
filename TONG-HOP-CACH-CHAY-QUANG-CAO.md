@@ -1,9 +1,25 @@
 # TỔNG HỢP CÁCH ĐẠI ĐANG CHẠY QUẢNG CÁO
 
-**Ngày:** 30/09/2026 · **Nguồn:** nhật ký thao tác thật của Meta, 01/09 → 01/10/2026
+**Ngày:** 01/10/2026 · **Nguồn:** nhật ký thao tác thật của Meta, 01/09 → 01/10/2026
 **Đọc cái này để làm gì:** đây là bản mô tả cách Đại làm việc, rút ra từ **chính việc Đại đã làm** —
-không phải từ lời kể. Đại đọc, chỗ nào sai thì nói, chỗ nào đúng thì xác nhận. Sau đó tôi mới dựng
-nấc 2.
+không phải từ lời kể.
+
+---
+
+## ⚠️ LUẬT ĐANG CHẠY — Đại chốt 01/10/2026
+
+> Phần thân tài liệu bên dưới mô tả **cách Đại đã làm trong quá khứ**. Mục nào nói về ngưỡng tắt thì
+> **luật dưới đây thay thế** — xem chi tiết ở **mục 3.4**.
+
+**Ba trường hợp, xét theo thứ tự TH3 → TH2 → TH1:**
+
+| | Điều kiện | Ngưỡng báo | Tên mới |
+|---|---|---|---|
+| **TH3** | Đã có lượt mua trong tháng | giá mỗi lượt mua **tháng** ≥ **390.000đ** | `<x>/450 X<tháng>` |
+| **TH2** | Có tin nhắn, chưa ra lượt mua | chi tiêu **hôm nay** ≥ **290.000đ** | `0/350 X<tháng> TN` |
+| **TH1** | Không có tin nhắn nào | chi tiêu **hôm nay** ≥ **70.000đ** | `0/<2× chi tiêu> X<tháng>` |
+
+Khi tắt: **tắt quảng cáo + tắt nhóm + hạ ngân sách 27.000đ + đổi tên nhóm** (agent tự làm cả bốn).
 
 ---
 
@@ -246,7 +262,52 @@ chuyển sang cấp nhóm.
 Chi tiết nhỏ: 20/09 15:17 có lần **hạ hai bước 400.000 → 29.000 → 27.000** (cách nhau 5 giây) — lần
 duy nhất có bước trung gian, có thể chỉ là gõ nhầm rồi sửa.
 
-### 3.4. 🔑 NGƯỠNG TẮT THẬT — Đại vừa nói rõ (30/09/2026)
+### 3.4. 🔑 NGƯỠNG TẮT THẬT — **LUẬT ĐANG DÙNG (Đại chốt 01/10/2026)**
+
+> ⚠️ **PHẦN DƯỚI MỤC NÀY LÀ LUẬT CŨ (30/09/2026), CHỈ CÒN DÙNG ĐỂ ĐỌC TÊN NHÓM CŨ.**
+> **Luật đang chạy là ba trường hợp dưới đây.**
+
+Đại tự viết ra ba trường hợp. Xét theo **thứ tự TH3 → TH2 → TH1**; nhóm có lượt mua **luôn** rơi
+vào TH3 dù nó có tin nhắn hay không.
+
+| | Điều kiện | Ngưỡng báo | Tên mới khi tắt |
+|---|---|---|---|
+| **TH3** | Đã có lượt mua trong tháng | **giá mỗi lượt mua (tính theo THÁNG)** ≥ **390.000đ** | `<x>/450 X<tháng>` |
+| **TH2** | Có tin nhắn (từ 1 trở lên), chưa ra lượt mua | chi tiêu **hôm nay** ≥ **290.000đ** | `0/350 X<tháng> TN` |
+| **TH1** | Không có tin nhắn nào | chi tiêu **hôm nay** ≥ **70.000đ** | `0/<gấp đôi chi tiêu> X<tháng>` |
+
+**Bốn điều Đại xác nhận rõ:**
+1. **Ngưỡng CỐ ĐỊNH cho mọi nhóm** — không đọc từ `y` trong tên nhóm nữa.
+2. TH3 đo **giá mỗi lượt mua**, KHÔNG phải tổng chi tiêu.
+3. Nhóm **có lượt mua mà không có tin nhắn** (bán qua web) → **vẫn xếp TH3**.
+4. Khi tắt, **agent tự đổi tên nhóm** — Đại không phải vào Trình quản lý quảng cáo.
+
+**"Tin nhắn" đếm CẢ HAI chỉ số:** *Người liên hệ nhắn tin mới* **hoặc** *Lượt bắt đầu cuộc trò
+chuyện qua tin nhắn*. (Bản cũ **bỏ sót** chỉ số thứ nhất.)
+
+**Khi tắt thì làm 4 việc** (khớp đúng thao tác thật của Đại trong sổ):
+1. Tắt **quảng cáo** (ad) bên trong
+2. Tắt **nhóm quảng cáo** (adset)
+3. Hạ ngân sách về **27.000đ**
+4. **Đổi tên** thành `<tên cũ> x/y X<tháng>`
+
+**TH1 ghi `y` ĐỘNG:** gấp đôi số tiền **đang** chi tiêu lúc tắt — chạm ngưỡng ở 70.000đ thì ra
+`0/140`; phát hiện muộn ở 85.000đ thì ra `0/170`. TH2/TH3 ghi **cột mốc chẵn cố định** 350 và 450.
+
+#### So với luật cũ — ba thay đổi lớn
+
+| | Luật cũ (30/09) | Luật mới (01/10) |
+|---|---|---|
+| Không tin nhắn | 80.000đ | **70.000đ** |
+| Có tin nhắn, 0 đơn | 70.000đ | **290.000đ** ⬅ đổi lớn, cảnh báo ít đi hẳn |
+| Có đơn | giá mỗi lượt mua ≥ 400.000đ | **≥ 390.000đ** |
+| Đếm tin nhắn | chỉ 1 chỉ số | **cả 2 chỉ số** |
+| Tắt quảng cáo | không | **có** |
+| Đổi tên nhóm | không | **có** |
+
+---
+
+### 3.4b. NGƯỠNG TẮT — LUẬT CŨ (30/09/2026), giữ để đọc tên nhóm cũ
 
 > *"450 là số ngưỡng mà tôi sẽ định tắt khi chi tiêu đến đó. Ví dụ ad set đang chi tiêu ở mức
 > 400.000 cho tổng cả tháng đó và đạt được 6 lượt mua hoặc lượt thanh toán thì đã là lúc tôi tắt
@@ -260,8 +321,9 @@ duy nhất có bước trung gian, có thể chỉ là gõ nhầm rồi sửa.
 
 **✅ ĐÃ GIẢI QUYẾT (cập nhật 30/09/2026):** chỗ này từng bị coi là *câu chặn đường C1*. **Không còn
 chặn nữa** — vì sau C2/C4/C6 đã rõ **Đại tự mã hoá ngưỡng vào tên nhóm**: phần `y` chính là trần chi
-phí mỗi lượt mua Đại chấp nhận, và **hệ thống chỉ cần đọc `y` từ tên**, không cần biết lãi mỗi đơn.
-Xem C1 ở mục 7.
+phí mỗi lượt mua Đại chấp nhận. Xem C1 ở mục 7.
+⚠️ **Từ 01/10/2026 hệ thống KHÔNG đọc `y` nữa** — ngưỡng đã cố định theo ba trường hợp ở mục 3.4.
+`y` nay chỉ là **bản ghi lại** trần Đại chọn, để đọc lại lịch sử.
 
 Và chỗ "chưa khớp" ngày đó cũng đã rõ: **`y` khác nhau là đúng** — mỗi nhóm một trần riêng, phổ biến
 nhất là **400.000–450.000đ** nhưng có nhóm tới `550`, `600`, `650`, `750`. Xem phân bố thật ở C6
@@ -344,6 +406,14 @@ Nói cách khác: **Đại dùng tên nhóm như một cuốn nhật ký nhẹ**
 chưa, tắt tháng nào, và có phát sinh tin nhắn hay không.
 
 ### 5.2. Phần `x/y` — ✅ ĐÃ RÕ, VÀ ĐÃ KIỂM CHỨNG BẰNG DỮ LIỆU THẬT
+
+> ⚠️ **CẬP NHẬT 01/10/2026 — ĐỌC TRƯỚC:** từ nay **hệ thống KHÔNG đọc `y` để phán nữa**.
+> Ngưỡng tắt đã **cố định theo ba trường hợp** (mục 3.4): TH1 70.000đ · TH2 290.000đ ·
+> TH3 giá mỗi lượt mua ≥ 390.000đ. Phần `x/y` nay là **bản ghi lịch sử** — ghi lại trần Đại đã chọn
+> cho lần chạy đó — và **agent tự ghi** khi tắt nhóm (mục 5.5 đã thành hiện thực).
+>
+> Lý do đổi: chỉ **8 trong 88 nhóm đang chạy** có ghi `x/y` trong tên (toàn nhóm cũ), nên dựa vào `y`
+> thì 80 nhóm còn lại **không có mốc nào để phán**.
 
 | Phần | Nghĩa |
 |---|---|

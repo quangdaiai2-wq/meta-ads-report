@@ -1,5 +1,10 @@
 # CÂU HỎI VỀ CÁCH ĐẠI ĐANG CARE QUẢNG CÁO
 
+> ✅ **CẬP NHẬT 01/10/2026 — ĐÃ HỎI XONG, VÀ LUẬT ĐÃ ĐỔI.** Đại đã trả lời hết, và **ngày 01/10/2026
+> Đại chốt lại luật tắt nhóm thành BA TRƯỜNG HỢP** (thay cho ngưỡng cũ).
+> 👉 **Đọc `TONG-HOP-CACH-CHAY-QUANG-CAO.md`, mục 3.4** — đó là luật đang chạy.
+> File này giữ lại làm bản gốc của bộ câu hỏi, **không dùng để tra cứu nữa**.
+
 > ✅ **CẬP NHẬT 30/09/2026 — ĐÃ HỎI XONG.** Đại đã trả lời hết qua cuộc trao đổi ngày 30/09. Kết quả
 > đã kiểm chứng bằng dữ liệu thật và ghi vào **`TONG-HOP-CACH-CHAY-QUANG-CAO.md`** — đó là tài liệu
 > để đọc, không phải file này. Các câu chặn đường **B1/B2/B3 nay đã có lời giải** (xem mục 3.2b, 3.3,

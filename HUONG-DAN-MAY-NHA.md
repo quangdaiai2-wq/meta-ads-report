@@ -1,19 +1,82 @@
-# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 29/09/2026 (Giai đoạn 2 + 3 + 4 + 5)
+# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 01/10/2026 (luật tắt nhóm mới)
 
 **Dành cho:** Đại (người không cần biết code) **và** trợ lý AI trên máy nhà.
 
-> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy 4 bản cập nhật lên GitHub.
-> File này nói rõ có gì mới, máy nhà cần làm gì, và những điểm cần biết về token.
-> Đọc hết trước khi làm.
+> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy một bản cập nhật **thay đổi luật
+> tắt nhóm hoàn toàn**. Đọc hết trước khi làm. Máy nhà chạy code cũ sẽ **tắt oan rất nhiều nhóm**.
 
 **Ngày máy công ty cài đặt:** 14/09/2026. Kho GitHub: `meta-ads-report`, nhánh `main`.
-**Mốc mới nhất đã đẩy:** `2e91314` (29/09/2026, gồm cả Giai đoạn 5).
+**Mốc mới nhất đã đẩy:** **`bca174c`** (01/10/2026).
 
 ---
 
-## 🆕 CẬP NHẬT NGÀY 29/09/2026 — ĐỌC PHẦN NÀY TRƯỚC
+## 🆕 CẬP NHẬT NGÀY 01/10/2026 — ĐỌC PHẦN NÀY TRƯỚC
 
-Nếu máy nhà đã làm xong bản 28/09 (Giai đoạn 2) thì nay chỉ còn **BA bước nhỏ**:
+### ⚠️ Vì sao bản này QUAN TRỌNG hơn các bản trước
+
+Luật tắt nhóm **đã đổi hoàn toàn**. Nếu máy nhà còn chạy code cũ:
+
+| | Code cũ (đang có ở máy nhà) | Luật mới |
+|---|---|---|
+| Nhóm có tin nhắn, chưa ra đơn | tắt khi chi **70.000đ** | tắt khi chi **290.000đ** |
+| Nhóm không có tin nhắn | tắt khi chi **80.000đ** | tắt khi chi **70.000đ** |
+| Nhóm đã có đơn | giá mỗi đơn ≥ **400.000đ** | giá mỗi đơn ≥ **390.000đ** |
+| Đếm tin nhắn | **chỉ 1** chỉ số | **cả 2** chỉ số |
+| Khi tắt | tắt nhóm + hạ ngân sách | tắt **quảng cáo** + tắt nhóm + hạ ngân sách + **đổi tên** |
+
+⇒ **Code cũ sẽ tắt oan** những nhóm mới chi 70.000đ mà đã có tin nhắn. Phải cập nhật.
+
+### Máy nhà cần làm — 4 bước
+
+**Bước 1 — Kéo code mới:**
+```
+git pull
+```
+Phải thấy mốc **`bca174c`**. Nếu chưa thấy, gõ `git log --oneline -1` để kiểm.
+
+**Bước 2 — Sửa `.env` (`.env` KHÔNG đi theo `git pull`):**
+Bấm `mo-file-env.bat`, tìm dòng `AGENT_TOI_DA_NGAY=3` và đổi thành:
+```
+AGENT_TOI_DA_NGAY=0
+```
+`0` nghĩa là **KHÔNG GIỚI HẠN** — agent được hỏi Đại về mọi nhóm chạm ngưỡng, không bị im lặng
+sau 3 nhóm như trước. Nếu máy nhà **chưa có** dòng này thì thêm vào, thiếu cũng chạy.
+
+**Bước 3 — Khởi động lại agent** (bắt buộc — đây là **đổi code**, không phải chỉ đổi `.env`):
+Bấm `khoi-dong-lai-agent.bat`.
+
+**Bước 4 — Kiểm chứng:**
+Mở `logs\baocao.log`, tìm dòng mới nhất có dạng:
+```
+AGENT: N nhom cham nguong — hoi X, bo qua Y (dang cho Dai tra loi), chan Z (rao an toan)
+```
+Dòng này **mới có từ hôm nay**. Thấy nó là code mới đã chạy. Từ nay **mỗi lần quét đều ghi dòng này**,
+nên nhìn vào là biết agent có làm việc hay không — không còn cảnh im lặng mà không rõ vì sao.
+
+### Những gì đã sửa trong bản này
+
+1. **Luật tắt nhóm mới** — ba trường hợp TH1/TH2/TH3 (bảng trên).
+2. **Tắt quảng cáo + đổi tên nhóm** — agent nay làm đủ 4 việc như Đại vẫn làm tay.
+3. **Bỏ trần đề xuất** — trước đây hết 3 nhóm/ngày là agent **im lặng hoàn toàn**, kể cả khi tìm ra
+   nhóm cần tắt. Nay không giới hạn, và mọi lý do dừng đều được ghi log.
+4. **Sửa phép so sánh của báo cáo** — trước đây so 1 ngày với 7 ngày nên cột chênh lệch luôn ra −80%.
+   Nay so **ngày hôm qua với ngày hôm trước**.
+5. **Thêm dòng "chi phí mỗi đơn" vào bảng so sánh** — đây là thủ phạm chính làm phần nhận định luôn
+   viết tiêu cực. Trước đây mọi dòng khác đều giảm nên AI kết luận "kém hiệu quả", trong khi chi phí
+   mỗi đơn lại rẻ đi.
+6. **Chờ lâu hơn khi Meta chặn** — Meta giới hạn ghi ~1 lần/30 giây; code cũ chờ 5–15 giây, không đủ.
+
+### ⚠️ Một điều máy nhà cần biết về token
+
+Token Meta của máy nhà hết hạn **10/11/2026** (máy công ty **** — hai máy khác ngày).
+Và từ 30/09/2026 token **đã có quyền GHI** (`ads_management`), nên agent **tắt nhóm thật** được.
+Kiểm tra token còn sống hay không: nhắn bot chữ `token`.
+
+---
+
+## 📅 CẬP NHẬT NGÀY 29/09/2026 — nếu máy nhà CHƯA làm bản này
+
+Nếu máy nhà đã làm xong bản 28/09 (Giai đoạn 2) thì chỉ còn **BA bước nhỏ**:
 
 1. **`git pull`** → nhận Giai đoạn 3 + 4 + 5.
 2. **Thêm `GEMINI_API_KEY` vào `.env`** — chìa khoá AI, lấy theo `HUONG-DAN-LAY-CHIA-KHOA-AI.md`

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mẫu báo cáo quảng cáo</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+:root, html[data-theme="dark"] {
+  --bg:#0a0d13; --bg-soft:#111722; --panel:#151c28; --border:#26313f;
+  --text:#e9edf4; --muted:#8794a8; --faint:#5d6a7d;
+  --spend:#f5b544; --purchase:#4ade80; --cpr:#60a5fa;
+  --good:#4ade80; --mid:#fbbf24; --bad:#f87171;
+  --good-bg:rgba(74,222,128,.14); --bad-bg:rgba(248,113,113,.14);
+  --mid-bg:rgba(251,191,36,.14); --bad-line:rgba(248,113,113,.38);
+}
+html[data-theme="light"] {
+  --bg:#f4f6f9; --bg-soft:#eaeef4; --panel:#fff; --border:#dfe5ee;
+  --text:#17202e; --muted:#5f6b7d; --faint:#97a1b0;
+  --spend:#b45309; --purchase:#15803d; --cpr:#1d4ed8;
+  --good:#15803d; --mid:#a16207; --bad:#b91c1c;
+  --good-bg:rgba(21,128,61,.11); --bad-bg:rgba(185,28,28,.10);
+  --mid-bg:rgba(161,98,7,.11); --bad-line:rgba(185,28,28,.30);
+}
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.6; padding:20px 16px 48px;
+  -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1000px; margin:0 auto; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:18px; }
+.brand { font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); font-weight:600; }
+.toggle { background:var(--panel); border:1px solid var(--border); color:var(--muted);
+  border-radius:999px; padding:6px 14px; font-size:12px; cursor:pointer; font-family:inherit; }
+.hero { background:var(--panel); border:1px solid var(--border); border-radius:18px;
+  padding:22px 24px; margin-bottom:14px; }
+.hero h1 { font-size:24px; font-weight:650; letter-spacing:-.01em; }
+.hero-sub { color:var(--muted); font-size:14px; margin-top:6px; }
+.chip { display:inline-block; background:var(--bg-soft); border:1px solid var(--border);
+  color:var(--muted); border-radius:999px; padding:3px 11px; font-size:12px;
+  margin-right:6px; margin-top:8px; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+.big { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 18px; }
+.big-label { font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:6px; }
+.big-value { font-size:29px; font-weight:680; letter-spacing:-.02em; line-height:1.15;
+  font-variant-numeric:tabular-nums; }
+.big.spend .big-value { color:var(--spend); }
+.big.purchase .big-value { color:var(--purchase); }
+.big.cpr .big-value { color:var(--cpr); }
+.big-unit { font-size:13px; font-weight:500; color:var(--muted); margin-left:5px; }
+.delta { display:inline-block; margin-top:8px; font-size:12px; font-weight:600;
+  border-radius:999px; padding:2px 9px; }
+.delta.good { color:var(--good); background:var(--good-bg); }
+.delta.bad { color:var(--bad); background:var(--bad-bg); }
+.delta.neu { color:var(--muted); background:var(--bg-soft); }
+.delta-note { font-size:11px; color:var(--faint); margin-top:6px; }
+.khoi { background:var(--panel); border:1px solid var(--border); border-radius:16px;
+  padding:18px 20px; margin-bottom:14px; }
+.khoi-label { font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:10px; }
+.khoi p { font-size:14.5px; margin-bottom:9px; }
+.khoi p:last-child { margin-bottom:0; }
+.khoi b { font-weight:650; }
+.khoi.canh-bao { border-color:var(--bad-line); }
+.viec { display:flex; gap:14px; padding:14px 0; border-top:1px solid var(--border); }
+.viec:first-of-type { border-top:none; padding-top:4px; }
+.viec-so { flex:0 0 26px; height:26px; border-radius:999px; background:var(--bg-soft);
+  border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:650;
+  display:flex; align-items:center; justify-content:center; }
+.viec-than { flex:1; min-width:0; }
+.viec-dau { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:5px; }
+.viec-ten { font-size:14px; font-weight:600; word-break:break-word; }
+.viec-ly { font-size:13px; color:var(--muted); line-height:1.6; }
+.tag { display:inline-block; font-size:11px; font-weight:650; border-radius:6px;
+  padding:2px 8px; white-space:nowrap; }
+.tag-bad { color:var(--bad); background:var(--bad-bg); }
+.tag-good { color:var(--good); background:var(--good-bg); }
+.tag-mid { color:var(--mid); background:var(--mid-bg); }
+h2 { font-size:15px; font-weight:600; margin-bottom:4px; }
+.note { font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+.table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; padding:0 10px 9px;
+  border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:11px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+td.ten { min-width:220px; }
+.thieu { color:var(--faint); font-style:italic; }
+.tot-item { display:flex; align-items:center; gap:12px; padding:9px 0;
+  border-top:1px solid var(--border); flex-wrap:wrap; }
+.tot-item:first-child { border-top:none; }
+.tot-cpr { font-weight:680; color:var(--good); font-variant-numeric:tabular-nums;
+  min-width:96px; }
+.tot-meta { font-size:12px; color:var(--muted); min-width:104px; }
+.tot-ten { font-size:13.5px; }
+.suckhoe { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+.sk { background:var(--bg-soft); border:1px solid var(--border); border-radius:12px;
+  padding:12px 14px; }
+.sk-nhan { font-size:11px; color:var(--muted); letter-spacing:.04em; }
+.sk-so { font-size:20px; font-weight:680; font-variant-numeric:tabular-nums;
+  margin-top:3px; }
+.sk-note { font-size:11px; color:var(--faint); margin-top:3px; }
+.bi-chan { display:flex; align-items:baseline; gap:12px; padding:8px 0;
+  border-top:1px solid var(--border); flex-wrap:wrap; }
+.bi-chan:first-child { border-top:none; }
+.bc-so { font-weight:680; color:var(--bad); font-variant-numeric:tabular-nums;
+  min-width:88px; font-size:13.5px; }
+.bc-tin { font-size:12px; color:var(--muted); min-width:118px; }
+.bc-ten { font-size:13px; }
+.dien-thoai { max-width:380px; margin:0 auto; background:#0e1621;
+  border:1px solid var(--border); border-radius:20px; padding:14px; }
+.tin { background:#1c2b3a; border-radius:14px; padding:13px 15px; font-size:13.5px;
+  line-height:1.62; color:#e9edf4; white-space:pre-wrap; word-break:break-word;
+  font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+.tin .d { color:#7f8ea3; }
+.sosanh { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sosanh > div { border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.sosanh .cu { border-color:var(--bad-line); }
+.sosanh h3 { font-size:12px; font-weight:650; margin-bottom:8px; }
+.sosanh .cu h3 { color:var(--bad); }
+.sosanh .moi h3 { color:var(--good); }
+.sosanh p { font-size:13px; color:var(--muted); }
+.sosanh b { color:var(--text); }
+footer { color:var(--faint); font-size:12px; margin-top:22px; line-height:1.8; }
+footer code { background:var(--bg-soft); border:1px solid var(--border);
+  border-radius:5px; padding:1px 6px; font-size:11.5px; }
+@media (max-width:640px) {
+  .grid, .sosanh { grid-template-columns:1fr; }
+  .suckhoe { grid-template-columns:1fr 1fr; }
+  .big-value { font-size:25px; }
+  .hero h1 { font-size:20px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Mẫu báo cáo — bản thử</div>
+    <button class="toggle" id="doi-mau" type="button">Nền sáng</button>
+  </div>
+
+  <div class="hero">
+    <h1>Báo cáo quảng cáo</h1>
+    <div class="hero-sub"></div>
+    <div>
+      <span class="chip">Kết quả ngày 30/09/2026</span>
+      <span class="chip">So với hôm trước 29/09</span>
+      <span class="chip">Việc cần làm: cập nhật 13:30 ngày 01/10</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="big spend">
+      <div class="big-label">Chi tiêu</div>
+      <div class="big-value">6.755.161<span class="big-unit">đ</span></div>
+      <div class="delta neu">▼ 62,9%</div>
+      <div class="delta-note">Hôm trước 18.188.330đ</div>
+    </div>
+    <div class="big purchase">
+      <div class="big-label">Lượt mua</div>
+      <div class="big-value">25</div>
+      <div class="delta bad">▼ 51,9%</div>
+      <div class="delta-note">Hôm trước 52</div>
+    </div>
+    <div class="big cpr">
+      <div class="big-label">Chi phí mỗi đơn</div>
+      <div class="big-value">270.206<span class="big-unit">đ</span></div>
+      <div class="delta good">▼ 22,7% · tốt lên</div>
+      <div class="delta-note">Hôm trước 349.776đ</div>
+    </div>
+  </div>
+
+  <div class="khoi">
+    <div class="khoi-label">Đọc đúng bản chất</div>
+    <p>Chi tiêu giảm <b>63%</b>, lượt mua giảm <b>52%</b>.
+    Nhưng đây <b>không phải dấu hiệu quảng cáo kém đi</b>: số chiến dịch còn chi tiền đã
+    giảm từ <b>16</b> xuống <b>6</b>. Sổ thao tác cho thấy chiều 29/09 — từ
+    <b>14:35 đến 17:20</b> — Đại đã tắt <b>13 chiến dịch</b>, cả ngày tắt <b>15 lượt</b>.
+    Đây là Đại <b>chủ động cắt</b>, không phải máy tự ngừng.</p>
+    <p>Xét trên hiệu quả thì chiều ngược lại: chi phí mỗi đơn giảm <b>22,7%</b>,
+    tức mỗi đơn <b>rẻ hơn 79.570đ</b>. Đây là <b>thu hẹp có chọn lọc</b>
+    — giữ lại phần chạy hiệu quả, cắt phần chạy kém.</p>
+  </div>
+
+  <div class="khoi canh-bao">
+    <div class="khoi-label">Cần khắc phục — 5 việc · cập nhật 13:30 ngày 01/10</div>
+    <div class="viec"><div class="viec-so">1</div><div class="viec-than"><div class="viec-dau"><span class="tag tag-bad">Tắt nhóm</span><span class="viec-ten">2026 - 09 - 07 - dainq - Scale - Online WEB+VIDEO</span></div><div class="viec-ly">Hôm nay chi <b>120.175đ</b>, có <b>2 tin nhắn</b> nhưng <b>chưa ra đơn nào</b>. Ngưỡng tắt khi đã có tin nhắn là <b>70.000đ</b>.</div></div></div><div class="viec"><div class="viec-so">2</div><div class="viec-than"><div class="viec-dau"><span class="tag tag-bad">Tắt nhóm</span><span class="viec-ten">2026 - 09 - 01 - dainq - Scale - Online LALWEB+TARGET</span></div><div class="viec-ly">Hôm nay chi <b>109.159đ</b>, có <b>4 tin nhắn</b> nhưng <b>chưa ra đơn nào</b>. Ngưỡng tắt khi đã có tin nhắn là <b>70.000đ</b>.</div></div></div><div class="viec"><div class="viec-so">3</div><div class="viec-than"><div class="viec-dau"><span class="tag tag-bad">Tắt nhóm</span><span class="viec-ten">2025 - 07 - 02 - dainq - Scale - Online WEB+VIDEO 120625 BL</span></div><div class="viec-ly">Hôm nay chi <b>96.110đ</b> mà <b>không có tin nhắn nào</b>. Ngưỡng tắt khi không có tin nhắn là <b>80.000đ</b>.</div></div></div><div class="viec"><div class="viec-so">4</div><div class="viec-than"><div class="viec-dau"><span class="tag tag-bad">Tắt nhóm</span><span class="viec-ten">2026 - 10 - 01 - dainq - Scale - Online A1</span></div><div class="viec-ly">Hôm nay chi <b>84.170đ</b> mà <b>không có tin nhắn nào</b>. Ngưỡng tắt khi không có tin nhắn là <b>80.000đ</b>.</div></div></div><div class="viec"><div class="viec-so">5</div><div class="viec-than"><div class="viec-dau"><span class="tag tag-mid">Đặt lại tên nhóm</span><span class="viec-ten">Chưa ghi trần chi phí vào tên nhóm</span></div><div class="viec-ly">Trong <b>7</b> nhóm chạy ngày 30/09, chỉ <b>3</b> nhóm có ghi <b>x/y</b> trong tên. Không có <b>y</b> thì không biết lấy mốc nào để phán nhóm nào đang tốt, nhóm nào đang tệ — báo cáo đành dùng mốc chung <b>400.000đ</b>, mà mốc đó <b>không đúng cho mọi nhóm</b>. Ví dụ hai nhóm trong bảng ngày 30/09 ở dưới: trần thật là 200.000đ và 160.000đ, đều <b>thấp hơn</b> 400.000đ rất nhiều.</div></div></div>
+  </div>
+
+  <div class="khoi">
+    <h2>Hệ thống có đang làm việc không</h2>
+    <div class="note">Phần này trả lời câu hỏi “sao hôm nay không thấy nó báo gì”.</div>
+    <div class="suckhoe">
+      <div class="sk">
+        <div class="sk-nhan">Nhịp quét</div>
+        <div class="sk-so">30 phút</div>
+        <div class="sk-note">một lần, suốt ngày</div>
+      </div>
+      <div class="sk">
+        <div class="sk-nhan">Đã quét hôm nay</div>
+        <div class="sk-so">23 lần</div>
+        <div class="sk-note">lần cuối 13:30</div>
+      </div>
+      <div class="sk">
+        <div class="sk-nhan">Đề xuất đã hỏi</div>
+        <div class="sk-so">3/3</div>
+        <div class="sk-note">đã dùng hết trần trong ngày</div>
+      </div>
+      <div class="sk">
+        <div class="sk-nhan">Máy ngủ</div>
+        <div class="sk-so">43 phút</div>
+        <div class="sk-note">12:46–13:30 (43 phút)</div>
+      </div>
+    </div>
+
+    <p><b>Agent vẫn chạy, vẫn quét đủ 23 lần.</b> Nhưng đến <b>12:07</b> nó đã dùng hết
+    trần <b>3 đề xuất một ngày</b>. Từ giờ đó trở đi nó <b>im lặng hoàn toàn</b> — kể cả
+    khi tìm ra nhóm cần tắt. Đó là lý do Đại phải tự tắt tay mà không nhận được tin nào.</p>
+
+    <p>Cộng thêm một chuyện ngoài tầm agent: <b>máy tính đã ngủ 43 phút</b>
+    (12:46–13:30 (43 phút)). Trong lúc máy ngủ thì <b>không chương trình nào chạy</b> — agent không quét
+    được, người trực cũng không. Khoảng đó trùng đúng giờ nghỉ trưa.</p>
+
+    <p><b>4 nhóm dưới đây đã vượt ngưỡng nhưng agent KHÔNG hỏi được</b> vì hết
+    trần. Đại phải tự xử lý:</p>
+    <div class="bi-chan"><span class="bc-so">84.170đ</span><span class="bc-tin">0 tin nhắn · 0 đơn</span><span class="bc-ten">2026 - 10 - 01 - dainq - Scale - Online A1</span></div><div class="bi-chan"><span class="bc-so">120.175đ</span><span class="bc-tin">2 tin nhắn · 0 đơn</span><span class="bc-ten">2026 - 09 - 07 - dainq - Scale - Online WEB+VIDEO</span></div><div class="bi-chan"><span class="bc-so">109.159đ</span><span class="bc-tin">4 tin nhắn · 0 đơn</span><span class="bc-ten">2026 - 09 - 01 - dainq - Scale - Online LALWEB+TARGET</span></div><div class="bi-chan"><span class="bc-so">96.110đ</span><span class="bc-tin">0 tin nhắn · 0 đơn</span><span class="bc-ten">2025 - 07 - 02 - dainq - Scale - Online WEB+VIDEO 120625 BL</span></div>
+
+    <div class="note" style="margin-top:14px;margin-bottom:6px">
+      Còn 0 suất trần cho phần còn lại của ngày.</div>
+
+    <div class="note" style="margin-bottom:6px"><b>Hôm nay agent đã hỏi Đại 3 nhóm:</b></div>
+    <div class="bi-chan"><span class="bc-so">07:51</span><span class="bc-tin">đã hỏi Đại</span><span class="bc-ten">2026 - 09 - 07 - dainq - Online - Scale Target+ Video(%)</span></div><div class="bi-chan"><span class="bc-so">08:22</span><span class="bc-tin">đã hỏi Đại</span><span class="bc-ten">2026 - 09 - 04 - dainq - Scale - Online A4</span></div><div class="bi-chan"><span class="bc-so">11:58</span><span class="bc-tin">đã hỏi Đại</span><span class="bc-ten">2026 - 09 - 29 - dainq - Scale - Offline A4</span></div>
+  </div>
+
+  <div class="khoi">
+    <h2>Nhóm đang chạy tốt</h2>
+    <div class="note">Chỉ xét nhóm đã có từ 3 đơn trở lên trong tháng — 1–2 đơn chưa đủ
+      để kết luận. Xếp theo chi phí mỗi đơn, rẻ nhất trước.</div>
+    <div class="note" style="margin:0">Hôm nay chưa có nhóm nào đủ 3 đơn để xếp hạng.</div>
+  </div>
+
+  <div class="khoi">
+    <h2>Nhóm quảng cáo chạy ngày 30/09</h2>
+    <div class="note">Cấp nhóm là nơi Đại thật sự thao tác. Cột <b>Trần</b> lấy từ phần
+      <code>x/y</code> trong tên nhóm — chưa ghi thì để trống, và khi đó báo cáo không thể
+      phán đúng nhóm đó.</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Tên nhóm</th><th class="num">Chi tiêu</th><th class="num">Đơn</th>
+          <th class="num">Chi phí / đơn</th><th class="num">Trần</th><th>Tình trạng</th>
+        </tr></thead>
+        <tbody><tr><td class="ten">2026 - 09 - 07 - dainq - Online - Scale Target+ Video(%) 0/200 X10</td><td class="num">2.213.657</td><td class="num">10</td><td class="num">316.987</td><td class="num">200.000</td><td><span class="tag tag-bad">Vượt trần</span></td></tr><tr><td class="ten">2026 - 09 - 04 - dainq - Scale - Online A4</td><td class="num">1.430.949</td><td class="num">5</td><td class="num">338.978</td><td class="num"><span class="thieu">chưa ghi</span></td><td><span class="tag tag-mid">Bình thường</span></td></tr><tr><td class="ten">2026 - 09 - 05 - dainq - Scale - Online A4</td><td class="num">1.092.777</td><td class="num">4</td><td class="num">309.302</td><td class="num"><span class="thieu">chưa ghi</span></td><td><span class="tag tag-mid">Bình thường</span></td></tr><tr><td class="ten">2026 - 09 - 04 - dainq - Online - Scale A2</td><td class="num">892.213</td><td class="num">3</td><td class="num">303.794</td><td class="num"><span class="thieu">chưa ghi</span></td><td><span class="tag tag-mid">Bình thường</span></td></tr><tr><td class="ten">2026 - 09 - 18 - dainq - Scale - Online LAL+Target 0/160 X10</td><td class="num">746.880</td><td class="num">2</td><td class="num">296.811</td><td class="num">160.000</td><td><span class="tag tag-bad">Vượt trần</span></td></tr><tr><td class="ten">2026 - 09 - 30 - dainq - Scale - Online</td><td class="num">285.713</td><td class="num">1</td><td class="num">285.713</td><td class="num"><span class="thieu">chưa ghi</span></td><td><span class="tag tag-mid">Bình thường</span></td></tr><tr><td class="ten">2026 - 09 - 30 - dainq - Scale - Online 0/160 X9</td><td class="num">93.198</td><td class="num">0</td><td class="num">—</td><td class="num">160.000</td><td><span class="tag tag-bad">Không ra đơn</span></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="khoi">
+    <h2>Các chỉ số khác</h2>
+    <div class="note">Bắt đầu trò chuyện <b>62</b> · Người liên hệ mới
+      <b>57</b> · Đơn đặt hàng <b>25</b> · Lượt thanh toán
+      <b>25</b> · Bình luận <b>1</b></div>
+  </div>
+
+  <div class="khoi">
+    <h2>Tin nhắn Telegram sẽ gửi</h2>
+    <div class="note">Phần này ngắn để đọc trên điện thoại. Việc chi tiết nằm trong file
+      HTML — không nhồi hết vào tin nhắn.</div>
+    <div class="dien-thoai">
+      <div class="tin">🔴 <b>BÁO CÁO QUẢNG CÁO — 30/09/2026</b>
+
+
+📊 <b>KẾT QUẢ</b> <span class="d">(so với hôm trước)</span>
+Chi tiêu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6.755.161đ &nbsp;▼ 63%
+Lượt mua&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 25 &nbsp;▼ 52%
+Chi phí mỗi đơn &nbsp;270.206đ &nbsp;▼ 23% ✅
+
+🧭 <b>ĐỌC ĐÚNG</b>
+Giảm <b>không phải vì kém đi</b>: chiều 29/09 Đại tắt 12 chiến
+dịch nên 30/09 chỉ còn 6 chiến dịch chạy. Tính trên hiệu quả
+thì <b>tốt lên</b> — mỗi đơn rẻ hơn 79.570đ.
+
+⚠️ <b>CẦN KHẮC PHỤC</b> <span class="d">(5 việc)</span>
+<b>1. Tắt 4 nhóm đã chi tiền mà không ra đơn:</b>
+   · 2026 - 09 - 07 - dainq - Scale - Online WEB+<br>&nbsp;&nbsp;&nbsp;&nbsp;120.175đ, 2 tin nhắn, 0 đơn<br>   · 2026 - 09 - 01 - dainq - Scale - Online LALW<br>&nbsp;&nbsp;&nbsp;&nbsp;109.159đ, 4 tin nhắn, 0 đơn<br>   · 2025 - 07 - 02 - dainq - Scale - Online WEB+<br>&nbsp;&nbsp;&nbsp;&nbsp;96.110đ, 0 tin nhắn, 0 đơn<br>   · 2026 - 10 - 01 - dainq - Scale - Online A1<br>&nbsp;&nbsp;&nbsp;&nbsp;84.170đ, 0 tin nhắn, 0 đơn<br><b>2. Đặt lại tên nhóm:</b> 7 nhóm chạy ngày 30/09
+&nbsp;&nbsp;&nbsp;chỉ 3 nhóm ghi trần x/y → báo cáo không
+&nbsp;&nbsp;&nbsp;biết lấy mốc nào để phán đúng.
+
+🔧 <b>HỆ THỐNG</b>
+Quét 30 phút/lần · hôm nay quét 23 lần, lần cuối 13:30.
+Đã hỏi 3/3 nhóm → <b>hết suất cho hôm nay</b>, nên từ
+12:07 agent <b>im lặng</b> dù còn 4 nhóm cần tắt.
+Máy ngủ 43 phút (12:46–13:30 (43 phút)).
+
+📄 Mở file HTML để xem bảng đầy đủ.</div>
+    </div>
+  </div>
+
+  <div class="khoi">
+    <h2>Phụ lục — bản báo cáo đang chạy sai ở đâu</h2>
+    <div class="note">Cùng một ngày 30/09, hai cách đặt phép so sánh cho ra hai kết luận
+      ngược nhau.</div>
+    <div class="sosanh">
+      <div class="cu">
+        <h3>Bản đang chạy</h3>
+        <p>So <b>1 ngày</b> (30/09) với <b>7 ngày</b> (23–29/09) rồi ghi thẳng ra cột
+        chênh lệch. Vì 1 ngày luôn nhỏ hơn 7 ngày, kết quả gần như <b>luôn là −80%</b>
+        — bất kể Đại làm ăn tốt lên hay xấu đi.</p>
+        <p>Kết luận AI viết: <i>“chi tiêu giảm 82%, đơn giảm 73%… hiệu quả tổng thể
+        chưa được tốt”</i>.</p>
+      </div>
+      <div class="moi">
+        <h3>Bản mẫu này</h3>
+        <p>So <b>1 ngày</b> với <b>1 ngày</b> (30/09 với 29/09) — phải cùng độ dài mới so
+        được. Rồi đối chiếu với sổ thao tác để giải thích vì sao số lại đổi.</p>
+        <p>Kết luận: <i>“chi tiêu giảm 63% vì Đại tắt bớt 10 chiến
+        dịch; hiệu quả tốt lên 23%”</i>.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>Bộ lọc: tên chứa <code>dainq</code> · loại trừ
+      <code>thuonghieu, thương hiệu, Brand</code> · điều kiện <code>chi tiêu &gt; 0</code></div>
+    <div>Chi phí / đơn = chi tiêu ÷ lượt mua (— nghĩa là chưa có lượt mua)</div>
+    <div>⚠️ Meta báo đơn TRỄ. Số của ngày đang chạy có thể còn tăng sau khi báo cáo được tạo.</div>
+    <div>Bản thử dựng ngày 01/10/2026 từ số liệu thật của Meta. <b>Chưa nối vào hệ thống
+      đang chạy.</b></div>
+  </footer>
+
+</div>
+<script>
+(function () {
+  var nut = document.getElementById('doi-mau');
+  var goc = document.documentElement;
+  nut.addEventListener('click', function () {
+    var toi = goc.getAttribute('data-theme') === 'dark';
+    goc.setAttribute('data-theme', toi ? 'light' : 'dark');
+    nut.textContent = toi ? 'Nền tối' : 'Nền sáng';
+  });
+})();
+</script>
+</body>
+</html>

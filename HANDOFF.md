@@ -1,31 +1,44 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **THÊM NHÀ CUNG CẤP AI THỨ HAI (Nous Research)** — chờ Đại dán chìa khoá
-· **báo cáo ngày bất kỳ** · **agent sở hữu Telegram** · **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h**
-· **đã đẩy GitHub (`3cf252c`)**. Bộ kiểm thử: **630/630 đạt**.
-🐛 **3 LỖI THẬT đã bắt và sửa hôm nay:** khoá không ghi PID (agent từ chối chạy gần 1 giờ) · câu trả lời
-*“Lần gửi gần nhất”* nói sai · **trần đề xuất bị tiêu tốn gấp đôi** (agent im lặng giữa ngày).
-📌 **Máy nhà:** `git pull` để nhận tới `3cf252c`.
-✅ **Đại đã tự thử báo cáo ngày bất kỳ và thành công (11:44):** *“AGENT: da gui bao cao ngay 21/09/2026”*.
-🐛 **3 LỖI THẬT đã bắt và sửa hôm nay:** khoá không ghi PID (agent từ chối chạy gần 1 giờ) ·
-câu trả lời *“Lần gửi gần nhất”* nói sai · **trần đề xuất bị tiêu tốn gấp đôi** (agent im lặng giữa ngày).
-📌 **Máy nhà:** `git pull` để nhận tới `9b64edc`.
-✅ **Đại đã tự thử và thành công (01/10/2026, 11:44):** `AGENT: da gui bao cao ngay 21/09/2026`.
-🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
-khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
-📌 **Máy nhà:** `git pull` để nhận tới `af38f07`.
-🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
-khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
-📌 **Máy nhà:** `git pull` để nhận tới `42b0e9d`.
-🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
-khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
-📌 **Máy nhà:** `git pull` để nhận tới `e54715e`.
-🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
-khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
-📌 **Máy nhà:** `git pull` để nhận tới `4f87a10`.
-🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
-khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật (xem mục “Chưa làm”).
-📌 **Máy nhà:** `git pull` để nhận tới `b8dfcab` (nấc 2 + chạy ngầm + sửa lỗi khoá).
+**Cập nhật lần cuối:** 01/10/2026 (chiều) — **LUẬT TẮT NHÓM MỚI (3 trường hợp) + TẮT QUẢNG CÁO + ĐỔI TÊN NHÓM
++ SỬA PHÉP SO SÁNH CỦA BÁO CÁO + BỎ TRẦN ĐỀ XUẤT**. Đã đẩy GitHub tới **`bca174c`**.
+Bộ kiểm thử: **659/659 đạt**.
+
+🐛 **4 LỖI THẬT đã bắt và sửa hôm nay:**
+1. **Trần đề xuất bị chạm là IM LẶNG** — hết 3 nhóm/ngày thì agent không nói gì nữa dù vẫn tìm ra
+   nhóm cần tắt. Đại tưởng hỏng. → **Đã bỏ trần** (`0` = không giới hạn), và mọi nhánh nay **đều ghi log**.
+2. **Báo cáo so 1 ngày với 7 ngày** → cột chênh lệch luôn ra −80% bất kể tốt lên hay xấu đi.
+   → Nay so **ngày hôm qua với ngày hôm trước**.
+3. **Bảng so sánh THIẾU dòng "chi phí mỗi đơn"** → mọi dòng khác đều giảm nên AI luôn viết "kém hiệu quả",
+   trong khi chi phí mỗi đơn **giảm 22%**. → Đã thêm dòng đó và ghi rõ chiều `RẺ HƠN / ĐẮT HƠN`.
+   **Đây mới là thủ phạm chính làm nhận định luôn tiêu cực.**
+4. **Meta giới hạn GHI ~1 lần/30 giây** (`#613`) — code cũ chờ 5–15 giây, **không đủ**. → Nay chờ 35 giây.
+
+📌 **Máy nhà:** `git pull` để nhận tới **`bca174c`**. Sau đó **phải khởi động lại agent** (đổi code,
+không phải chỉ đổi `.env`). Chi tiết từng bước: xem `HUONG-DAN-MAY-NHA.md`.
+
+⚠️ **CẢNH BÁO QUAN TRỌNG CHO MÁY NHÀ:** luật tắt nhóm **đã đổi hoàn toàn**. Máy nhà nếu chạy code cũ
+sẽ tắt nhóm theo ngưỡng cũ (70.000đ cho nhóm có tin nhắn) — **tắt oan rất nhiều nhóm**. Phải `git pull`
+và khởi động lại trước khi để agent chạy thật.
+
+**Cùng ngày, trước đó:** thêm **nhà cung cấp AI thứ hai (Nous Research)** · **agent sở hữu Telegram**
+· **chạy ngầm không cửa sổ** · **agent tự ghi lịch sử** · **bỏ mốc 12h** · **báo cáo ngày bất kỳ**
+· **chỉ nhận ngày đủ năm**.
+
+**Trước đó (30/09/2026):** **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
+camp đang chi tiền mà 0 đơn) và tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất.
+**AI chỉ đề xuất, chưa thực hiện gì.** `487/487` kiểm thử đạt. Đại cũng đã **duyệt bản định nghĩa
+AI Agent** và chốt đích là "tự hành có trần".
+Trước đó (29/09): **Giai đoạn 5 xong** (tự xử lý lỗi), đổi mẫu báo cáo (tin nhắn Telegram còn
+**tiêu đề + tài khoản + TÓM TẮT**, phần NHẬN ĐỊNH và hai bảng xếp hạng chuyển vào **file HTML**),
+và kết luận **token Meta KHÔNG tự gia hạn được**.
+
+> ⏭️ **Việc tiếp theo nằm ở MÁY NHÀ:** `git pull` để nhận GĐ3 + GĐ4 + GĐ5 + bản đổi mẫu báo cáo +
+> **nấc 1**, **nấc 2**, và **luật 3 trường hợp mới nhất**, rồi thêm `GEMINI_API_KEY` vào `.env`
+> (`.env` không đi theo `git pull`) và **thêm hai khoá `DE_XUAT_NGUONG_CHI`, `DE_XUAT_TOI_DA`**
+> (thiếu cũng chạy, vì code có mặc định). **Đổi `AGENT_TOI_DA_NGAY=3` thành `=0`** trong `.env`
+> nếu máy nhà đã có khoá này (0 = không giới hạn).
+> Xem `HUONG-DAN-MAY-NHA.md`, `HUONG-DAN-LAY-CHIA-KHOA-AI.md` và `HUONG-DAN-CAI-LAI-MAY-NHA.md`.
 
 **Trước đó (30/09/2026):** **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
 camp đang chi tiền mà 0 đơn) và tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất.
@@ -90,6 +103,21 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
 
 ### Chưa làm
 
+- 🆕 **Luật 3 trường hợp — ĐÃ THI CÔNG XONG (01/10/2026, chiều).** Kế hoạch + kết quả dựng thử:
+  `docs/superpowers/plans/2026-10-01-ba-truong-hop-tat-nhom.md`. Cùng ngày còn một kế hoạch nữa:
+  `docs/superpowers/plans/2026-10-01-bo-tran-de-xuat.md` (bỏ trần đề xuất).
+  **Luật đang chạy — xem mục "Cách Đại chạy quảng cáo" trong `TONG-HOP-CACH-CHAY-QUANG-CAO.md`.**
+- ⏳ **Sửa bẫy "agent chỉ đọc `.env` một lần lúc khởi động".** Vòng lặp agent có đọc lại `.env` mỗi
+  15 giây nhưng **chỉ giữ các khoá `AGENT_*`**, phần còn lại bị vứt. Nghĩa là đổi **khoá AI,
+  `TELEGRAM_*`, `META_*`** thì **PHẢI khởi động lại agent**. Câu ghi trong `khoi-dong-lai-agent.bat`
+  (*"đổi `.env` không cần bấm file này"*) **SAI** với các khoá đó — cần sửa cả code lẫn câu chữ.
+- ⏳ **Cập nhật `TONG-HOP-CACH-CHAY-QUANG-CAO.md` và `CAU-HOI-CACH-CARE-QUANG-CAO.md`** cho khớp
+  luật 3 trường hợp (đã làm phần chính ngày 01/10/2026).
+- ⏳ **3–4 kiểu giao diện file HTML** — Đại đã chốt hướng (làm sẵn vài kiểu, AI tự chọn kiểu),
+  **chưa thi công**.
+- ⏳ **Nấc 3 "tự hành có trần"** — chưa bắt đầu. **"Tăng tiền nhóm" CHƯA có** (nấc 2 chỉ `tam_dung`).
+- 💭 Đại đang cân nhắc **Nous/Hermes cloud** để chạy 24/7 — nhưng muốn bản local chạy tốt trước.
+  ⚠️ **Máy ngủ là mất việc thật**: 01/10 máy ngủ 12:46→13:30, không tiến trình nào chạy.
 - 🆕 **Nấc 1 đã thi công xong (30/09/2026)** — AI đề xuất tạm dừng camp, có rào kiểm bằng code.
   Kế hoạch + kết quả kiểm chứng: `docs/superpowers/plans/2026-09-29-nac-1-de-xuat-tam-dung-camp.md`
   (**đọc mục "Kế hoạch này ĐÃ ĐƯỢC KIỂM CHỨNG" ở đầu file** — có hai lỗi thật của kế hoạch
