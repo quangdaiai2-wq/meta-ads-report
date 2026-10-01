@@ -37,9 +37,11 @@ MAC_DINH = {
     "AGENT_MUC": 2,
     "AGENT_TAP_SU": True,
     "AGENT_NHIP_PHUT": 30,
-    "AGENT_TOI_DA_NGAY": 3,
-    "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 1,
-    "AGENT_TOI_DA_CHO": 3,
+    # 0 = KHONG GIOI HAN. Doi 01/10/2026 theo yeu cau cua Dai.
+    # Truoc day 3/1/3 khien agent hoi duoc 3 nhom roi IM LANG suot ngay.
+    "AGENT_TOI_DA_NGAY": 0,
+    "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+    "AGENT_TOI_DA_CHO": 0,
 }
 
 
@@ -125,32 +127,67 @@ def _dem_nhom_da_hoi_hom_nay(ban_ghi, bay_gio):
 
 
 def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio):
-    """Tra ve danh sach de xuat QUA DUOC rao an toan."""
+    """Tra ve danh sach de xuat QUA DUOC rao an toan.
+
+    MOI TRAN DAT 0 = KHONG GIOI HAN.
+
+    LOI THAT 01/10/2026 — vi sao ham nay phai GHI LOG moi nhanh:
+    Ban cu co ba cho `break` thoat IM LANG (het tran vong / het tran cho / het
+    tran ngay). Dai hoi du 3 nhom luc 12:07 roi agent im lang suot buoi chieu:
+    no VAN quet, VAN tim ra nhom can tat, nhung khong hoi duoc va cung khong
+    bao gi. Dai tuong no hong, phai tu tat tay.
+    Nay moi nhanh deu ghi log, va cuoi ham luon co MOT dong tong ket.
+    """
     duyet = []
     lich_su = agent_ky_uc.dem_hanh_dong(bay_gio)
     lich_su["nhom_da_tra_loi"] = agent_ky_uc.nhom_da_tra_loi(bay_gio)
     da_cho = set(agent_ky_uc.ma_dang_cho(bay_gio))
     nhom_da_hoi_hom_nay = _dem_nhom_da_hoi_hom_nay(agent_ky_uc.doc(), bay_gio)
     dem_de_xuat_hom_nay = nhom_da_hoi_hom_nay
-    con_lai = cau_hinh["AGENT_TOI_DA_DE_XUAT_MOI_VONG"]
 
-    for d in agent_muc_tieu.xet(nhom, hom_nay, thang, loai_ten):
-        if con_lai <= 0:
+    tran_vong = cau_hinh["AGENT_TOI_DA_DE_XUAT_MOI_VONG"]
+    tran_cho = cau_hinh["AGENT_TOI_DA_CHO"]
+    tran_ngay = cau_hinh["AGENT_TOI_DA_NGAY"]
+
+    tat_ca = agent_muc_tieu.xet(nhom, hom_nay, thang, loai_ten)
+    bo_qua_dang_cho = 0
+    bi_rao_chan = 0
+    dung_som = None
+
+    for d in tat_ca:
+        ten_ngan = d["doi_tuong"]["ten"][:40]
+        ma = str(d["doi_tuong"]["id"])
+
+        if tran_vong > 0 and len(duyet) >= tran_vong:
+            dung_som = f"da du {tran_vong} de xuat moi vong"
             break
-        if str(d["doi_tuong"]["id"]) in da_cho:
+        if ma in da_cho:
+            bo_qua_dang_cho += 1
             continue
-        if len(da_cho) >= cau_hinh["AGENT_TOI_DA_CHO"]:
+        if tran_cho > 0 and len(da_cho) >= tran_cho:
+            dung_som = f"da co {tran_cho} nhom dang cho Dai tra loi"
             break
-        if dem_de_xuat_hom_nay >= cau_hinh["AGENT_TOI_DA_NGAY"]:
+        if tran_ngay > 0 and dem_de_xuat_hom_nay >= tran_ngay:
+            dung_som = f"hom nay da hoi du {tran_ngay} nhom"
             break
+
         ok, ly = agent_rao.kiem(d, lich_su, bay_gio)
         if not ok:
-            report.log(f"AGENT: chan de xuat {d['doi_tuong']['ten'][:40]!r}: {ly}")
+            bi_rao_chan += 1
+            report.log(f"AGENT: chan de xuat {ten_ngan!r}: {ly}")
             continue
         duyet.append(d)
-        da_cho.add(str(d["doi_tuong"]["id"]))
+        da_cho.add(ma)
         dem_de_xuat_hom_nay += 1
-        con_lai -= 1
+
+    # Mot dong TONG KET, luon ghi. Day la dong tra loi cau hoi "no co lam gi khong".
+    if tat_ca or dung_som:
+        report.log(
+            f"AGENT: {len(tat_ca)} nhom cham nguong — hoi {len(duyet)}, "
+            f"bo qua {bo_qua_dang_cho} (dang cho Dai tra loi), "
+            f"chan {bi_rao_chan} (rao an toan)"
+            + (f", DUNG SOM: {dung_som}" if dung_som else "")
+        )
     return duyet
 
 

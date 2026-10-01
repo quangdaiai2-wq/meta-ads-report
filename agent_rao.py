@@ -23,8 +23,14 @@ RE_MA_CONTENT = re.compile(r"^[A-Z]{2,}\d")
 
 MOC_CPR = 400000          # chi phi moi luot mua toi da (moc CO DINH, khong doi)
 NGAN_SACH_HA = 27000      # ngan sach ha ve khi tat
-TOI_DA_NGAY = 3           # tran hanh dong moi ngay
-TOI_DA_GIO = 1            # tran hanh dong moi gio
+# Tran hanh dong. 0 = KHONG GIOI HAN.
+# Doi 01/10/2026 theo yeu cau cua Dai: "khong gioi han so lan bao".
+# Vi sao bo: moi hanh dong deu PHAI co Dai bam nut moi chay, nen tran nay khong
+# ngan duoc agent lam bua — no chi ngan CHINH DAI lam viec. Thuc te 01/10: Dai
+# tat 1 nhom luc 12:07 thi ca gio sau khong tat duoc nhom nao nua.
+# Muon dat lai tran: sua hai so duoi day (vi du 20 va 5).
+TOI_DA_NGAY = 0           # tran hanh dong moi ngay (0 = khong gioi han)
+TOI_DA_GIO = 0            # tran hanh dong moi gio (0 = khong gioi han)
 HAN_CHO_PHUT = 24 * 60    # de xuat qua 24 gio thi het hieu luc
 HAN_HOI_LAI_PHUT = 24 * 60  # khong hoi lai nhom da co cau tra loi trong 24 gio
 HAN_HOAN_TAC_PHUT = 24 * 60  # chi duoc bat lai trong 24 gio ke tu luc tat
@@ -211,12 +217,12 @@ def kiem(de_xuat, lich_su=None, bay_gio=None):
             if t_cu is not None and (goc - t_cu) < timedelta(minutes=HAN_HOI_LAI_PHUT):
                 return False, "Nhóm này Đại đã trả lời trong 24 giờ qua"
 
-        # --- Rao 5: han muc hanh dong ---
+        # --- Rao 5: han muc hanh dong (0 = khong gioi han) ---
         n_ngay = _so(ls.get("so_hanh_dong_hom_nay")) or 0
         n_gio = _so(ls.get("so_hanh_dong_gio_nay")) or 0
-        if n_ngay >= TOI_DA_NGAY:
+        if TOI_DA_NGAY > 0 and n_ngay >= TOI_DA_NGAY:
             return False, f"Hôm nay đã đủ {TOI_DA_NGAY} hành động"
-        if n_gio >= TOI_DA_GIO:
+        if TOI_DA_GIO > 0 and n_gio >= TOI_DA_GIO:
             return False, "Giờ này đã có một hành động rồi"
 
         return True, "cho phép"

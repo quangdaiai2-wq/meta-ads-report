@@ -18,6 +18,12 @@ cache/
 *.tmp
 .DS_Store
 
+# --- BẢN SAO LƯU TRƯỚC KHI SỬA (giữ trên máy, không lên GitHub) ---
+# Lý do: mỗi lần sửa code đều tạo một bản .bak để lùi được. Đưa hết lên GitHub
+# thì repo phình ra vô ích, mà lịch sử Git đã giữ nguyên bản cũ rồi.
+*.bak
+*.bak-*
+
 # --- THƯ MỤC CÔNG CỤ (không cần đồng bộ) ---
 .workbuddy-ai/
 .superpowers/

@@ -95,12 +95,31 @@ class A_RaoAnToan(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("27.000", ly)
 
-    def test_du_3_hanh_dong_hom_nay_thi_chan(self):
+    def test_mac_dinh_khong_gioi_han_hanh_dong(self):
+        """Mac dinh TOI_DA_NGAY / TOI_DA_GIO = 0 nghia la KHONG GIOI HAN.
+
+        Doi 01/10/2026 theo yeu cau cua Dai. Truoc day tran 3/ngay + 1/gio
+        khien Dai tat 1 nhom luc 12:07 thi ca gio sau khong tat duoc nhom nao
+        nua — trong khi moi hanh dong deu PHAI co Dai bam nut moi chay.
+        """
+        self.assertEqual(agent_rao.TOI_DA_NGAY, 0)
+        self.assertEqual(agent_rao.TOI_DA_GIO, 0)
+        ok, ly = kiem(dx(), {"so_hanh_dong_hom_nay": 50, "so_hanh_dong_gio_nay": 9})
+        self.assertTrue(ok, ly)
+
+    def test_dat_lai_tran_ngay_thi_van_chan(self):
+        """Cua dat lai tran phai con dung — khong duoc vo hanh vi nay."""
+        cu = agent_rao.TOI_DA_NGAY
+        agent_rao.TOI_DA_NGAY = 3
+        self.addCleanup(setattr, agent_rao, "TOI_DA_NGAY", cu)
         ok, ly = kiem(dx(), {"so_hanh_dong_hom_nay": 3, "so_hanh_dong_gio_nay": 0})
         self.assertFalse(ok)
         self.assertIn("Hôm nay", ly)
 
-    def test_da_co_hanh_dong_gio_nay_thi_chan(self):
+    def test_dat_lai_tran_gio_thi_van_chan(self):
+        cu = agent_rao.TOI_DA_GIO
+        agent_rao.TOI_DA_GIO = 1
+        self.addCleanup(setattr, agent_rao, "TOI_DA_GIO", cu)
         ok, ly = kiem(dx(), {"so_hanh_dong_hom_nay": 1, "so_hanh_dong_gio_nay": 1})
         self.assertFalse(ok)
         self.assertIn("Giờ này", ly)
@@ -525,6 +544,99 @@ class G2_DemDeXuat(_KhongGhiLog, unittest.TestCase):
         self.assertEqual(agent._dem_nhom_da_hoi_hom_nay([], t), 0)
         self.assertEqual(agent._dem_nhom_da_hoi_hom_nay(None, t), 0)
         self.assertEqual(agent._dem_nhom_da_hoi_hom_nay([None, "x", {}], t), 0)
+
+
+class G3_KhongTranDeXuat(_KhongGhiLog, unittest.TestCase):
+    """Doi 01/10/2026: BO TRAN de xuat — hoi HET nhom cham nguong trong mot lan quet.
+
+    Loi that: cau hinh cu (3/ngay, 1/vong, 3/cho) khien agent hoi du 3 nhom roi
+    IM LANG suot ngay. No van quet, van tim ra nhom can tat, nhung ba nhanh
+    `break` thoat ma KHONG ghi mot dong nao — Dai tuong no hong, phai tu tat tay.
+    """
+
+    def setUp(self):
+        super().setUp()
+        import agent
+        self.agent = agent
+        self.t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
+        self.nhat_ky = []
+        report.log = lambda chu: self.nhat_ky.append(str(chu))
+        self._that = {}
+        for ten, gia in (("doc", []), ("ma_dang_cho", []),
+                         ("nhom_da_tra_loi", {}),
+                         ("dem_hanh_dong", {"so_hanh_dong_hom_nay": 0,
+                                            "so_hanh_dong_gio_nay": 0})):
+            self._that[ten] = getattr(agent_ky_uc, ten)
+            setattr(agent_ky_uc, ten, (lambda g: (lambda *a, **k: g))(gia))
+        self.addCleanup(self._tra_lai)
+
+    def _tra_lai(self):
+        for ten, fn in self._that.items():
+            setattr(agent_ky_uc, ten, fn)
+
+    def _du_lieu(self, n):
+        """n nhom deu cham nguong: chi 90.000d hom nay, khong tin nhan, 0 don."""
+        nhom_, hom_nay, thang = [], {}, {}
+        for i in range(n):
+            ma = "10000000000000%02d" % i
+            nhom_.append({"id": ma,
+                          "name": "2026 - 09 - %02d - dainq - Scale" % (i + 1),
+                          "effective_status": "ACTIVE", "daily_budget": None})
+            hom_nay[ma] = {"adset_id": ma, "spend": "90000", "actions": []}
+            thang[ma] = {"adset_id": ma, "spend": "90000", "actions": []}
+        return nhom_, hom_nay, thang
+
+    def test_mac_dinh_hoi_HET_6_nhom(self):
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 0, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+                    "AGENT_TOI_DA_CHO": 0}
+        ra = self.agent._xet_de_xuat(*self._du_lieu(6), ["thuonghieu"],
+                                     cau_hinh, self.t)
+        self.assertEqual(len(ra), 6, "phai hoi HET 6 nhom, khong dung som")
+
+    def test_dat_lai_tran_ngay_thi_dung_som_NHUNG_co_ghi_log(self):
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 3, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+                    "AGENT_TOI_DA_CHO": 0}
+        ra = self.agent._xet_de_xuat(*self._du_lieu(6), ["thuonghieu"],
+                                     cau_hinh, self.t)
+        self.assertEqual(len(ra), 3)
+        self.assertTrue(any("DUNG SOM" in d for d in self.nhat_ky),
+                        "bi chan thi PHAI ghi log — day chinh la loi 01/10/2026")
+
+    def test_dat_lai_tran_vong_thi_dung_som_NHUNG_co_ghi_log(self):
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 0, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 1,
+                    "AGENT_TOI_DA_CHO": 0}
+        ra = self.agent._xet_de_xuat(*self._du_lieu(6), ["thuonghieu"],
+                                     cau_hinh, self.t)
+        self.assertEqual(len(ra), 1)
+        self.assertTrue(any("DUNG SOM" in d for d in self.nhat_ky))
+
+    def test_luon_co_dong_tong_ket(self):
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 0, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+                    "AGENT_TOI_DA_CHO": 0}
+        self.agent._xet_de_xuat(*self._du_lieu(4), ["thuonghieu"], cau_hinh, self.t)
+        self.assertTrue(any("cham nguong" in d for d in self.nhat_ky),
+                        "cuoi ham LUON phai co mot dong tong ket")
+
+    def test_khong_cham_nguong_thi_im_lang(self):
+        """Khong co nhom nao cham nguong thi khong ghi gi — nhat ky khoi rac."""
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 0, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+                    "AGENT_TOI_DA_CHO": 0}
+        n, h, t = self._du_lieu(2)
+        for k in h:
+            h[k] = {"adset_id": k, "spend": "10000", "actions": []}
+            t[k] = {"adset_id": k, "spend": "10000", "actions": []}
+        ra = self.agent._xet_de_xuat(n, h, t, ["thuonghieu"], cau_hinh, self.t)
+        self.assertEqual(ra, [])
+        self.assertEqual(self.nhat_ky, [])
+
+    def test_khong_hoi_lai_nhom_dang_cho(self):
+        cau_hinh = {"AGENT_TOI_DA_NGAY": 0, "AGENT_TOI_DA_DE_XUAT_MOI_VONG": 0,
+                    "AGENT_TOI_DA_CHO": 0}
+        n, h, t = self._du_lieu(3)
+        agent_ky_uc.ma_dang_cho = lambda *a, **k: [n[0]["id"]]
+        ra = self.agent._xet_de_xuat(n, h, t, ["thuonghieu"], cau_hinh, self.t)
+        self.assertEqual(len(ra), 2)
+        self.assertNotIn(n[0]["id"], {d["doi_tuong"]["id"] for d in ra})
 
 
 class H_NutBam(_KhongGhiLog, unittest.TestCase):
