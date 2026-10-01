@@ -1,9 +1,11 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **AGENT ĐÃ SỞ HỮU TELEGRAM** (bước 2–4 của kế hoạch
-chuyển nhà): agent tự đọc tin, tự trả lời câu hỏi, tự xử lý nút bấm; `nguoi_truc.py` **chỉ còn gửi báo cáo**.
-Kèm: **chạy ngầm xong** · **agent tự ghi lịch sử xong** · **đã đẩy GitHub (`4f87a10`)**.
-Bộ kiểm thử: **603/603 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **AGENT SỞ HỮU TELEGRAM** · **BÁO CÁO THEO YÊU CẦU**
+(nhắn *“báo cáo”* là agent gửi tin báo cáo + **file HTML**) · **chạy ngầm** ·
+**agent tự ghi lịch sử** · **đã đẩy GitHub (`e54715e`)**. Bộ kiểm thử: **609/609 đạt**.
+🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
+khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
+📌 **Máy nhà:** `git pull` để nhận tới `e54715e`.
 🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
 khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
 📌 **Máy nhà:** `git pull` để nhận tới `4f87a10`.
@@ -191,6 +193,19 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   - ⚠️ **Còn sót:** nhánh `la_lenh` trong `nguoi_truc.tra_loi_tin_nhan` vẫn ghi vào hàng đợi (nay
     không ai đọc). Agent đã chặn lệnh TRƯỚC khi gọi hàm đó nên nhánh này không chạy — dọn lần sau.
   Bộ kiểm thử: **603/603 đạt**.
+- ✅ **BÁO CÁO THEO YÊU CẦU QUA TELEGRAM (01/10/2026).**
+  Đại nhắn **“báo cáo”** (hoặc *báo cáo hôm qua* · *gửi báo cáo hôm qua* · *báo cáo hôm nay*)
+  ⇒ agent chạy `report.py --slot <mốc> --force` ⇒ **chính `report.py` gửi tin báo cáo + FILE HTML**.
+  Số liệu, bộ lọc, phần nhận định AI và file **giống hệt** báo cáo theo mốc giờ (không tự dựng lại).
+  - Mặc định = mốc nhỏ nhất (8) = **báo cáo ngày HÔM QUA, trọn ngày**. *hôm nay* = mốc lớn nhất đã qua.
+  - `--force`: Đại yêu cầu thì phải gửi, dù mốc đó đã gửi hôm nay.
+  - Phân biệt **yêu cầu gửi file** với **câu hỏi**: *“báo cáo hôm qua”* = xin file;
+    *“báo cáo hôm qua thế nào?”* · *“báo cáo tháng 9”* = câu hỏi → để AI trả lời.
+  - ✅ **Đã kiểm chứng thật:** `report.py --slot 8 --force` → gửi được **cả tin lẫn file HTML**.
+  Bộ kiểm thử: **609/609 đạt**.
+  - ⚠️ **Phải biết TRƯỚC khi tắt báo cáo theo khung giờ:** báo cáo theo mốc còn mang theo
+    **cảnh báo hạn token Meta** (`canh_bao_han_token`) và **cảnh báo số liệu bất thường**
+    (`bat_thuong.canh_bao`). Tắt hết báo cáo ⇒ **mất hai cảnh báo đó**. Token hết hạn ****.
 - 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ XONG BƯỚC 1–4 (01/10/2026); còn bước 5–6.**
   `docs/superpowers/plans/2026-09-30-chuyen-telegram-ve-agent.md`.
   Đại chốt hướng: agent tự **hỏi đáp + lấy thông tin** được, thì **bỏ hẳn báo cáo theo khung giờ**.
