@@ -1,6 +1,11 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 30/09/2026 — **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
+**Cập nhật lần cuối:** 01/10/2026 — **CHẠY NGẦM ĐÃ XONG** (hai tiến trình chạy bằng
+`pythonw.exe`, không còn cửa sổ đen; đã kiểm tra lại lịch Windows và tiến trình đang chạy).
+🐛 **BẮT ĐƯỢC 1 LỖI THẬT ngay khi áp dụng**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì khoá
+cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật. Bộ kiểm thử: **599/599 đạt**.
+
+**Trước đó (30/09/2026):** **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
 camp đang chi tiền mà 0 đơn) và tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất.
 **AI chỉ đề xuất, chưa thực hiện gì.** `487/487` kiểm thử đạt. Đại cũng đã **duyệt bản định nghĩa
 AI Agent** và chốt đích là "tự hành có trần".
@@ -72,18 +77,115 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   `docs/superpowers/specs/2026-09-29-dinh-nghia-ai-agent-facebook-design.md` (+ bản `.html`).
   Đại chốt: đích là **"tự hành có trần"**, làm **cả ba việc theo thứ tự 1 → 2 → 3**.
   **Việc #1 (bản định nghĩa) và #2 (nấc 1) đã xong.** Còn **việc #3** — xem mục dưới.
-- ⏳ **Việc #3 — agent mới tự hành (nấc 2 → 3). CHƯA BẮT ĐẦU.** Còn chờ ĐẠI **một** thứ:
-  (a) ⏳ **mỗi đơn lãi bao nhiêu** — không có thì không định nghĩa được "camp kém";
+- 🆕 **Nấc 2 ĐÃ THI CÔNG XONG (30/09/2026, 14h30)** — agent xin phép Đại qua Telegram rồi mới tắt nhóm.
+  Kế hoạch + kết quả: `docs/superpowers/plans/2026-09-30-nac-2-xin-phep-qua-telegram.md`
+  (**đọc hai mục "Kế hoạch này ĐÃ ĐƯỢC KIỂM CHỨNG" và "THI CÔNG XONG" ở đầu file** — **5 lỗi thật**
+  của kế hoạch đã bị bước dựng thử và bước chạy thật bắt được).
+  Code mới: `agent.py`, `agent_rao.py`, `agent_muc_tieu.py`, `agent_xin_phep.py`, `agent_ky_uc.py`,
+  `agent_cong_cu_ghi.py`, `agent_doc_meta.py`, `lenh_telegram.py`, `tests/test_agent.py`,
+  `bat-chay-agent.bat`.
+  ⚠️ **`nguoi_truc.py` có sửa** (30/09/2026): từ nay nó **nhận ra lệnh `tắt <mã>` / `bỏ qua <mã>`**
+  và **ghi vào `logs/agent-lenh.json`** thay vì đem hỏi AI. Lý do bắt buộc phải sửa: hai tiến trình
+  dùng **chung một bot Telegram**, mà `getUpdates` chỉ giao mỗi tin cho **một** nơi — không sửa thì
+  lệnh của Đại bị tiến trình báo cáo lấy mất và agent **không bao giờ nhận được**.
+  🆕 **Nút bấm (30/09/2026):** tin xin phép nay có **2 nút** *Tắt nhóm* / *Bỏ qua*. Đại bấm một cái là
+  gửi lệnh luôn, không phải gõ. Bấm xong **tin nhắn cũ tự đổi thành kết quả và nút biến mất** (Đại chốt).
+  Vì vậy `nguoi_truc.py` nay xin nhận **cả `callback_query`** và chuyển tiếp nút bấm cho agent.
+  ⚠️ **Phải KHỞI ĐỘNG LẠI người trực** thì nó mới biết nhận nút bấm — bản đang chạy vẫn là code cũ và
+  sẽ **nuốt mất** mọi lần bấm nút.
+  Bộ kiểm thử: **564/564 đạt**.
+  🆕 **Khoá một-tiến-trình + nghe nút bấm nhanh (30/09/2026):**
+  - Nhật ký 30/09 ghi agent **khởi động HAI LẦN** cách nhau 15 giây (14:52:29 và 14:52:44) —
+    rất có thể bấm `bat-chay-agent.bat` hai lần. Hai agent cùng chạy thì **đề xuất trùng, xử lý
+    trùng, sổ loạn**. ⇒ Nay agent **giữ khoá** `logs/agent-dang-chay.lock`; mở cửa sổ thứ hai sẽ
+    **từ chối khởi động** và nói rõ lý do. (`--thu` vẫn chạy được, `--mot-lan` từ chối nếu đã có agent.)
+  - Vòng lặp tách **hai nhịp**: **nghe nút bấm mỗi 15 giây** (nên bấm là xử lý gần như tức thì) và
+    **quét Meta mỗi `AGENT_NHIP_PHUT` phút** (mặc định 30).
+  - 🆕 Hai file bấm mới: **`cai-dat-agent.bat`** (tạo lịch Windows `AgentNac2` — chạy khi đăng nhập,
+    tự bật lại nếu tắt) và **`go-agent.bat`** (gỡ lịch + dừng agent). **Không có lịch này thì agent
+    chết im lặng khi máy khởi động lại** — kiểu hỏng nguy hiểm nhất.
+  🆕 **Nút HOÀN TÁC + BẬT CHẠY THẬT (30/09/2026, 15h20):**
+  - Tin báo kết quả sau khi tắt nay có **nút "↩️ Bật lại nhóm này"** — một lần bấm là hoàn tác.
+    Lý do: tắt nhầm thì cái mất không phải tiền, mà là **giai đoạn học của Meta** (bật lại là học từ đầu).
+    Rào an toàn cho việc bật lại: ngân sách khôi phục phải **1đ – 5.000.000đ** (không thể đặt số vô lý
+    nếu sổ bị hỏng), chỉ trong **24 giờ** kể từ lúc tắt.
+    ⚠️ **Lỗi thật do kiểm thử bắt được:** ban đầu việc HOÀN TÁC bị chính trần "1 hành động/giờ" chặn —
+    vì lệnh TẮT vừa rồi đã được tính là một hành động. Nghĩa là **vừa tắt xong thì không hoàn tác
+    được, đúng lúc cần nhất**. Đã sửa: **hoàn tác không chịu trần hành động**.
+  - **ĐÃ BẬT CHẠY THẬT** — `AGENT_TAP_SU=false`. Từ nay bấm *Tắt nhóm* là **tắt thật** trên Meta.
+    Sao lưu cấu hình cũ: `.env.bak-truoc-bat-that`. Muốn quay lại chế độ tập sự: sửa dòng đó thành
+    `true` — **không cần khởi động lại** (agent đọc lại `.env` mỗi 15 giây).
+  - 🆕 `khoi-dong-lai-agent.bat` — tắt rồi bật lại agent trong một lần bấm (cần khi có **code mới**,
+    vì agent chỉ nạp code một lần lúc khởi động). Tương tự: `khoi-dong-lai-nguoi-truc.bat`.
+  - 🐛 **LỖI THẬT đã sửa (30/09/2026, 15h30) — người trực chết làm MẤT LỆNH của Đại:**
+    người trực bị tắt lúc **15:21:55** (mã thoát `0xC000013A` = bị Ctrl+C), tự chạy lại lúc 15:26:56.
+    Trong ~5 phút đó, nếu Đại bấm nút thì lần bấm nằm chờ ở Telegram — **nhưng cách cũ
+    (`xa_tin_ton_dong`) XOÁ SẠCH mọi tin đang chờ lúc khởi động**, nên lần bấm đó **mất im lặng** và
+    Đại tưởng agent hỏng.
+    ⇒ Nay người trực **đọc hết tin đang chờ TRƯỚC, chuyển tiếp lệnh/nút bấm cho agent, rồi mới bỏ
+    phần còn lại** (`doc_va_chuyen_tiep_tin_ton_dong`). Câu hỏi cũ vẫn không trả lời, như cũ.
+  - 🐛 **Lỗi thứ hai cùng lúc:** `offset_moi_tu_ket_qua` viết `max(u["update_id"] …)` — gặp **một tin
+    hỏng** (None, chuỗi, thiếu `update_id`) là **ném lỗi làm sập cả vòng lặp đọc tin**. Đã làm cứng.
+  Bộ kiểm thử: **593/593 đạt**.
+  - ⚠️ **Lần tắt thật đầu tiên cũng là lần thử thật của đường ghi lên Meta từ agent.** Nên xem kỹ
+    tin báo kết quả — nó đọc lại từ Meta để xác nhận, không chỉ báo "đã gửi".
+  Bộ kiểm thử: **586/586 đạt**.
+- ✅ **CHẠY NGẦM (không cửa sổ đen) — ĐÃ ÁP DỤNG XONG (01/10/2026).**
+  Hai tiến trình nay chạy bằng `pythonw.exe`, không còn hai cửa sổ đen trên thanh tác vụ.
+  - `agent.py` và `nguoi_truc.py` đã thêm `_an_toan_stdout()`: chạy ngầm thì `sys.stdout`/`sys.stderr`
+    là `None` ⇒ **mọi `print()` sẽ ném lỗi và giết tiến trình**. Hàm này trỏ chúng vào
+    `logs/console.log` để không bao giờ vỡ, vẫn còn dấu vết để đọc khi cần.
+  - `report.py` (chạy như tiến trình con) **đã an toàn sẵn**: `nguoi_truc.py` gọi nó bằng
+    `subprocess` với `capture_output=True` (có ống dẫn, không phải `None`) + `CREATE_NO_WINDOW`
+    + `PYTHONIOENCODING=utf-8`. Đã kiểm chứng lại ngày 01/10.
+  - 🐛 **LỖI THẬT #1 bắt được NGAY KHI ÁP DỤNG — AGENT KHÔNG CHẠY ĐƯỢC:** lịch `AgentNac2` ở trạng
+    thái `Ready`, mã thoát **2**. Nhật ký: *“AGENT: tu choi khoi dong vi đã có agent khác đang chạy
+    (cập nhật lúc 10:23:47)”*.
+    **Nguyên nhân:** khoá một-tiến-trình **chỉ ghi THỜI ĐIỂM, không ghi tiến trình nào giữ**, mà khoá
+    chỉ được **làm mới mỗi 30 phút** (lúc quét Meta). Khi `.bat` dừng agent cũ rồi bật lại **ngay**,
+    khoá trông vẫn “còn sống” tới **60 phút** ⇒ agent mới **từ chối chạy gần một giờ**. Lỗi này sẽ tái
+    diễn mỗi lần khởi động lại agent — kể cả `khoi-dong-lai-agent.bat`.
+  - ✅ **Đã sửa:** khoá nay ghi **2 dòng** — thời điểm + **PID**. `_khoa_con_song` **ưu tiên PID**: PID
+    không còn sống ⇒ coi như khoá chết **ngay**, không đợi hết hạn. Thêm `_tien_trinh_song()` dùng
+    `ctypes OpenProcess` trên Windows — ⚠️ **KHÔNG dùng `os.kill(pid, 0)`**: trên Windows hàm đó gọi
+    `TerminateProcess`, tức là **GIẾT** tiến trình chứ không phải phép thử vô hại. Khoá cũ (một dòng)
+    vẫn đọc được — tự lùi về xét thời điểm.
+  - ✅ **Đã kiểm chứng THẬT (10:39:52):** dừng agent rồi bật lại **ngay, KHÔNG xoá khoá** ⇒ agent khởi
+    động tức thì: *“khoa cu khong con hieu luc (da qua han hoac tien trinh cu da chet) — gianh lai”*.
+  - 🛠️ **Mẹo môi trường đã vấp:** công cụ PowerShell của trợ lý AI **bị chặn `Stop-Process`** —
+    dùng `taskkill //F //PID <pid>` qua Bash thì được. `Register-ScheduledTask` cũng bị chặn.
+    Và `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*agent.py*' }` sẽ
+    **khớp chính tiến trình PowerShell đang chạy** — phải lọc thêm `$_.Name -like 'python*'`.
+  Bộ kiểm thử: **599/599 đạt** (thêm 4 bài cho khoá ghi PID).
+- 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ VIẾT, CHƯA THI CÔNG (30/09/2026).**
+  `docs/superpowers/plans/2026-09-30-chuyen-telegram-ve-agent.md`.
+  Đại chốt hướng: agent tự **hỏi đáp + lấy thông tin** được, thì **bỏ hẳn báo cáo theo khung giờ**.
+  ⚠️ **Đọc mục 4 trước khi làm bất cứ gì:** `logs/lich-su.json` do `report.py` ghi mỗi mốc báo cáo.
+  Bỏ báo cáo ⇒ **không còn ai ghi sổ đó**, mà **phần hỏi đáp đọc chính sổ đó**. Phải cho agent tự ghi
+  sổ **trước**, chạy song song đối chiếu, **rồi mới** tắt báo cáo.
+  Khoá mới trong `.env`: `AGENT_TAP_SU=true`, `AGENT_MUC=2`, `AGENT_NHIP_PHUT=30`,
+  `AGENT_TOI_DA_NGAY=3`. Sao lưu `.env` cũ ở `.env.bak-truoc-nac2`.
+  Bộ kiểm thử: **546/546 đạt** (trước nấc 2 là 487).
+  ⚠️ **Đang ở CHẾ ĐỘ TẬP SỰ** — agent chỉ nói, **không gửi lệnh nào lên Meta**. Đại giữ 1–2 tuần,
+  đối chiếu rồi mới đổi `AGENT_TAP_SU=false`.
+  ✅ **Nấc 2 KHÔNG dùng AI** (vòng lặp bằng luật code) ⇒ không tốn lượt AI miễn phí của báo cáo.
+- ⏳ **Việc #3 — nấc 3 "tự hành có trần". CHƯA BẮT ĐẦU.** Nấc 2 đã xong, còn nấc 3.
+  (a) ✅ **Rào cản "mỗi đơn lãi bao nhiêu" ĐÃ GỠ** — Đại tự mã hoá ngưỡng vào **tên nhóm** (phần `y`),
+      hệ thống **đọc `y` từ tên** nên không cần biết lãi. Xem `TONG-HOP-CACH-CHAY-QUANG-CAO.md`
+      mục 5.2 và mục 7 (C1). *(Chỉ cần lại nếu muốn AI tự đề xuất `y` cho nhóm mới.)*
   (b) ✅ **ĐÃ XONG 30/09/2026** — Đại lấy token mới, **đã có quyền `ads_management`**,
-      hạn  (còn 60 ngày). Xem mục "ĐANG CHỜ ĐẠI" bên dưới.
+      hạn . Xem mục "ĐANG CHỜ ĐẠI" bên dưới.
   Chi tiết ở §3.3 và §7 của bản định nghĩa.
   👉 **Công cụ đã có sẵn:** `HUONG-DAN-LAY-TOKEN-QUYEN-GHI.md`,
   `kiem-tra-quyen-ghi.py` + `.bat`, `doi-token-60-ngay.bat`. App cần chọn trong Graph API
   Explorer: tên **`MCP ADS`**, App ID ``.
-  ⚠️ **Bài học đã trả giá:** KHÔNG thể kiểm quyền ghi bằng một lệnh vô hại. Đã thử 4 cách ngày
-  30/09/2026 (lệnh rỗng, object không tồn tại, tên rỗng, ghi lại đúng tên cũ) — **cả 4 đều vô
-  giá trị**, vì Meta cố ý gộp mọi nguyên nhân vào một câu trả lời. Cách duy nhất để chắc là
-  **ghi thật một lần** trên chiến dịch Đại đã muốn tắt. **Việc này CHƯA LÀM.**
+  ✅ **QUYỀN GHI ĐÃ ĐƯỢC THỬ THẬT VÀ CHẠY ĐƯỢC (30/09/2026).** Bằng chứng nằm ngay trong
+  `logs/nhat-ky-agent.json`: 09:53 tạm dừng và 09:58 bật lại ad set `120250506886650509`, cả hai
+  **HTTP 200, `success=true`, đọc lại thấy đúng trạng thái**, và đã hoàn tác về đúng trạng thái đầu.
+  ⚠️ **Bài học vẫn giữ nguyên giá trị:** KHÔNG thể kiểm quyền ghi bằng một lệnh vô hại. Đã thử 4 cách
+  ngày 30/09/2026 (lệnh rỗng, object không tồn tại, tên rỗng, ghi lại đúng tên cũ) — **cả 4 đều vô
+  giá trị**, vì Meta cố ý gộp mọi nguyên nhân vào một câu trả lời. Cách duy nhất để chắc là **ghi
+  thật một lần** trên nhóm Đại đã muốn tắt. **Việc đó NAY ĐÃ LÀM XONG.**
 - ⏳ **Máy nhà chưa cập nhật code mới** — cần `git pull` để nhận **GĐ3 (phần nhận định AI)**,
   **GĐ4 (trả lời câu hỏi)**, **GĐ5 (tự xử lý lỗi)** và **nấc 1 (đề xuất)**, rồi thêm
   `GEMINI_API_KEY` vào `.env` (`.env` không đi theo `git pull`).

@@ -13,9 +13,14 @@ nấc 2.
   đổi tên).
 - **Đại tạo 260 nhóm quảng cáo mới** trong 30 ngày — khoảng **9 nhóm mỗi ngày**.
 - **Tắt/bật rất nhiều:** 797 lần ở cấp nhóm + 1.541 lần ở cấp từng quảng cáo.
-- **Ngân sách hay dùng nhất: 27.000đ** (75 lần) — đây là "mức tắt mềm", không phải mức chạy.
+- **Ngân sách hay dùng nhất: 27.000đ** (75 lần ở cấp nhóm + 9 lần ở cấp chiến dịch) — đây là
+  **mức "chôn nhóm"**: hạ ngân sách về sàn **đi kèm TẮT nhóm** (72/75 lần), không phải mức chạy và
+  cũng **không phải "tắt mềm"** như đoán ban đầu.
+- **Đại dùng ngân sách ở CẢ HAI cấp:** ban đầu chiến dịch giữ ngân sách (nhóm con nằm ở mức sàn
+  ~26.200đ của Meta), sau đó chuyển sang ngân sách cấp nhóm và dồn **400.000đ** cho nhóm cần chạy.
 - **Khi tăng ngân sách: +100.000đ là chủ đạo** (156 trong 193 lần tăng). Tăng theo bậc tiền, không
-  theo phần trăm.
+  theo phần trăm. **Nấc thang đã kiểm chứng:** `400.000 + 100.000 × (lượt mua TRONG THÁNG // 5)` —
+  cứ 5 lượt mua trong tháng là lên một bậc (mục 3.2b).
 - **Từ lúc tạo nhóm đến lần tắt đầu tiên: trung vị 31 giờ** (khoảng 1 ngày 7 tiếng).
 - **Tắt rồi bật lại: trung vị 5,8 giờ.**
 - **Làm việc hai buổi:** sáng 7h–11h (đỉnh 8h–10h), chiều 13h–17h; thêm một đợt tối 21h–22h.
@@ -80,7 +85,7 @@ Theo thứ trong tuần: **Thứ 4 (749) và Thứ 6 (740) nhiều nhất**, Ch�
 
 | Ngân sách | Số lần đặt |
 |---|---|
-| **27.000đ** | **75** |
+| **27.000đ** | **84** — 75 lần cấp nhóm + 9 lần cấp chiến dịch |
 | 400.000đ | 34 |
 | 500.000đ | 29 |
 | 700.000đ | 16 |
@@ -107,27 +112,139 @@ Ví dụ thật: 900.000 → 1.000.000 · 1.000.000 → 1.100.000 · 1.200.000 �
 > +100.000đ đã là **+25%** — vượt trần 20% và sẽ bị hệ thống chặn oan. Rào an toàn phải đổi thành
 > **trần theo số tiền tuyệt đối**, không phải theo phần trăm.
 
-### 3.3. Con số 27.000đ — "tắt mềm"
+### 3.2b. 🔑 NẤC THANG NGÂN SÁCH — ĐÃ KIỂM CHỨNG (30/09/2026)
 
-**75 lần** Đại hạ ngân sách xuống đúng **27.000đ**, và **luôn luôn từ 400.000đ**.
+**Đại trả lời C4:**
+> *"Tôi sẽ dựa vào quy định của bản thân. Dựa vào kết quả của lượt mua. Ví dụ khi lượt mua đạt:
+> 0-4 là 400.000 · 5-9 là 500.000 · 10-14 là 600.000 · 15-19 là 700.000 ... Cứ thế tịnh tiến tiếp."*
 
-Ví dụ thật, gần như cùng một kịch bản lặp lại mỗi ngày:
+**Công thức:**
 ```
-18/09 10:40 | 400.000 -> 27.000 | ... Offline A4
-21/09 10:46 | 400.000 -> 27.000 | ... Offline A4
-28/09 09:24 | 400.000 -> 27.000 | ... Offline A4
-29/09 10:03 | 400.000 -> 27.000 | ... Offline A4
-30/09 10:19 | 400.000 -> 27.000 | ... Online 0/160 X9
+ngân sách = 400.000 + 100.000 × (số lượt mua TRONG THÁNG // 5)
 ```
+Mỗi 5 lượt mua trong tháng → lên một bậc 100.000đ. Nhóm 0–4 lượt mua thì đứng ở 400.000đ.
 
-Và sau khi hạ xuống 27.000, **trung vị 5,5 giờ sau là tăng lại** (13 trong 15 lần trong vòng 24 giờ).
+**Kiểm chứng trên dữ liệu thật** (mỗi mức ngân sách lấy 1 nhóm, đọc số lượt mua từ Meta):
 
-**Cách hiểu của tôi:** hạ về 27.000đ là cách **"tắt nhóm mà không tắt"** — giữ nhóm còn sống (không
-phải tạo lại, không mất lịch sử học) nhưng gần như ngừng chi tiêu. Rồi vài giờ sau xem lại, nếu ổn
-thì nâng lên lại.
+| Mức ngân sách | Bậc đòi hỏi | Lượt mua trong tháng | Kết quả |
+|---|---|---|---|
+| 500.000 | 5–9 | 7 | ✅ |
+| 900.000 | 25–29 | 26 | ✅ |
+| 1.300.000 | 45–49 | 45 | ✅ |
+| 1.700.000 | 65–69 | 65 | ✅ |
+| 2.200.000 | 90–94 | 95 | ✅ |
+| 2.600.000 | 110–114 | 117 | ✅ |
+| 3.700.000 | 165–169 | 169 | ✅ |
 
-**Đây là chỗ tôi cần Đại xác nhận** — vì nếu đúng, nấc 2 nên đề xuất **"hạ về 27.000"** thay vì
-**"tạm dừng"**, vì đó mới là cách Đại thật sự làm.
+**Kết quả: 23/34 mức ngân sách rơi ĐÚNG vào dải quy tắc.** 10 trường hợp còn lại lệch đúng **±1 bậc**
+(±5 lượt mua) — nằm trong sai số của dữ liệu (Meta chỉ trả số theo NGÀY, còn Đại bấm nút giữa ngày).
+⇒ **Quy tắc của Đại ĐÚNG.** Chỉ 1 ngoại lệ thật: một nhóm bị đặt 5.400.000đ dù chỉ có 6 lượt mua
+(10/09) — thao tác tay lẻ, không theo quy tắc.
+
+> ⚠️ **Chỗ tôi suy luận sai lần đầu — ghi lại để khỏi lặp:** tôi thử với **tổng lượt mua CẢ ĐỜI**
+> thì **0/34 khớp**. Đổi sang **lượt mua TRONG THÁNG** thì khớp. ⇒ Đơn vị đếm là **trong tháng**,
+> không phải cả đời. Điều này khớp với điều Đại đã nói ở mục 5.2 (*"số tiền trung bình của lượt mua
+> trong tháng"*).
+
+> 🐛 **Bẫy dữ liệu Meta — đã gặp thật:** Meta trả về **5 tên hành động cho CÙNG một lượt mua**
+> (`omni_purchase`, `onsite_conversion.purchase`, `onsite_web_purchase`, `onsite_app_purchase`,
+> `onsite_web_app_purchase`) với **giá trị y hệt nhau**. Cộng cả 5 là **đếm trùng gấp 5 lần**.
+> ✅ Kiểm tra `report.py`: **đã đúng sẵn** — chỉ dùng một tên (`ACT_PURCHASE =
+> ["onsite_conversion.purchase"]`) và có ghi chú cảnh báo. Hệ thống đang chạy KHÔNG có lỗi này.
+
+### 3.3. Con số 27.000đ — ĐÃ GIẢI THÍCH (30/09/2026)
+
+**Đại trả lời:**
+> *"Con số 27 này là do tôi tự động giảm xuống do nhóm quảng cáo chi tiêu trong ngày đến ngưỡng
+> 70.000 hoặc 80.000 hoặc bị chi tiêu vượt lên mà không ra kết quả tin nhắn nào. Tôi giảm xuống để
+> hạn chế khả năng chi tiêu lãng phí thêm tiền bạc của ngân sách quảng cáo tổng."*
+
+#### ❌ ĐÍNH CHÍNH: đây KHÔNG phải "tắt mềm"
+
+Tôi từng đoán hạ về 27.000đ là **"tắt nhóm mà không tắt"**. **Sai.** Dữ liệu 75 lần nói rõ:
+
+| Đo được | Số |
+|---|---|
+| Hạ về 27.000đ **đi kèm TẮT nhóm** (Hoạt động → Không hoạt động, trong ±3 phút) | **72/75** |
+| Độ lệch thời gian giữa hai thao tác | **trung vị 6 giây** |
+| Giá trị ngân sách TRƯỚC khi hạ | **400.000đ — 75/75 lần** |
+| Là giá trị ngân sách **dưới 100.000 duy nhất** Đại từng dùng | **có** (75/75) |
+| Được **bật lại + đặt lại 400.000đ** | **15/75** — trung vị **5,5 giờ** sau (13/15 trong 24h) |
+
+⇒ Đúng ra phải gọi là **"chôn nhóm"**: **tắt hẳn** + hạ ngân sách về sàn. Hạ ngân sách là **động tác
+đi kèm**, không phải cách thay thế việc tắt. **60/75 nhóm nằm im**, không bật lại.
+
+#### 💡 Phát hiện thêm: Meta có một mức sàn riêng ~26.100–26.300đ
+
+Trong lịch sử có hai con số **26.135** và **26.275** xuất hiện **10 lần** — nhưng **chưa bao giờ do
+Đại đặt** (chỉ là giá trị cũ, không bao giờ là giá trị mới). Hai số này nằm **đúng trong dải tỷ giá
+USD/VND tháng 9/2026 (26.105 – 26.270)**.
+
+⇒ **Đại xác nhận: 26.100 / 26.300 là con số CỦA META** (30/09/2026). Còn **27.000đ là do Đại tự
+đặt**, chọn để nằm sát ngưỡng đó — không thể là 20.000đ (Meta sẽ chặn), và cũng không cần tới 30.000đ.
+
+#### ✅ Ngưỡng kích hoạt 70.000 / 80.000 — KHỚP với công thức ở mục 5
+
+Hai giá trị `y` phổ biến nhất trong 75 lần: **`y=120` (27 lần)** và **`y=160` (14 lần)** — chiếm 55%.
+
+| Đại nói | Công thức | `y` | Số lần |
+|---|---|---|---|
+| **70.000đ** | có tin nhắn nhưng 0 lượt mua → chi tiêu + 50.000 | **120** | 27 |
+| **80.000đ** | không ra tin nhắn nào → 2 × chi tiêu | **160** | 14 |
+
+Đối chiếu chi tiêu THẬT lấy từ Meta (mẫu 15 nhóm): chi tiêu ngày **62.000 – 360.000đ**, phần lớn
+**82.000 – 99.000đ**; và **hầu hết có tin nhắn nhưng 0 lượt mua** — đúng ý *"không ra kết quả"*.
+
+- **30/09** · nhóm `0/160 X9`: chi tiêu **86.489đ**, **0 tin nhắn** ⇒ `y = 2 × 80.000 = 160` ✅
+- **29/09** · nhóm `0/120 X9`: **1 tin nhắn, 0 lượt mua**, chi tiêu **97.018đ** ⇒ `y = 70.000 + 50.000 = 120` ✅
+
+#### ⚠️ Cảnh báo mới: Meta báo đơn TRỄ
+
+Nhiều nhóm tên ghi `0/...` nhưng Meta sau đó báo **có 1 lượt mua** (04/09, 09/09, 12/09, 14/09,
+15/09). ⇒ Đại tắt lúc chưa thấy đơn, nhưng **đơn về sau**. Đây là lý do nấc 2 **phải đợi thêm**
+trước khi đề xuất tắt, không được phán ngay.
+
+#### ✅ Ba điểm treo — ĐẠI ĐÃ TRẢ LỜI (30/09/2026, 11h52)
+
+**1. Số lẻ 26.100 / 26.300 là của META; 27.000 là do Đại tự đặt** để nằm sát ngưỡng đó.
+Kiểm chứng — trong cả 30 ngày chỉ có **đúng 3 giá trị lẻ**:
+
+| Giá trị | Số lần | Ngày xuất hiện |
+|---|---|---|
+| 26.275đ | 9 | 03–04/09 |
+| 26.205đ | 5 | 15–20/09 |
+| 26.135đ | 1 | 30/09 |
+
+Cùng một ngày thì **mọi nhóm đều cùng một giá trị**, và giá trị **trôi dần theo thời gian** — đúng
+nhịp tỷ giá. ⇒ Đúng là hằng số của Meta (~1 USD), không phải Đại đặt.
+
+**Cơ chế Đại giải thích — KHỚP HOÀN TOÀN với dữ liệu:**
+> *"Do ban đầu tôi sử dụng ngân sách chiến dịch nên các nhóm quảng cáo chạy theo. Khi trong chiến dịch
+> đó có 1 nhóm quảng cáo chi tiêu đến ngưỡng như đã bảo ở trên tôi sẽ tắt nó đi và chuyển đổi sang
+> chi tiêu ngân sách nhóm quảng cáo để dồn toàn bộ 400.000 đồng cho nhóm quảng cáo mới thay đổi đó."*
+
+⇒ **15/15 lần** nhóm có số lẻ đều đi theo chiều **26,2xx → 400.000**. Nghĩa là nhóm nằm ở mức sàn của
+Meta cho tới khi Đại đặt 400.000 cho nó.
+
+**2. Làm CẢ HAI (tắt + hạ sàn) để chặn tối đa chi tiêu tiếp.** Đại: *"để hạn chế nhiều nhất mức chi
+tiêu tiếp có thể của nhóm quảng cáo đã tắt"*. Hợp lý: tắt là chốt chặn chính, hạ sàn là chốt thứ hai.
+
+**3. 27.000 là "mức hạn chế cao nhất" theo Đại nghĩ.** Đại: *"Vì đó là mức hạn chế cao nhất của việc
+chi tiêu tiếp mà do tôi nghĩ vậy đó"*. Khớp dữ liệu: 27.000 sát sàn Meta nên chi tiêu tiếp ≈ 0.
+
+#### 🔴 PHÁT HIỆN MỚI: Đại "chôn" ở CẢ HAI CẤP
+
+| Cấp | Số lần hạ về 27.000 | Ghi chú |
+|---|---|---|
+| **Nhóm quảng cáo (ad set)** | **75** | luôn từ 400.000; 72/75 đi kèm tắt nhóm |
+| **Chiến dịch (campaign)** | **9** | 04/09 · 06/09 · 12/09 · 13/09 · 14/09 · 18/09 · 19/09 · 20/09 (×2) — đều từ 400.000 |
+
+⚠️ **Điều này sửa một giả định cũ:** tài liệu từng ghi *"ngân sách nằm ở cấp nhóm, không phải cấp
+chiến dịch"*. **Không đúng** — Đại dùng **cả hai cấp**: ban đầu chiến dịch giữ ngân sách, sau đó mới
+chuyển sang cấp nhóm.
+
+Chi tiết nhỏ: 20/09 15:17 có lần **hạ hai bước 400.000 → 29.000 → 27.000** (cách nhau 5 giây) — lần
+duy nhất có bước trung gian, có thể chỉ là gõ nhầm rồi sửa.
 
 ### 3.4. 🔑 NGƯỠNG TẮT THẬT — Đại vừa nói rõ (30/09/2026)
 
@@ -141,13 +258,14 @@ thì nâng lên lại.
 2. **Ngưỡng gắn với số lượt mua / lượt thanh toán** đạt được.
 3. Con số **400.000đ** xuất hiện như "mức trần cho phép".
 
-**Đây là câu trả lời gần đúng cho câu chặn đường C1** — nhưng **chưa đủ**, vì 400.000đ là
-**ngưỡng chi phí Đại chấp nhận**, không phải **lãi**. Muốn biết nhóm chi 400.000đ cho một đơn là
-lãi hay lỗ thì vẫn phải biết **mỗi đơn lãi bao nhiêu**.
+**✅ ĐÃ GIẢI QUYẾT (cập nhật 30/09/2026):** chỗ này từng bị coi là *câu chặn đường C1*. **Không còn
+chặn nữa** — vì sau C2/C4/C6 đã rõ **Đại tự mã hoá ngưỡng vào tên nhóm**: phần `y` chính là trần chi
+phí mỗi lượt mua Đại chấp nhận, và **hệ thống chỉ cần đọc `y` từ tên**, không cần biết lãi mỗi đơn.
+Xem C1 ở mục 7.
 
-Và còn một chỗ chưa khớp: trong tên nhóm, `y` nhận nhiều giá trị khác nhau — `120`, `160`, `200`,
-`450`, `500`, `550` — chứ không chỉ 400. Cần Đại làm rõ quan hệ giữa **`y` trong tên** và
-**con số 400.000đ**.
+Và chỗ "chưa khớp" ngày đó cũng đã rõ: **`y` khác nhau là đúng** — mỗi nhóm một trần riêng, phổ biến
+nhất là **400.000–450.000đ** nhưng có nhóm tới `550`, `600`, `650`, `750`. Xem phân bố thật ở C6
+(mục 7).
 
 ---
 
@@ -192,6 +310,27 @@ tương đối dứt khoát.
 ---
 
 ## 5. TÊN NHÓM LÀ MỘT BẢNG THÔNG TIN — ĐẠI ĐÃ GIẢI THÍCH MỘT PHẦN
+
+### 5.0. Cách đặt tên theo "content" — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026, 12h36)
+
+Đại nói:
+> *"Cái tên này là ký hiệu của lần đầu nhóm quảng cáo đó chạy với content mới nó sẽ là
+> `new - dainq - …`. Những lần sau bạn sẽ thấy quảng cáo đi kèm một đống số đằng trước — `dainq` ở
+> phía sau."*
+
+**Kiểm chứng trên 4.234 thao tác — ĐÚNG:**
+
+| Kiểu tên | Số thao tác | Ví dụ thật |
+|---|---|---|
+| `new - dainq - <mã content>` — **lần ĐẦU chạy với content mới** | **45** | `new - dainq - TTHC22TTHM22 0/120 X9` |
+| `<mã/số> - dainq …` — **các lần sau** | **4.166** | `1474617764697309 - dainq` · `2026 - 09 - 30 - dainq - Scale - Online 0/160 X9` |
+
+⇒ Chữ **`new`** ở đầu = content mới, chạy lần đầu. Về sau tên bị thay bằng mã số (ID quảng cáo, ngày,
+hoặc mã content) đứng trước, `dainq` đứng sau.
+
+**Mã content** là các cụm viết hoa có số, ví dụ `TTHC22TTHM22`, `THC295THM295`. Đã thấy **6 thao tác**
+trên một đối tượng tên `THC295THM295 0/500 X9-26 TN` — **không có chữ `dainq`** nhưng theo Đại giải
+thích thì đây là một nhóm chạy content mới, đặt tên theo mã content.
 
 ### 5.1. Hậu tố `X9` và `X9-26` — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026)
 
@@ -323,26 +462,106 @@ Tên nhóm chứa **thông tin vận hành do Đại tự ghi**. Nếu hệ th�
 
 ## 6. NGƯỜI THAO TÁC
 
-| Người | Số thao tác |
-|---|---|
-|  | 3.948 |
-| Meta (hệ thống tự làm) | 706 |
-| **Vũ Quang Trường** | **13** |
+| Người | Thao tác đáng kể | Trên đối tượng có `dainq` |
+|---|---|---|
+| **** | 3.948 | **3.935 (99,7%)** |
+| Meta (hệ thống tự làm) | 276 | 276 (100%) |
+| Vũ Quang Trường | 10 | **0** |
 
-**Ai là Vũ Quang Trường?** Có 13 thao tác trong 30 ngày, chủ yếu đổi trạng thái quảng cáo.
-Nếu đây là người cùng team thì hệ thống phải biết, để **không đề xuất trùng việc người đó vừa làm**
-và để không giật tay nhau.
+### ✅ ĐÃ LÀM RÕ (30/09/2026) — và nó cho ra một QUY TẮC LỌC
+
+**Đại nói:** *"Vũ Quang Trường là người sử dụng chung tài khoản với tôi. Nhưng bạn không cần để ý và
+loại những chiến dịch, nhóm quảng cáo, quảng cáo của người này ra. Bạn chỉ cần quan tâm đến những
+chiến dịch, nhóm quảng cáo có chứa 'dainq' thôi."*
+
+**Dữ liệu xác nhận ĐÚNG:**
+- **10/10 thao tác của Vũ Quang Trường đều trên đối tượng KHÔNG chứa `dainq`** — tên kiểu
+  `2026 - 5 - 28 - Truong - Online - …`, `Quảng cáo Lượt tương tác mới`. Anh ta **không đụng vào nhóm
+  nào của Đại**.
+- Chỉ **23/4.234 thao tác (0,5%)** nằm ngoài `dainq`.
+- ⇒ **Chỉ cần lọc theo tên chứa `dainq` là đủ để loại hết việc của Vũ Quang Trường.** Không cần lọc
+  theo người thao tác.
+
+**Bộ lọc này ĐÃ CÓ SẴN trong cấu hình:** `.env` → `FILTER_INCLUDE=dainq`, kèm
+`FILTER_EXCLUDE=thuonghieu,thương hiệu,Brand` (loại nhóm thương hiệu).
+
+### ✅ QUY TẮC LỌC CHỐT (Đại trả lời 30/09/2026, 12h36)
+
+> *"Bạn cứ lọc theo tên dainq và người thao tác nó. Via facebook tôi sử dụng để thao tác tên là
+>  thì phải."*
+
+**Bộ lọc = (tên đối tượng chứa `dainq`) VÀ (người thao tác = ``).**
+
+✅ Xác nhận tài khoản: ** chiếm 3.935/3.948 thao tác trên đối tượng `dainq` (99,7%)**
+⇒ đúng là tài khoản Đại dùng.
+
+**Số lượng qua từng mức lọc** (trên 4.234 thao tác đáng kể):
+
+| Mức lọc | Còn lại | Loại ra |
+|---|---|---|
+| Chỉ theo tên `dainq` | 4.211 | 23 |
+| Chỉ theo người () | 3.948 | 286 |
+| **Cả hai (quy tắc chốt)** | **3.935** | **299** |
+
+**✅ Đại chốt "GIỮ" cả hai (30/09/2026, 12h40). QUY TẮC LỌC CUỐI CÙNG:**
+
+```
+GIỮ  nếu:
+  A) Người thao tác = ""
+     VÀ đối tượng thuộc phạm vi của Đại, nghĩa là tên:
+        • chứa "dainq", HOẶC
+        • bắt đầu bằng mã content viết hoa (kiểu THC295THM295), HOẶC
+        • có "new - dainq"
+
+  B) Người thao tác = "Meta"  → giữ ở NGĂN RIÊNG "Meta tự làm"
+     (276 thao tác, toàn bộ là Meta tự tắt/bật quảng cáo — để tham khảo vận hành,
+      KHÔNG tính là hành vi của Đại)
+
+LOẠI:
+  • Mọi thao tác của "Vũ Quang Trường" (10 thao tác)
+  • Đối tượng mang tên mặc định do Meta sinh: "Chiến dịch / Nhóm quảng cáo /
+    Quảng cáo Lượt tương tác mới" (7 thao tác)
+```
+
+**Kết quả trên 4.234 thao tác đáng kể:**
+
+| | Số thao tác |
+|---|---|
+| Việc của Đại (A) | **3.941** |
+| Meta tự làm (B) — ngăn riêng | **276** |
+| **Giữ tổng** | **4.217** |
+| Loại | **17** (0,4%) |
+
+**Vì sao giữ cả hai:** 276 thao tác Meta tự làm tuy không phải việc của Đại, nhưng **biết Meta vừa tự
+tắt quảng cáo là thông tin vận hành hữu ích**. Còn 6 thao tác trên `THC295THM295 0/500 X9-26 TN` là
+**việc thật của Đại** — nhóm chạy content mới nên tên theo mã content, không có chữ `dainq`; bỏ đi là
+bỏ oan.
+
+### 📌 Hệ quả cho nấc 2 — lọc ở cấp NÀO?
+
+Lọc theo tên **chiến dịch / nhóm quảng cáo cha**, **KHÔNG lọc theo tên quảng cáo** — vì Meta tự sinh
+tên quảng cáo kiểu *"Quảng cáo Lượt tương tác mới"* (không chứa `dainq`) dù quảng cáo đó nằm trong
+nhóm `dainq`. Lọc ở cấp nhóm là bao được cả cấp quảng cáo.
+
+*(Số cũ ghi "Vũ Quang Trường 13" là tính cả thao tác vặt; số thao tác ĐÁNG KỂ là 10.)*
 
 ---
 
 ## 7. NHỮNG GÌ TÔI CHƯA SUY RA ĐƯỢC — CẦN ĐẠI TRẢ LỜI
 
 Lịch sử cho biết **Đại đã làm gì**, nhưng không cho biết **vì sao**. Bảy câu dưới đây là chỗ dữ liệu
-không trả lời được.
+không trả lời được — **✅ nay đã trả lời xong 6/7 (C2 → C7)**. Chỉ còn **C1**, và C1 **không còn chặn
+đường** nữa.
 
-**C1.** 🔴 **Mỗi đơn hàng lãi bao nhiêu tiền?** (hoặc lãi bao nhiêu % doanh thu)
-*Vẫn là câu chặn đường số một.* Không có nó thì không định nghĩa được "nhóm kém" — và mọi ngưỡng
-đều là đoán.
+**C1.** 🟡 **Mỗi đơn hàng lãi bao nhiêu tiền?** — **KHÔNG CÒN CHẶN ĐƯỜNG** (cập nhật 30/09/2026).
+
+Trước đây tôi coi đây là *câu chặn đường số một*, vì tưởng hệ thống phải tự tính ra "nhóm kém".
+**Sai.** Sau C2, C4, C6 thì đã rõ: **Đại tự mã hoá ngưỡng vào tên nhóm** — phần `y` chính là trần chi
+phí mỗi lượt mua mà Đại chấp nhận. Hệ thống **đọc `y` từ tên nhóm**, không cần biết lãi mỗi đơn.
+
+⇒ **Dựng nấc 2 KHÔNG cần câu này nữa.**
+⏳ Vẫn cần **nếu** sau này muốn AI **tự đề xuất `y` cho nhóm mới** — lúc đó phải biết lãi mỗi đơn mới
+chọn được trần. Câu hỏi phụ đáng hỏi: **vì sao nhóm này trần 400.000đ, nhóm kia 550.000đ hay 750.000đ?**
 
 **C2.** ✅ **ĐÃ TRẢ LỜI (30/09/2026).**
 `x/y` = *(số lượt mua hoặc lượt thanh toán)* / *(ngưỡng chi tiêu sẽ tắt khi chạm tới)*.
@@ -350,34 +569,87 @@ không trả lời được.
 `X9-26` = đã tắt tháng 9/2026, **chỉ dùng cho nhóm có từ 1 trở lên** ở *"Người liên hệ nhắn tin
 mới"* hoặc *"Lượt bắt đầu cuộc trò chuyện qua tin nhắn"*.
 Bật lại: **campaign** giữ `X` + thêm chữ `v` nhỏ; **ad set** và **ad** xoá dấu `X`.
-⏳ **Còn 4 điểm nhỏ cần làm rõ** — xem mục 8 phần "còn treo".
+✅ **Bốn điểm nhỏ từng treo đã giải quyết hết** — xem mục 9.
 
-**C3.** **27.000đ là con số ở đâu ra?** Đại tự chọn, hay đó là mức ngân sách tối thiểu Meta cho phép?
-Và ý nghĩa của nó: "tắt mềm" đúng không?
+**C3.** ✅ **ĐÃ TRẢ LỜI (30/09/2026, 11h38).**
+**27.000đ là do Đại tự đặt** — không phải mức Meta bắt buộc. Nhưng dữ liệu cho thấy Meta có **mức sàn
+riêng ~26.100–26.300đ** (xem mục 3.3), nên 27.000đ nằm ngay trên sàn.
+Ý nghĩa: **KHÔNG phải "tắt mềm"** — đây là **"chôn nhóm"**: hạ sàn **đi kèm TẮT nhóm** (72/75 lần,
+lệch trung vị 6 giây).
+⏳ Còn 3 điểm nhỏ — xem cuối mục 3.3.
 
-**C4.** **Khi tăng ngân sách, Đại dựa vào gì để quyết định +100.000đ?**
-Có quy tắc nào không (ví dụ "ra đơn đều thì tăng"), hay nhìn rồi phán? Và **cách nhau bao lâu mới
-tăng lần tiếp**?
+**C4.** ✅ **ĐÃ TRẢ LỜI (30/09/2026, 11h58).**
+**Nấc thang ngân sách:** `400.000 + 100.000 × (lượt mua TRONG THÁNG // 5)`.
+0–4 → 400.000 · 5–9 → 500.000 · 10–14 → 600.000 · 15–19 → 700.000… tịnh tiến tiếp.
+Kiểm chứng: **23/34 mức ngân sách khớp đúng dải**, 10 trường hợp còn lại lệch đúng ±1 bậc (sai số
+của dữ liệu theo ngày). Xem mục 3.2b.
+*✅ Đại xác nhận (30/09, 12h29): **"Dựa vào kết quả lượt mua thì sẽ tăng ngân sách, chứ không có mốc
+nào cả."** ⇒ **Không có mốc thời gian cố định** — cứ đủ 5 lượt mua trong tháng nữa là lên một bậc.*
 
-**C5.** **Vũ Quang Trường là ai?** Cùng team hay người ngoài? Có được phép thao tác không?
+**C5.** ✅ **ĐÃ TRẢ LỜI (30/09/2026, 12h29).**
+Vũ Quang Trường là **người dùng chung tài khoản** với Đại — không phải người ngoài, nhưng **không
+phải việc của hệ thống**. Quy tắc lọc: **chỉ quan tâm đối tượng có chứa `dainq`**, loại phần của
+Vũ Quang Trường ra. Đã kiểm chứng: 10/10 thao tác của anh ta đều nằm ngoài `dainq`. Xem mục 6.
 
-**C6.** **Lúc tắt một nhóm, Đại đang nhìn con số nào?**
-Trung vị 31 giờ cho biết Đại đợi khoảng một ngày. Nhưng **ngưỡng để bấm nút là gì** — chi bao nhiêu
-mà chưa ra đơn? Bao nhiêu đơn thì coi là quá đắt?
+**C6.** ✅ **ĐÃ TRẢ LỜI (30/09/2026, 12h45).**
+> *"Lúc tắt 1 nhóm quảng cáo tôi thường nhìn vào **chi phí trung bình theo tháng của lượt mua**."*
 
-**C7.** **Có nhóm nào Đại không bao giờ tắt dù số xấu không?**
-(nhóm thương hiệu · nhóm của khách · nhóm đang chạy thử nghiệm)
+⇒ Đúng con số đã dựng ở mục 5.2 và 3.2b: **chi phí trung bình mỗi lượt mua, tính theo tháng**. Nhóm
+chạm ngưỡng `y` thì tắt.
+
+**Kiểm chứng mạnh — phân bố chi phí/lượt mua của 108 nhóm `dainq` có lượt mua trong tháng 9:**
+
+| Chi phí trung bình mỗi lượt mua | Số nhóm |
+|---|---|
+| dưới 100.000đ | 4 |
+| 100.000 – 200.000đ | 2 |
+| 200.000 – 300.000đ | 3 |
+| 300.000 – 400.000đ | 27 |
+| **400.000 – 450.000đ** | **44** ← đông nhất |
+| 450.000 – 550.000đ | 21 |
+| trên 550.000đ | 7 |
+
+**Trung vị 418.668đ.** ⇒ Các nhóm **dồn đúng vào dải 400.000–450.000đ** — tức chúng bị cắt ngay khi
+chạm ngưỡng. Đây là **bằng chứng mạnh nhất** cho thấy 400.000đ/lượt mua là mức Đại thật sự dùng để phán.
+
+> ✅ **MỐC 400.000đ LÀ CỐ ĐỊNH** (Đại xác nhận 30/09/2026, 13h31):
+> *"Cái này là do tôi không có hệ thống tự động tắt nên bị chi tiêu vượt quá. Chứ không có gì thay đổi
+> cho mốc 400.000 đồng cả."*
+>
+> ⇒ Những nhóm có chi phí/lượt mua trên 400.000đ **không phải vì Đại nới trần**, mà vì **chưa kịp tắt
+> nên chi tiêu đã vượt**. Các giá trị `y` cao hơn (`550`, `600`, `650`, `750`) là **hậu quả của việc
+> vượt ngưỡng** — Đại đặt lại theo đúng công thức ở mục 5.2: *`y` = chi tiêu mới + 50.000*.
+>
+> ⇒ **Hệ thống đọc `y` từ tên nhóm** để biết nhóm đã bị vượt hay chưa, **nhưng mốc để phán là
+> 400.000đ**. Và đây chính là lý do Đại cần nấc 2: **có hệ thống tự tắt thì sẽ không vượt nữa**.
+
+**C7.** ✅ **ĐÃ TRẢ LỜI (30/09/2026, 12h45).**
+> *"Không có nhóm nào. Vì dựa vào kết quả chi phí trung bình theo tháng của lượt mua mà."*
+
+⇒ **Không có nhóm nào được miễn trừ.** Nhóm thương hiệu, nhóm của khách, nhóm chạy thử — tất cả theo
+một thước đo duy nhất: chi phí trung bình mỗi lượt mua theo tháng. (Khớp cấu hình:
+`FILTER_EXCLUDE=thuonghieu,thương hiệu,Brand` — nhóm thương hiệu bị **loại khỏi báo cáo**, chứ không
+phải được miễn tắt.)
+
+**Hệ quả cho nấc 2:** **không cần danh sách vùng cấm.** Rào chặn cứng duy nhất là **bộ lọc phạm vi ở
+mục 6**. Ngoài phạm vi đó thì không đụng; trong phạm vi thì mọi nhóm đều có thể bị đề xuất tắt nếu
+chạm ngưỡng.
 
 ---
 
 ## 8. ĐIỀU NÀY NGHĨA GÌ CHO NẤC 2
 
-Ba điều chỉnh so với kế hoạch ban đầu:
+Sáu điều chỉnh so với kế hoạch ban đầu:
 
-1. **Đề xuất nên là "hạ về 27.000đ" chứ không phải "tạm dừng".** Vì đó là cách Đại thật sự làm
-   (75 lần trong 30 ngày), và nó **nhẹ hơn** tạm dừng — không mất lịch sử học của nhóm.
+1. **Đề xuất phải là "tắt nhóm + hạ ngân sách về 27.000đ" như MỘT động tác gộp** — không phải
+   "tạm dừng", cũng không phải chỉ "hạ ngân sách". Vì đó là cách Đại thật sự làm: 75 lần trong 30
+   ngày, và 72/75 lần hai thao tác cách nhau **trung vị 6 giây**. (Giả thuyết cũ "hạ 27.000 là tắt
+   mềm, nhẹ hơn tạm dừng" đã bị dữ liệu bác bỏ — xem mục 3.3.)
 2. **Rào an toàn phải là trần TIỀN TUYỆT ĐỐI, không phải trần phần trăm.** Vì Đại tăng theo bậc
    100.000đ; ở nhóm 400.000đ thì +100.000đ đã là +25%.
+   **Và rào đúng hơn nữa là dùng chính NẤC THANG của Đại (mục 3.2b):** hệ thống chỉ được đề xuất
+   tăng **đúng một bậc 100.000đ**, và chỉ khi **số lượt mua trong tháng đã vượt mốc 5 lượt** tiếp
+   theo. Đây là rào chặt hơn "trần tiền tuyệt đối" vì nó buộc đúng lý do, không chỉ đúng số tiền.
 3. **Mốc báo cáo 12h gần như vô dụng** — Đại chỉ đụng tới quảng cáo 5 lần trong 30 ngày vào giờ đó.
    Đáng cân nhắc chuyển mốc 12h sang giờ khác, hoặc đổi nội dung mốc 12h cho khác đi.
 
@@ -385,6 +657,17 @@ Ba điều chỉnh so với kế hoạch ban đầu:
    tắt/bật nhóm hộ Đại, nó **tự thêm `X<tháng>` hoặc chữ `v`** theo đúng quy tắc ở mục 5. Việc này
    phải làm **rất cẩn thận**: sửa tên là ghi đè lên thứ Đại đang dùng để làm việc hằng ngày. Nguyên
    tắc bắt buộc: **giữ nguyên phần `x/y`**, chỉ đụng phần ký hiệu ở cuối.
+
+5. **Hệ thống phải nhìn được CẢ HAI cấp ngân sách.** Đại "chôn" ở cấp nhóm (75 lần) **và** cấp chiến
+   dịch (9 lần). Nếu chỉ nhìn một cấp thì sẽ đề xuất sai — hoặc bỏ sót việc Đại đã làm, hoặc đề xuất
+   trùng. Ngoài ra phải hiểu mức sàn ~26.200đ của Meta: thấy nhóm ở mức đó nghĩa là **chiến dịch đang
+   giữ ngân sách**, không phải Đại đặt.
+
+6. **Bộ lọc phạm vi (Đại chốt 30/09/2026, 12h40): người thao tác `` + đối tượng thuộc
+   phạm vi Đại** (`dainq` / mã content viết hoa / `new - dainq`). Meta tự làm giữ ở **ngăn riêng**.
+   Lọc ở cấp **chiến dịch / nhóm quảng cáo**, không lọc theo tên quảng cáo. Vũ Quang Trường dùng chung
+   tài khoản nhưng làm việc ngoài `dainq` (10/10 thao tác ngoài) — hệ thống **không được đề xuất gì
+   vào phần đó**. Quy tắc đầy đủ + con số ở **mục 6**.
 
 Và một điều nữa: **Đại can thiệp ở cấp từng quảng cáo (1.541 lần) nhiều hơn cấp nhóm (797 lần)**.
 Nếu hệ thống chỉ nhìn tới cấp nhóm thì nó sẽ bỏ sót hơn một nửa công việc thật của Đại.

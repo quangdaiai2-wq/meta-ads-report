@@ -1,5 +1,10 @@
 # CÂU HỎI VỀ CÁCH ĐẠI ĐANG CARE QUẢNG CÁO
 
+> ✅ **CẬP NHẬT 30/09/2026 — ĐÃ HỎI XONG.** Đại đã trả lời hết qua cuộc trao đổi ngày 30/09. Kết quả
+> đã kiểm chứng bằng dữ liệu thật và ghi vào **`TONG-HOP-CACH-CHAY-QUANG-CAO.md`** — đó là tài liệu
+> để đọc, không phải file này. Các câu chặn đường **B1/B2/B3 nay đã có lời giải** (xem mục 3.2b, 3.3,
+> 5.2 và mục 7 của tài liệu tổng hợp). File này giữ lại làm bản gốc của bộ câu hỏi.
+
 **Ngày soạn:** 30/09/2026
 **Để làm gì:** Đây là đầu vào cho **nấc 2** — bước AI xin phép Đại qua Telegram rồi mới tắt nhóm
 quảng cáo. Tôi cần hiểu cách Đại làm việc thật, để hệ thống phán đoán **giống Đại**, chứ không
@@ -13,8 +18,9 @@ phải áp một quy trình lạ vào.
   chỗ nào cần bàn tiếp.
 - Trả lời bằng lời thường, không cần đúng thuật ngữ. Tôi sẽ hỏi lại nếu chưa hiểu.
 
-**Đã biết sẵn, không cần nhắc lại:** Đại care ở cấp **nhóm quảng cáo (ad set)**. Ngân sách nằm ở
-cấp này, không phải cấp chiến dịch.
+**Đã biết sẵn, không cần nhắc lại:** Đại care ở cấp **nhóm quảng cáo (ad set)**. Ngân sách **có thể
+nằm ở cả hai cấp** — ban đầu chiến dịch giữ ngân sách, sau đó Đại chuyển sang cấp nhóm (xem mục 3.3
+tài liệu tổng hợp).
 
 > 🔴 **Ba câu chặn đường** — chưa có ba câu này thì chưa dựng được nấc 2: **B1**, **B2**, **B3**.
 
@@ -114,6 +120,7 @@ Tôi sẽ làm theo đúng thứ tự đã chốt:
 2. **Dựng thử toàn bộ trong thư mục tạm** để kiểm chứng kế hoạch trước khi đụng vào code thật.
 3. Đại duyệt, rồi mới sửa code.
 
-Và việc quan trọng không được quên: **nhóm này phải ở cấp ad set**, không phải cấp chiến dịch —
-vì ngân sách nằm ở ad set. Báo cáo hiện tại chỉ nhìn tới cấp chiến dịch, nên có thể phải mở rộng
-xuống một cấp nữa.
+Và việc quan trọng không được quên: **nhóm này phải ở cấp ad set** — nhưng **ngân sách Đại dùng ở cả
+hai cấp**: ban đầu chiến dịch giữ ngân sách (nhóm con nằm ở mức sàn ~26.200đ của Meta), sau đó Đại
+chuyển sang ngân sách cấp nhóm và dồn 400.000đ cho nhóm cần chạy. Báo cáo hiện tại chỉ nhìn tới cấp
+chiến dịch, nên có thể phải mở rộng xuống một cấp nữa — và hiểu cả mức sàn của Meta.

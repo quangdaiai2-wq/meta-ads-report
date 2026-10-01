@@ -264,10 +264,17 @@ class TestThamSoLayTin(unittest.TestCase):
     def test_offset_None_thi_khong_truyen(self):
         self.assertNotIn("offset", nguoi_truc.tham_so_lay_tin(None))
 
-    def test_chi_nhan_update_loai_message(self):
-        self.assertEqual(
-            nguoi_truc.tham_so_lay_tin(None)["allowed_updates"], '["message"]'
-        )
+    def test_chi_nhan_update_loai_message_va_nut_bam(self):
+        """Tu 30/09/2026 xin nhan CA `callback_query` (lan BAM NUT cua agent nac 2).
+
+        Bat buoc phai xin nhan: Telegram chi giao mot update cho MOT nguoi goi,
+        ma `offset` thi xoa vinh vien moi update co ma nho hon. Loai nao khong
+        xin nhan o day se bi nuot mat truoc khi agent kip thay — nghia la nut
+        bam cua Dai khong bao gio toi duoc agent.
+        """
+        import json as _json
+        ds = _json.loads(nguoi_truc.tham_so_lay_tin(None)["allowed_updates"])
+        self.assertEqual(sorted(ds), ["callback_query", "message"])
 
 
 class TestOffsetMoi(unittest.TestCase):
@@ -679,6 +686,75 @@ class TestLenhToken(unittest.TestCase):
             doc_han_fn=self._doc_gia(20),
         )
         self.assertIn("Người trực đang chạy", chu)
+
+
+class TestChuyenTiepTinTonDong(unittest.TestCase):
+    """LOI THAT ngay 30/09/2026: nguoi truc bi tat luc 15:21, Dai bam nut trong
+    luc no khong chay, den khi bat lai thi lan bam da bi XOA SACH — mat lenh im
+    lang va Dai tuong agent hong. Nay phai CHUYEN TIEP truoc khi bo."""
+
+    def setUp(self):
+        import os
+        import tempfile
+        from pathlib import Path
+
+        import agent_ky_uc
+        self.agent_ky_uc = agent_ky_uc
+        self.os = os
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        self.tmp.close()
+        os.unlink(self.tmp.name)
+        self.cu = agent_ky_uc.LENH_PATH
+        agent_ky_uc.LENH_PATH = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.agent_ky_uc.LENH_PATH = self.cu
+        if self.os.path.exists(self.tmp.name):
+            self.os.unlink(self.tmp.name)
+
+    def _chay(self, tin_cho_san):
+        tg = TrucGia(luc(13), tin_cho_san=tin_cho_san)
+        tg.truc.mot_vong()
+        return tg
+
+    def test_lan_bam_nut_ton_dong_duoc_chuyen_tiep(self):
+        self._chay([{"update_id": 1, "callback_query": {
+            "id": "cb1", "data": "tat:120250506886650509",
+            "message": {"message_id": 99, "chat": {"id": 123}}}}])
+        hang = self.agent_ky_uc.doc_lenh()
+        self.assertEqual(len(hang), 1, "lan bam nut bi mat")
+        self.assertEqual(hang[0]["noi_dung"], "tat:120250506886650509")
+        self.assertEqual(hang[0]["tin_nhan_id"], 99)
+
+    def test_lenh_go_tay_ton_dong_duoc_chuyen_tiep(self):
+        self._chay([{"update_id": 1, "message": {
+            "chat": {"id": 123}, "text": "tắt 120250506886650509"}}])
+        self.assertEqual(len(self.agent_ky_uc.doc_lenh()), 1)
+
+    def test_cau_hoi_cu_thi_KHONG_chuyen_tiep(self):
+        self._chay([{"update_id": 1, "message": {
+            "chat": {"id": 123}, "text": "doanh thu hôm nay thế nào"}}])
+        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
+
+    def test_tin_tu_nguoi_la_khong_chuyen_tiep(self):
+        self._chay([{"update_id": 1, "message": {
+            "chat": {"id": 999}, "text": "tắt 120250506886650509"}}])
+        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
+
+    def test_nut_bam_tu_nguoi_la_khong_chuyen_tiep(self):
+        self._chay([{"update_id": 1, "callback_query": {
+            "id": "cb1", "data": "tat:120250506886650509",
+            "message": {"message_id": 99, "chat": {"id": 999}}}}])
+        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
+
+    def test_van_danh_dau_da_doc_ton_dong(self):
+        tg = self._chay([])
+        self.assertTrue(tg.truc.da_xa_tin_ton_dong)
+
+    def test_tin_hong_khong_lam_sap(self):
+        self._chay([None, "chuoi", {}, {"update_id": 2},
+                    {"update_id": 3, "callback_query": None}])
+        self.assertEqual(self.agent_ky_uc.doc_lenh(), [])
 
 
 if __name__ == "__main__":
