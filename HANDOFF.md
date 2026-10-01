@@ -1,9 +1,10 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **CHẠY NGẦM ĐÃ XONG** (hai tiến trình chạy bằng
-`pythonw.exe`, không còn cửa sổ đen; đã kiểm tra lại lịch Windows và tiến trình đang chạy).
-🐛 **BẮT ĐƯỢC 1 LỖI THẬT ngay khi áp dụng**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì khoá
-cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật. Bộ kiểm thử: **599/599 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **CHẠY NGẦM XONG** · **agent tự ghi lịch sử XONG**
+· **đã đẩy lên GitHub (`b8dfcab`)**. Bộ kiểm thử: **607/607 đạt**.
+🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
+khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật (xem mục “Chưa làm”).
+📌 **Máy nhà:** `git pull` để nhận tới `b8dfcab` (nấc 2 + chạy ngầm + sửa lỗi khoá).
 
 **Trước đó (30/09/2026):** **Nấc 1 xong**: báo cáo có thêm khung **ĐỀ XUẤT** (AI chỉ ra
 camp đang chi tiền mà 0 đơn) và tin nhắn Telegram thêm **đúng 1 dòng** khi có đề xuất.
@@ -157,7 +158,18 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
     Và `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*agent.py*' }` sẽ
     **khớp chính tiến trình PowerShell đang chạy** — phải lọc thêm `$_.Name -like 'python*'`.
   Bộ kiểm thử: **599/599 đạt** (thêm 4 bài cho khoá ghi PID).
-- 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ VIẾT, CHƯA THI CÔNG (30/09/2026).**
+- ✅ **AGENT TỰ GHI `logs/lich-su.json` — BƯỚC 1 CỦA KẾ HOẠCH CHUYỂN TELEGRAM (01/10/2026).**
+  Kế hoạch: `docs/superpowers/plans/2026-10-01-agent-tu-ghi-lich-su.md` (đã **dựng thử 9/9 đạt**).
+  Code: `agent_lich_su.py` + một **nhịp thứ ba** trong `agent.py` (thử mỗi 1 giờ).
+  - Dùng lại `report.compute_stats` + `report.luu_lich_su` ⇒ số liệu **giống hệt** báo cáo ghi.
+  - **Chỉ ghi khi THIẾU** bản ghi trọn ngày ⇒ chạy song song **không giẫm chân** báo cáo.
+  - **Chỉ ghi sau 09:00** (báo cáo ghi bản trọn ngày cho hôm trước vào mốc 8h; Meta báo đơn trễ).
+  - Mốc ghi = **8** (phải nằm trong `lich_su.MOC_DAY_DU = (8, 22)`).
+  - 🔎 **Phát hiện THẬT khi đối chiếu:** Meta **chốt số thêm** sau khi báo cáo 8h ghi.
+    Cùng ngày 30/09: 08:00 chi tiêu 6.719.831đ → 10:43 thành 6.746.301đ (**+26.470đ, 0,4%**);
+    lượt mua **không đổi**. ⇒ Sau này khi tắt báo cáo, sổ do agent ghi sẽ **sát thực tế hơn**.
+  Bộ kiểm thử: **607/607 đạt** (thêm 8 bài).
+- 🗺️ **Kế hoạch chuyển Telegram về cho agent — ĐÃ THI CÔNG BƯỚC 1 (01/10/2026); còn bước 2–6.**
   `docs/superpowers/plans/2026-09-30-chuyen-telegram-ve-agent.md`.
   Đại chốt hướng: agent tự **hỏi đáp + lấy thông tin** được, thì **bỏ hẳn báo cáo theo khung giờ**.
   ⚠️ **Đọc mục 4 trước khi làm bất cứ gì:** `logs/lich-su.json` do `report.py` ghi mỗi mốc báo cáo.
