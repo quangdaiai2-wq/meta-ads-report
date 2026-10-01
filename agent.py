@@ -352,6 +352,7 @@ def _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin):
         danh_sach_moc=report.doc_moc_tu_env(env),
         bat_dau=tt_tg["bat_dau"],
         lan_gui_cuoi=tt_tg["lan_gui_cuoi"],
+        lan_gui_cuoi_txt="do tiến trình báo cáo gửi (agent không theo dõi)",
         da_gui=report.ds_moc_da_gui(bay_gio.strftime("%Y-%m-%d")),
         now=bay_gio,
         nhan="Agent (nấc 2)",

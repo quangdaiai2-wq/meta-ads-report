@@ -1014,6 +1014,16 @@ class M_AgentDocTelegram(_KhongGhiLog, unittest.TestCase):
         self._xu_ly(self._tin("con song khong?"))
         self.assertIn("Agent", self.gui[0], "phai noi ro ai tra loi")
 
+    def test_Lan_gui_gan_nhat_noi_DUNG_su_that(self):
+        """Agent khong gui bao cao nen khong duoc noi 'chua co trong phien nay'.
+
+        Loi that 01/10/2026: cau tra loi hien '- Hom nay da gui: 8h' ngay tren
+        '- Lan gui gan nhat: chua co trong phien nay' — hai dong mau thuan nhau.
+        """
+        self._xu_ly(self._tin("con song khong?"))
+        self.assertNotIn("chưa có trong phiên này", self.gui[0])
+        self.assertIn("tiến trình báo cáo gửi", self.gui[0])
+
     def test_tin_tu_nguoi_la_bi_bo_qua(self):
         self._xu_ly(self._tin("tat 120250506886650509", chat=999))
         self.assertEqual(self.gui, [])

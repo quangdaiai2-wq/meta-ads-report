@@ -525,7 +525,7 @@ def tra_loi_han_token(env, now=None, doc_han_fn=None):
 
 def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
                      now=None, tra_loi_ai_fn=None, doc_han_fn=None,
-                     nhan="Người trực"):
+                     nhan="Người trực", lan_gui_cuoi_txt=None):
     """Soan cau tra loi cho mot tin nhan tu Dai.
 
     Giai doan 2 tra loi cau hoi suc khoe. Giai doan 4 tra loi them cau hoi ve
@@ -544,10 +544,13 @@ def tra_loi_tin_nhan(cau_hoi, env, danh_sach_moc, bat_dau, lan_gui_cuoi, da_gui,
     )):
         moc_txt = ", ".join(f"{m}h" for m in danh_sach_moc)
         da_gui_txt = ", ".join(f"{m}h" for m in sorted(da_gui)) or "chưa gửi mốc nào"
-        lan_cuoi_txt = (
-            lan_gui_cuoi.strftime("%H:%M ngày %d/%m")
-            if lan_gui_cuoi else "chưa có trong phiên này"
-        )
+        # Agent KHONG gui bao cao nen khong biet gio gui -> phai cho no noi
+        # mot cau dung su that, thay vi in 'chua co trong phien nay' (mau thuan
+        # voi dong 'Hom nay da gui: 8h' ngay ben tren).
+        if lan_gui_cuoi:
+            lan_cuoi_txt = lan_gui_cuoi.strftime("%H:%M ngày %d/%m")
+        else:
+            lan_cuoi_txt = lan_gui_cuoi_txt or "chưa có trong phiên này"
         return "\n".join([
             f"✅ {nhan} đang chạy.",
             f"- Máy: {env.get('REPORT_ACCOUNT_NAME', '?')}",
