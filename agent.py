@@ -105,17 +105,33 @@ def _bao_ket_qua(env, ban_ghi, thong_bao, text, nut=None):
     thong_bao(text)
 
 
+def _dem_nhom_da_hoi_hom_nay(ban_ghi, bay_gio):
+    """So NHOM KHAC NHAU da duoc hoi Dai trong ngay.
+
+    Dem theo NHOM chu KHONG dem theo BAN GHI. Vi sao: MOT lan xin phep sinh HAI
+    ban ghi — ban de xuat (luc hoi Dai) va ban luc gui lenh len Meta (luc Dai
+    bam nut). Dem theo ban ghi thi tran AGENT_TOI_DA_NGAY bi tieu ton GAP DOI.
+
+    Loi that 01/10/2026: chi 2 nhom duoc hoi nhung dem ra 3 ⇒ agent IM LANG
+    suot phan con lai cua ngay, Dai tuong no hong.
+    """
+    return len({
+        str((r.get("doi_tuong") or {}).get("id") or "")
+        for r in (ban_ghi or [])
+        if isinstance(r, dict) and r.get("che_do") == "xin_phep"
+        and (agent_ky_uc._gio(r.get("luc")) or datetime.min.replace(tzinfo=GIO_VN)).date()
+        == bay_gio.date()
+    })
+
+
 def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio):
     """Tra ve danh sach de xuat QUA DUOC rao an toan."""
     duyet = []
     lich_su = agent_ky_uc.dem_hanh_dong(bay_gio)
     lich_su["nhom_da_tra_loi"] = agent_ky_uc.nhom_da_tra_loi(bay_gio)
     da_cho = set(agent_ky_uc.ma_dang_cho(bay_gio))
-    dem_de_xuat_hom_nay = sum(
-        1 for r in agent_ky_uc.doc()
-        if isinstance(r, dict) and r.get("che_do") == "xin_phep"
-        and (agent_ky_uc._gio(r.get("luc")) or datetime.min.replace(tzinfo=GIO_VN)).date()
-        == bay_gio.date())
+    nhom_da_hoi_hom_nay = _dem_nhom_da_hoi_hom_nay(agent_ky_uc.doc(), bay_gio)
+    dem_de_xuat_hom_nay = nhom_da_hoi_hom_nay
     con_lai = cau_hinh["AGENT_TOI_DA_DE_XUAT_MOI_VONG"]
 
     for d in agent_muc_tieu.xet(nhom, hom_nay, thang, loai_ten):

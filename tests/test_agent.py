@@ -495,6 +495,38 @@ class G_LuongDaiDongY(_KhongGhiLog, unittest.TestCase):
         self.assertIsNone(agent_ky_uc.doc()[-1]["dai_phan_hoi"])
 
 
+class G2_DemDeXuat(_KhongGhiLog, unittest.TestCase):
+    """Tran AGENT_TOI_DA_NGAY phai dem theo NHOM, khong dem theo BAN GHI.
+
+    Loi that 01/10/2026: mot lan xin phep sinh HAI ban ghi (ban de xuat + ban
+    luc gui lenh len Meta), nen tran 3/ngay bi tieu ton gap doi => chi hoi duoc
+    2 nhom roi agent IM LANG het ngay. Dai tuong agent hong.
+    """
+
+    def _r(self, ma, luc, che_do="xin_phep"):
+        return {"che_do": che_do, "luc": luc, "doi_tuong": {"id": ma}}
+
+    def test_dem_theo_NHOM_khong_theo_ban_ghi(self):
+        import agent
+        t = datetime(2026, 10, 1, 12, 0, tzinfo=GIO_VN)
+        ban_ghi = [
+            self._r("A", "2026-10-01T07:51:48+07:00"),   # de xuat nhom A
+            self._r("A", "2026-10-01T07:58:49+07:00"),   # CUNG nhom A -> khong dem them
+            self._r("B", "2026-10-01T08:22:13+07:00"),   # nhom B
+            self._r("C", "2026-09-30T14:49:00+07:00"),   # HOM QUA -> khong dem
+            self._r("D", "2026-10-01T09:00:00+07:00", "hoan_tac"),  # khac che_do
+        ]
+        self.assertEqual(agent._dem_nhom_da_hoi_hom_nay(ban_ghi, t), 2,
+                         "chi 2 NHOM khac nhau duoc hoi hom nay")
+
+    def test_dau_vao_hong_khong_nem_loi(self):
+        import agent
+        t = datetime(2026, 10, 1, 12, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent._dem_nhom_da_hoi_hom_nay([], t), 0)
+        self.assertEqual(agent._dem_nhom_da_hoi_hom_nay(None, t), 0)
+        self.assertEqual(agent._dem_nhom_da_hoi_hom_nay([None, "x", {}], t), 0)
+
+
 class H_NutBam(_KhongGhiLog, unittest.TestCase):
     """Ban phim noi: Dai bam mot cai la gui lenh luon."""
 
