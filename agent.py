@@ -13,10 +13,11 @@ nao len Meta. Dai doc vai ngay, doi chieu, roi moi tat tap su.
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import report
@@ -276,11 +277,51 @@ def _la_yeu_cau_bao_cao(text):
         phan = phan[1:]
     if len(phan) < 2 or phan[0] != "bao" or phan[1] != "cao":
         return False
-    # Sau "bao cao" chi duoc la cac tu chi ngay thang / loi xin. "bao cao thang 9"
-    # thi KHONG phai yeu cau gui file -> de AI tra loi.
-    return set(phan[2:]) <= {
-        "hom", "qua", "nay", "ngay", "toi", "cho", "cua", "lai", "di", "giup",
-    }
+    # Sau "bao cao" chi duoc la tu chi ngay thang, mot NGAY CU THE (15/09,
+    # 2026-09-15), hoac loi xin. "bao cao thang 9" thi KHONG phai yeu cau gui
+    # file -> de AI tra loi.
+    for x in phan[2:]:
+        if x in {"hom", "qua", "nay", "ngay", "toi", "cho", "cua", "lai", "di", "giup"}:
+            continue
+        if re.fullmatch(r"\d{1,4}([/\-.]\d{1,4}){1,2}", x):
+            continue
+        return False
+    return True
+
+
+def _tao_ngay(nam, thang, ngay, bay_gio):
+    """date hop le, hoac None. Ngay o TUONG LAI thi lui mot nam.
+
+    Lui mot nam de "bao cao 15/12" hoi vao thang 10 van ra thang 12 NAM TRUOC
+    (nguoi ta khong hoi ve tuong lai).
+    """
+    try:
+        d = date(nam, thang, ngay)
+    except ValueError:
+        return None
+    if nam == bay_gio.year and d > bay_gio.date():
+        try:
+            return date(nam - 1, thang, ngay)
+        except ValueError:
+            return None
+    return d
+
+
+def _ngay_duoc_neu(text, bay_gio):
+    """Ngay CU THE duoc neu trong tin (15/09, 15-09-2026, 2026-09-15). Khong co -> None.
+
+    "hom qua" / "hom nay" tra ve None — hai cai do di duong MOC GIO.
+    """
+    if not isinstance(text, str):
+        return None
+    m = re.search(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b", text)
+    if m:
+        return _tao_ngay(int(m.group(1)), int(m.group(2)), int(m.group(3)), bay_gio)
+    m = re.search(r"\b(\d{1,2})[/\-.](\d{1,2})(?:[/\-.](\d{4}))?\b", text)
+    if m:
+        nam = int(m.group(3)) if m.group(3) else bay_gio.year
+        return _tao_ngay(nam, int(m.group(2)), int(m.group(1)), bay_gio)
+    return None
 
 
 def _moc_cho_bao_cao(text, bay_gio, danh_sach_moc):
@@ -303,13 +344,26 @@ def _gui_bao_cao_theo_yeu_cau(env, noi_dung, bay_gio):
     Dung lai report.py chu KHONG tu dung bao cao: nho vay so lieu, bo loc,
     phan nhan dinh AI va file HTML GIONG HET bao cao theo moc gio.
 
-    Dung `--force`: Dai da yeu cau thi phai gui, du moc do da gui hom nay.
+    - Neu tin neu MOT NGAY CU THE ("bao cao 15/09") -> `--ngay YYYY-MM-DD`.
+      Cach nay lay so TRUC TIEP tu Meta, KHONG phu thuoc so — nen hoi duoc
+      ngay bat ky trong qua khu.
+    - Con lai -> `--slot <moc>` nhu bao cao theo moc gio (mac dinh = hom qua).
+    - Luon dung `--force`: Dai da yeu cau thi phai gui, du hom nay da gui roi.
     """
-    danh_sach_moc = report.doc_moc_tu_env(env)
-    slot = _moc_cho_bao_cao(noi_dung, bay_gio, danh_sach_moc)
+    ngay = _ngay_duoc_neu(noi_dung, bay_gio)
+    if ngay is not None:
+        mo_ta = f"ng\u00e0y {ngay.strftime('%d/%m/%Y')}"
+        lenh = [sys.executable, str(GOC / "report.py"),
+                "--ngay", ngay.isoformat(), "--force"]
+    else:
+        danh_sach_moc = report.doc_moc_tu_env(env)
+        slot = _moc_cho_bao_cao(noi_dung, bay_gio, danh_sach_moc)
+        mo_ta = f"m\u1ed1c {slot}h"
+        lenh = [sys.executable, str(GOC / "report.py"),
+                "--slot", str(slot), "--force"]
+
     nguoi_truc.gui_tin_nhan(
-        env, f"\u23f3 \u0110ang l\u1ea5y b\u00e1o c\u00e1o m\u1ed1c {slot}h... kho\u1ea3ng 20\u201330 gi\u00e2y.")
-    lenh = [sys.executable, str(GOC / "report.py"), "--slot", str(slot), "--force"]
+        env, f"\u23f3 \u0110ang l\u1ea5y b\u00e1o c\u00e1o {mo_ta}... kho\u1ea3ng 20\u201330 gi\u00e2y.")
     moi_truong = dict(os.environ)
     moi_truong["PYTHONIOENCODING"] = "utf-8"
     khong_cua_so = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -320,16 +374,16 @@ def _gui_bao_cao_theo_yeu_cau(env, noi_dung, bay_gio):
             timeout=CHO_BAO_CAO_TOI_DA, creationflags=khong_cua_so,
         )
     except Exception as e:
-        nguoi_truc.gui_tin_nhan(env, f"\u26a0\ufe0f Kh\u00f4ng ch\u1ea1y \u0111\u01b0\u1ee3c b\u00e1o c\u00e1o: {e}")
+        nguoi_truc.gui_tin_nhan(env, f"\u26a0\ufe0f Kh\u00f4ng ch\u1ea1y \u0111\u01b0\u1ee3c b\u00e1o c\u00e1o {mo_ta}: {e}")
         report.log(f"AGENT: loi khi gui bao cao theo yeu cau: {type(e).__name__}: {e}")
         return
     if kq.returncode == 0:
-        report.log(f"AGENT: da gui bao cao moc {slot}h theo yeu cau cua Dai")
+        report.log(f"AGENT: da gui bao cao {mo_ta} theo yeu cau cua Dai")
         return
     nguoi_truc.gui_tin_nhan(
-        env, f"\u26a0\ufe0f B\u00e1o c\u00e1o m\u1ed1c {slot}h l\u1ed7i (m\u00e3 {kq.returncode}). "
+        env, f"\u26a0\ufe0f B\u00e1o c\u00e1o {mo_ta} l\u1ed7i (m\u00e3 {kq.returncode}). "
              f"Xem logs\\baocao.log.")
-    report.log(f"AGENT: bao cao theo yeu cau THAT BAI moc {slot}h, ma {kq.returncode}")
+    report.log(f"AGENT: bao cao theo yeu cau THAT BAI {mo_ta}, ma {kq.returncode}")
 
 
 def _nghe_telegram(env, cau_hinh, bay_gio, thong_bao, tt_tg):

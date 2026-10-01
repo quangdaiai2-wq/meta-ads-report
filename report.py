@@ -1039,6 +1039,9 @@ def main():
                         help="Chạy thật nhưng không gửi Telegram")
     parser.add_argument("--force", action="store_true",
                         help="Gửi lại dù mốc này đã gửi hôm nay (bỏ qua chống trùng)")
+    parser.add_argument("--ngay",
+                        help="Báo cáo cho MỘT ngày cụ thể, dạng YYYY-MM-DD "
+                             "(lấy số trực tiếp từ Meta, không phụ thuộc sổ)")
     args = parser.parse_args()
 
     if not env:
@@ -1048,7 +1051,19 @@ def main():
 
     now = datetime.now()
 
-    if args.mock is not None:
+    # --- NGAY RIENG (--ngay): bao cao mot ngay bat ky, lay tu Meta ---
+    # Dung cho cau hoi kieu "cho toi so lieu ngay 15/09". KHONG di qua
+    # chon_moc() va KHONG bi chan boi "da gui hom nay".
+    ngay_rieng = None
+    if args.ngay:
+        try:
+            ngay_rieng = datetime.strptime(args.ngay.strip(), "%Y-%m-%d").date()
+        except ValueError:
+            print(f"LOI: --ngay phai co dang YYYY-MM-DD, nhan duoc: {args.ngay!r}")
+            sys.exit(MA_THOAT_VINH_VIEN)
+        slot = moc_sang(danh_sach_moc)
+        print(f"Bao cao ngay rieng: {ngay_rieng.strftime('%d/%m/%Y')}")
+    elif args.mock is not None:
         slot = args.mock
         print(f"[CHE DO THU] Moc gio: {slot}h")
     else:
@@ -1061,12 +1076,18 @@ def main():
     # --- CHONG TRUNG: moi moc chi gui 1 lan trong ngay ---
     # (Xem giai thich o phan khai bao DEDUP_FILE phia tren.)
     # Chi ap dung khi gui that: bo qua che do thu (--mock/--dry) va khi dung --force.
-    if args.mock is None and not args.dry and not args.force and da_gui_hom_nay(slot):
+    if (ngay_rieng is None and args.mock is None and not args.dry
+            and not args.force and da_gui_hom_nay(slot)):
         print(f"[BO QUA] Moc {slot}h da duoc gui trong ngay hom nay - khong gui lai.")
         log(f"BO QUA - moc {slot}h (da gui hom nay, tranh trung)")
         sys.exit(0)
 
-    since, until, period_text = determine_period(now, slot, moc_sang(danh_sach_moc))
+    if ngay_rieng is not None:
+        since = until = ngay_rieng
+        period_text = ngay_rieng.strftime('%d/%m/%Y')
+    else:
+        since, until, period_text = determine_period(
+            now, slot, moc_sang(danh_sach_moc))
     print(f"Khoang thoi gian: {since} -> {until}")
     print()
     log(f"BAT DAU - moc {slot}h, khoang {since} -> {until}")
@@ -1100,7 +1121,8 @@ def main():
     nhan_dinh = None
     loi_ai = None
     de_xuat_tho = []
-    tron_ngay = la_bao_cao_tron_ngay(slot, danh_sach_moc)
+    tron_ngay = (True if ngay_rieng is not None
+                 else la_bao_cao_tron_ngay(slot, danh_sach_moc))
     try:
         ky_truoc = None
         if tron_ngay:
@@ -1193,7 +1215,8 @@ def main():
     if ok:
         print("DA GUI BAO CAO VAO TELEGRAM")
         log(f"THANH CONG - moc {slot}h, da gui Telegram")
-        ghi_da_gui(slot)  # danh dau da gui -> chan gui trung trong ngay
+        if ngay_rieng is None:
+            ghi_da_gui(slot)  # danh dau da gui -> chan gui trung trong ngay
     else:
         print(f"LOI GUI TELEGRAM: {err}")
         log(f"THAT BAI GUI TELEGRAM - moc {slot}h: {err}")
