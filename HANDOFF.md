@@ -1,9 +1,12 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **BÁO CÁO NGÀY BẤT KỲ QUA TELEGRAM**
-(nhắn *“báo cáo 20/09/2026”* — **bắt buộc đủ ngày/tháng/năm**) · **agent sở hữu Telegram**
-· **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h (còn 8h, 17h)** · **đã đẩy GitHub (`af38f07`)**.
-Bộ kiểm thử: **614/614 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **BÁO CÁO NGÀY BẤT KỲ QUA TELEGRAM** (nhắn *“báo cáo 20/09/2026”*)
+· **agent sở hữu Telegram** · **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h (còn 8h, 17h)**
+· **đã đẩy GitHub (`9b64edc`)**. Bộ kiểm thử: **616/616 đạt**.
+✅ **Đại đã tự thử báo cáo ngày bất kỳ và thành công (11:44):** *“AGENT: da gui bao cao ngay 21/09/2026”*.
+🐛 **3 LỖI THẬT đã bắt và sửa hôm nay:** khoá không ghi PID (agent từ chối chạy gần 1 giờ) ·
+câu trả lời *“Lần gửi gần nhất”* nói sai · **trần đề xuất bị tiêu tốn gấp đôi** (agent im lặng giữa ngày).
+📌 **Máy nhà:** `git pull` để nhận tới `9b64edc`.
 ✅ **Đại đã tự thử và thành công (01/10/2026, 11:44):** `AGENT: da gui bao cao ngay 21/09/2026`.
 🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
 khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
@@ -210,7 +213,19 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   - Phân biệt **yêu cầu gửi file** với **câu hỏi**: *“báo cáo hôm qua”* = xin file;
     *“báo cáo hôm qua thế nào?”* · *“báo cáo tháng 9”* = câu hỏi → để AI trả lời.
   - ✅ **Đã kiểm chứng thật:** `report.py --slot 8 --force` → gửi được **cả tin lẫn file HTML**.
-  Bộ kiểm thử: **614/614 đạt**.
+  Bộ kiểm thử: **616/616 đạt**.
+- 🐛 **LỖI THẬT đã sửa (01/10/2026) — TRẦN ĐỀ XUẤT BỊ TIÊU TỐN GẤP ĐÔI.**
+  Đại hỏi *“sao không thấy agent báo tắt nhóm nào?”*. Kiểm tra: **không hỏng**, nhưng có lỗi thật.
+  - **Nguyên nhân:** MỘT lần xin phép sinh **HAI bản ghi** (bản đề xuất + bản lúc gửi lệnh
+    lên Meta). Code đếm cả hai ⇒ trần `AGENT_TOI_DA_NGAY=3` bị tiêu tốn **gấp đôi**.
+  - **Bằng chứng:** ngày 01/10 chỉ **2 nhóm** được hỏi (07:51 và 08:22) nhưng đếm ra **3 bản ghi** ⇒ chạm trần
+    ⇒ agent **im lặng suốt phần còn lại của ngày**. Trong khi đó có 1 nhóm **chạm ngưỡng**
+    (`2026 - 09 - 29 - dainq - Scale - Offline A4`, chi 81.194đ, không có tin nhắn nào) mà rào an toàn **cho phép tắt**.
+  - **Đã sửa:** tách hàm `_dem_nhom_da_hoi_hom_nay()` — đếm theo **NHÓM KHÁC NHAU**, không đếm theo bản ghi.
+  - **Kiểm chứng thật:** sau khi sửa, agent đã đề xuất: `11:58:44 AGENT: xin phep tat`
+    `'2026 - 09 - 29 - dainq - Scale - Offline' (tin nhan 189)`.
+  - ⚠️ **Còn một việc CHƯA LÀM: “tăng tiền nhóm”.** Nấc 2 **chỉ được `tam_dung`** (rào số 2 của kế hoạch).
+    Nấc thang tăng ngân sách đã có công thức (`400.000 + 100.000 × (lượt mua tháng // 5)`) nhưng **chưa cài**.
   - 🆕 **NGÀY BẤT KỲ:** nhắn *“báo cáo 20/09/2026”* ⇒ agent chạy
     `report.py --ngay YYYY-MM-DD` — **lấy số TRỰC TIẾP từ Meta**, không phụ thuộc sổ.
     **BẮT BUỘC đủ ngày/tháng/năm** (01/10/2026, Đại chốt): `20/09/2026` · `20-09-2026` · `2026-09-20`.
