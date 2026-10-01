@@ -1,8 +1,13 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 — **BÁO CÁO NGÀY BẤT KỲ QUA TELEGRAM** (nhắn *“báo cáo 15/09”*)
-· **agent sở hữu Telegram** · **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h (còn 8h, 17h)**
-· **đã đẩy GitHub (`42b0e9d`)**. Bộ kiểm thử: **611/611 đạt**.
+**Cập nhật lần cuối:** 01/10/2026 — **BÁO CÁO NGÀY BẤT KỲ QUA TELEGRAM**
+(nhắn *“báo cáo 20/09/2026”* — **bắt buộc đủ ngày/tháng/năm**) · **agent sở hữu Telegram**
+· **chạy ngầm** · **agent tự ghi lịch sử** · **bỏ mốc 12h (còn 8h, 17h)** · **đã đẩy GitHub (`af38f07`)**.
+Bộ kiểm thử: **614/614 đạt**.
+✅ **Đại đã tự thử và thành công (01/10/2026, 11:44):** `AGENT: da gui bao cao ngay 21/09/2026`.
+🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
+khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
+📌 **Máy nhà:** `git pull` để nhận tới `af38f07`.
 🐛 **Bắt được 1 LỖI THẬT ngay khi áp dụng chạy ngầm**: agent TỪ CHỐI KHỞI ĐỘNG gần 1 giờ vì
 khoá cũ không ghi tiến trình nào giữ — đã sửa và kiểm chứng thật.
 📌 **Máy nhà:** `git pull` để nhận tới `42b0e9d`.
@@ -205,9 +210,12 @@ Chủ dự án: **Đại** — người không biết lập trình, cần hướ
   - Phân biệt **yêu cầu gửi file** với **câu hỏi**: *“báo cáo hôm qua”* = xin file;
     *“báo cáo hôm qua thế nào?”* · *“báo cáo tháng 9”* = câu hỏi → để AI trả lời.
   - ✅ **Đã kiểm chứng thật:** `report.py --slot 8 --force` → gửi được **cả tin lẫn file HTML**.
-  Bộ kiểm thử: **611/611 đạt**.
-  - 🆕 **NGÀY BẤT KỲ:** nhắn *“báo cáo 15/09”* / *“báo cáo 2026-09-15”* ⇒ agent chạy
+  Bộ kiểm thử: **614/614 đạt**.
+  - 🆕 **NGÀY BẤT KỲ:** nhắn *“báo cáo 20/09/2026”* ⇒ agent chạy
     `report.py --ngay YYYY-MM-DD` — **lấy số TRỰC TIẾP từ Meta**, không phụ thuộc sổ.
+    **BẮT BUỘC đủ ngày/tháng/năm** (01/10/2026, Đại chốt): `20/09/2026` · `20-09-2026` · `2026-09-20`.
+    Ghi thiếu năm (`20/09`) thì bot **nhắc lại định dạng**, KHÔNG đoán bừa ra báo cáo hôm qua.
+    Ngày ở **tương lai** thì báo *“chưa tới”* thay vì gửi báo cáo rỗng.
     ⚠️ **Vì sao cần:** sổ `logs/lich-su.json` **mới chỉ có 3 ngày** (28–30/09), nên hỏi đáp bằng AI
     **KHÔNG** trả lời được về ngày cũ hơn. Đường `--ngay` mới hỏi được **ngày bất kỳ trong quá khứ**.
     Ngày ở TƯƠNG LAI thì tự lùi một năm (hỏi tháng 12 vào tháng 10 ⇒ năm trước).
