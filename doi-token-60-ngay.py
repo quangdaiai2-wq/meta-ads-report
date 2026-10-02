@@ -22,7 +22,7 @@ import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
-API_VERSION = "v21.0"
+API_VERSION = "v26.0"
 ENV_PATH = Path(__file__).parent / ".env"
 
 

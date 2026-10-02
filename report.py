@@ -57,8 +57,25 @@ def _ep_stdout_utf8():
 
 _ep_stdout_utf8()
 
-API_VERSION = "v21.0"
+API_VERSION = "v26.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
+
+# ⚠️ DAY LA NOI DUY NHAT khai bao phien ban API. Cac file khac phai lay tu day
+# (`report.API_VERSION`), KHONG duoc tu viet lai chuoi "v26.0".
+# Truoc 02/10/2026 co 9 file moi noi tu khai bao "v21.0" — sua mot cho thi
+# bon cho khac van cu, khong ai kiem soat duoc minh dang goi phien ban nao.
+#
+# Vi sao doi v21.0 -> v26.0 (kiem chung that 02/10/2026):
+#   Meta bao "v21.0 has been deprecated" va TU NANG moi cuoc goi len v26.0.
+#   Da goi CUNG duong dan bang ca hai phien ban va so tung truong:
+#   ket qua GIONG NHAU TUNG KY TU (tai khoan, adsets, insights, ads).
+#   => Doi sang v26.0 KHONG doi hanh vi, chi lam code noi dung su that.
+#
+# ⚠️ TU 02/10/2026, moi cuoc goi doc deu KIEM header canh bao phien ban
+# (`x-ad-api-version-warning`) va ghi log MOT LAN neu Meta bao phien ban nay
+# da bi khai tu. Nho vay lan sau Meta doi phien ban thi minh BIET NGAY, chu
+# khong bi doi hanh vi trong im lang.
+PHIEN_BAN_DA_CANH_BAO = set()
 
 # Cac moc gio bao cao MAC DINH (gio Viet Nam).
 # Doi duoc bang khoa REPORT_SLOTS trong .env, vi du: REPORT_SLOTS=8,12,17
@@ -466,6 +483,26 @@ def phan_loai_loi(chuoi_loi):
     return "tam_thoi"
 
 
+def kiem_canh_bao_phien_ban(headers):
+    """Ghi log MOT LAN neu Meta bao phien ban API da bi khai tu.
+
+    Vi sao can: khi phien ban minh xin da bi bo, Meta AM THAM nang len phien
+    ban moi va chi noi trong mot header. Neu khong ai doc header do thi minh
+    khong bao gio biet — den ngay Meta doi hanh vi that thi vo tran.
+    Ghi MOT LAN thoi (khong phai moi cuoc goi) de khong lam ngap nhat ky.
+    """
+    if not headers:
+        return
+    try:
+        canh_bao = headers.get("x-ad-api-version-warning")
+    except Exception:
+        return
+    if not canh_bao or canh_bao in PHIEN_BAN_DA_CANH_BAO:
+        return
+    PHIEN_BAN_DA_CANH_BAO.add(canh_bao)
+    log(f"CANH BAO PHIEN BAN API ({API_VERSION}): {canh_bao}")
+
+
 def api_get(path, params, ngu_fn=None):
     """Goi Meta Graph API. Tra ve (du_lieu, loi).
 
@@ -481,6 +518,8 @@ def api_get(path, params, ngu_fn=None):
     for attempt in range(3):
         try:
             with urllib.request.urlopen(url, timeout=60) as resp:
+                # getattr: doi tuong gia trong bai kiem thu khong co `.headers`.
+                kiem_canh_bao_phien_ban(getattr(resp, "headers", None))
                 return json.loads(resp.read().decode("utf-8")), None
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="ignore")

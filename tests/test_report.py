@@ -1030,5 +1030,53 @@ class TestDongNhacDeXuat(unittest.TestCase):
         self.assertTrue(ghep.endswith(dong))
 
 
+class TestCanhBaoPhienBanApi(unittest.TestCase):
+    """Meta AM THAM nang phien ban API khi phien ban minh xin da bi bo.
+
+    LOI THAT 02/10/2026: Meta bao 'v21.0 has been deprecated' va tu nang len
+    v26.0 — nhung chi noi trong MOT HEADER, khong ai doc thi khong bao gio biet.
+    """
+
+    def setUp(self):
+        report.PHIEN_BAN_DA_CANH_BAO.clear()
+        self.da_ghi = []
+        self.cu = report.log
+        report.log = self.da_ghi.append
+
+    def tearDown(self):
+        report.log = self.cu
+        report.PHIEN_BAN_DA_CANH_BAO.clear()
+
+    def test_co_canh_bao_thi_ghi_log(self):
+        report.kiem_canh_bao_phien_ban(
+            {"x-ad-api-version-warning": "auto-upgraded to v27.0"})
+        self.assertEqual(len(self.da_ghi), 1)
+        self.assertIn("auto-upgraded to v27.0", self.da_ghi[0])
+        self.assertIn("CANH BAO PHIEN BAN API", self.da_ghi[0])
+
+    def test_cung_mot_canh_bao_chi_ghi_MOT_LAN(self):
+        """Khong ghi lai moi cuoc goi — se lam ngap nhat ky."""
+        h = {"x-ad-api-version-warning": "auto-upgraded to v27.0"}
+        for _ in range(5):
+            report.kiem_canh_bao_phien_ban(h)
+        self.assertEqual(len(self.da_ghi), 1)
+
+    def test_khong_co_canh_bao_thi_khong_ghi_gi(self):
+        report.kiem_canh_bao_phien_ban({})
+        report.kiem_canh_bao_phien_ban(None)
+        self.assertEqual(self.da_ghi, [])
+
+    def test_headers_la_doi_tuong_la_thi_khong_nem_loi(self):
+        """Doi tuong gia trong bai kiem thu khac khong co .get()."""
+        report.kiem_canh_bao_phien_ban(object())
+        report.kiem_canh_bao_phien_ban("chuoi")
+        self.assertEqual(self.da_ghi, [])
+
+    def test_phien_ban_dang_dung_khong_con_bi_khai_tu(self):
+        """v21.0 da bi khai tu 02/10/2026 — khong duoc quay lai."""
+        self.assertNotEqual(report.API_VERSION, "v21.0")
+        self.assertTrue(report.API_VERSION.startswith("v"))
+
+
 if __name__ == "__main__":
     unittest.main()

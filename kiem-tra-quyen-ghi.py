@@ -48,7 +48,7 @@ import urllib.request
 from pathlib import Path
 
 ENV_PATH = Path(__file__).parent / ".env"
-API_VERSION = "v21.0"
+API_VERSION = "v26.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 
 QUYEN_DOC = "ads_read"

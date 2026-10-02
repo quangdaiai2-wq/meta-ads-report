@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-API_VERSION = "v21.0"
+API_VERSION = "v26.0"
 BASE = f"https://graph.facebook.com/{API_VERSION}"
 
 

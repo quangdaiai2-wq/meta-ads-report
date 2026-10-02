@@ -31,7 +31,7 @@ from pathlib import Path
 GOC = Path(__file__).parent
 ENV_PATH = GOC / ".env"
 OUT_PATH = GOC / "logs" / "lich-su-thao-tac.json"
-API_VERSION = "v21.0"
+API_VERSION = "v26.0"
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 GIO_VN = timezone(timedelta(hours=7))
 

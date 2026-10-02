@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ENV_PATH = Path(__file__).parent / ".env"
-GRAPH = "https://graph.facebook.com/v21.0"
+GRAPH = "https://graph.facebook.com/v26.0"
 TELEGRAM = "https://api.telegram.org"
 
 # Token Meta duoi nguong nay coi la NGAN HAN (phai doi sang 60 ngay)

@@ -31,7 +31,9 @@ import urllib.request
 import report
 from agent_rao import NGAN_SACH_HA, thuoc_pham_vi
 
-API_VERSION = "v21.0"
+# Phien ban API lay tu MOT nguon duy nhat la report.py — dung tu viet lai chuoi
+# "v26.0" o day. Xem giai thich day du o report.API_VERSION.
+API_VERSION = report.API_VERSION
 GRAPH = f"https://graph.facebook.com/{API_VERSION}"
 
 # Ma loi Meta tra ve khi ghi qua nhanh.
@@ -53,6 +55,7 @@ def api_post(path, params, ngu_fn=None):
         try:
             req = urllib.request.Request(url, data=body)
             with urllib.request.urlopen(req, timeout=60) as resp:
+                report.kiem_canh_bao_phien_ban(getattr(resp, "headers", None))
                 return json.loads(resp.read().decode("utf-8")), None
         except urllib.error.HTTPError as e:
             raw = e.read().decode("utf-8", errors="ignore")
