@@ -14,7 +14,7 @@ CAPTION = (
     "HƯỚNG DẪN MÁY NHÀ — bản 02/10/2026 (viết cho TRỢ LÝ AI ở nhà)\n\n"
     "File này viết để WorkBuddy ở nhà ĐỌC VÀ TỰ LÀM giúp, không phải để Đại tự đọc.\n\n"
     "6 bước:\n"
-    "1. git pull  → phải thấy mốc d22fd3f\n"
+    "1. git pull  → kiểm BẰNG NỘI DUNG, đừng so mã commit (xem file)\n"
     "2. sửa .env: REPORT_SLOTS=8,17\n"
     "3. sửa .env: AGENT_NHIP_PHUT=15\n"
     "4. sửa .env: FILTER_INCLUDE=dainq\n"

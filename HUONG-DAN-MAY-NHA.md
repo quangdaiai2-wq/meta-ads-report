@@ -19,7 +19,7 @@
 ## Bối cảnh bạn cần biết
 
 Đây là **hệ thống báo cáo Meta Ads → Telegram** ("Người trực") của Đại. Chạy trên **2 máy**:
-- **Máy công ty** — đã cập nhật xong bản `19f05ce`, đang chạy thật.
+- **Máy công ty** — đã cập nhật xong, **đang chạy thật**, đã kiểm chứng đủ luật tắt nhóm mới.
 - **Máy nhà** — là máy bạn đang ngồi. Đang cũ hơn, cần cập nhật cho khớp.
 
 **Hai máy dùng CHUNG một tài khoản Meta** nhưng **bot Telegram riêng**. Đây là điểm quan trọng
@@ -46,13 +46,30 @@ git pull
 ```
 git log --oneline -1
 ```
-Phải in ra **`d22fd3f`** (hoặc mới hơn). Nếu chưa tới mốc đó thì **DỪNG LẠI**:
-kiểm tra nhánh (`git branch`), thử `git fetch && git pull origin main`.
-**Không làm tiếp khi chưa có mốc này** — code cũ ghi tên nhóm thiếu năm.
 
-> Vì sao là `d22fd3f` mà không phải mốc khác: đây là bản có **đầy đủ** luật tắt nhóm mới
-> (tên kèm năm + xét theo từng quảng cáo). Mốc `16aa0ff` cũ hơn cũng đã có luật mới,
-> nhưng `d22fd3f` là bản mới nhất máy công ty đã kiểm chứng.
+⛔ **ĐỪNG đối chiếu mã commit với tài liệu này.** Lý do: file bạn đang đọc **nằm trong chính repo**,
+nên mỗi lần máy công ty sửa tài liệu là lại sinh ra commit mới ⇒ mã commit ghi trong tài liệu
+**tự lệch ngay sau khi đẩy**. Máy công ty đã dính bẫy này 2 lần liên tiếp khi viết bản này.
+
+✅ **Cách kiểm đúng — kiểm theo NỘI DUNG, không theo mã commit.** Chạy 2 lệnh này:
+
+```
+git log --oneline -1
+python -c "import agent_muc_tieu as m; import inspect; print('CO HAM _de_xuat_ad :', hasattr(m,'_de_xuat_ad')); print('SO_AD_TOI_THIEU    :', getattr(m,'SO_AD_TOI_THIEU_DE_TAT_LE',None)); print('DUOI TEN           :', m._duoi_thoi_gian())"
+```
+
+Kết quả đúng phải là:
+```
+CO HAM _de_xuat_ad : True
+SO_AD_TOI_THIEU    : 2
+DUOI TEN           : X10-26      ← phải CÓ dấu gạch nối và 2 chữ số năm
+```
+
+Ba dòng trên chứng minh code đã đủ: **(1)** có xét theo từng quảng cáo,
+**(2)** ngưỡng tắt lẻ = 2 quảng cáo, **(3)** tên nhóm kèm năm.
+
+Nếu `DUOI TEN` ra `X10` (thiếu `-26`) ⇒ **code còn cũ, DỪNG LẠI** — chưa được làm bước 6.
+Kiểm nhánh (`git branch`), thử `git fetch && git pull origin main` rồi kiểm lại.
 
 ### Bước 2 → 4 — Sửa `.env` (BẮT BUỘC, `git pull` KHÔNG mang theo)
 
@@ -272,7 +289,7 @@ kèm 2 nút `quét lại` / `bỏ qua 24h`. Không bấm gì ⇒ 15 phút sau h�
 # TÓM TẮT CHO AI — chạy tuần tự, kiểm chứng từng bước
 
 ```
-BƯỚC 1  git pull                       → git log --oneline -1 phải ra d22fd3f
+BƯỚC 1  git pull                       → kiểm BẰNG NỘI DUNG (xem mục Bước 1), đừng so mã commit
 BƯỚC 2  sửa .env: REPORT_SLOTS=8,17    → kiểm: python -c "... doc_moc_tu_env ..."  ra [8, 17]
 BƯỚC 3  sửa .env: AGENT_NHIP_PHUT=15   → kiểm: e.get('AGENT_NHIP_PHUT')  ra 15
 BƯỚC 4  sửa .env: FILTER_INCLUDE=dainq → kiểm: e.get('FILTER_INCLUDE')  ra dainq
@@ -284,6 +301,10 @@ BƯỚC 6  khoi-dong-lai-agent.bat        → kiểm: logs\baocao.log có "AGENT
 1. `.env` **không** đi theo `git pull` — phải sửa tay.
 2. `git pull` là **sửa code** ⇒ **bắt buộc** khởi động lại agent.
 3. Đo giờ khởi động bằng `logs\baocao.log`, **KHÔNG** bằng `logs\agent-dang-chay.lock`.
+
+**Và điều thứ tư — quan trọng nhất:**
+4. **Đừng so mã commit với tài liệu.** Tài liệu nằm trong repo nên mã commit trong nó tự lệch.
+   Kiểm **bằng nội dung** (3 dòng ở Bước 1: có hàm `_de_xuat_ad` · ngưỡng `2` · đuôi `X10-26`).
 
 **Công cụ có sẵn (chỉ đọc, không gửi lệnh nào lên Meta):**
 ```
