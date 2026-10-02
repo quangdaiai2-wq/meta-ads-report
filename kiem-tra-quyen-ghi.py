@@ -150,8 +150,10 @@ def main():
     ten_tk, trang_thai = "(khong doc duoc)", None
     if acc:
         # Tai khoan quang cao tren Graph API phai co tien to "act_".
-        # Thieu tien to se bao HTTP 400 "object does not exist" du token dung.
-        du_lieu, loi, ma = goi_graph("act_" + acc, {
+        # CHUAN HOA: chi them "act_" khi CHUA co, tranh lap "act_act_..." neu
+        # .env da ghi san tien to (lam giong report.py dong 728).
+        acc_node = acc if acc.startswith("act_") else "act_" + acc
+        du_lieu, loi, ma = goi_graph(acc_node, {
             "access_token": token, "fields": "name,account_status"})
         if du_lieu:
             ten_tk = du_lieu.get("name", "?")
