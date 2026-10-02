@@ -198,11 +198,24 @@ class B_DocTraLoi(unittest.TestCase):
         self.assertEqual(agent_xin_phep.bo_dau("TẮT ĐI"), "tat di")
         self.assertEqual(agent_xin_phep.bo_dau("Bỏ qua"), "bo qua")
 
-    def test_soan_tin_co_du_ma_nhom(self):
+    def test_soan_tin_KHONG_con_phan_go_tay(self):
+        """Dai bo 02/10/2026: 'Hoac go tay: tat <ma> / bo qua <ma>' — khong can thiet."""
         t = agent_xin_phep.soan_tin(dx())
-        self.assertIn(ID, t)
         self.assertIn("XIN PHÉP TẮT NHÓM", t)
+        self.assertNotIn("gõ tay", t)
+        self.assertNotIn(ID, t, "khong con ma nhom trong phan chu")
+
+    def test_soan_tin_noi_ro_moc_ha_ngan_sach(self):
+        t = agent_xin_phep.soan_tin(dx())
         self.assertIn("27.000", t)
+
+    def test_nut_bam_lo_HAI_lua_chon_tat(self):
+        """Hai lua chon nam o NUT, khong nam o phan chu nua."""
+        import json as _json
+        hang = _json.loads(agent_xin_phep.nut_bam(ID))["inline_keyboard"]
+        chu = " ".join(n["text"] for h in hang for n in h)
+        self.assertIn("TẮT NHÓM", chu)
+        self.assertIn("HẠ NGÂN SÁCH", chu)
 
     def test_soan_tin_hien_ID_CHIEN_DICH(self):
         """Dai chot 02/10/2026: tra tren Meta bang ID chien dich cho de."""
@@ -215,11 +228,6 @@ class B_DocTraLoi(unittest.TestCase):
         t = agent_xin_phep.soan_tin(dx())          # dx() khong co campaign_id
         self.assertNotIn("Chiến dịch:", t)
         self.assertIn("XIN PHÉP TẮT NHÓM", t)
-
-    def test_soan_tin_noi_ro_HAI_lua_chon(self):
-        t = agent_xin_phep.soan_tin(dx())
-        self.assertIn("Tắt nhóm", t)
-        self.assertIn("Tắt + hạ ngân sách", t)
 
     def test_soan_tin_voi_de_xuat_hong_tra_ve_rong(self):
         for xau in [None, {}, "chuoi", {"doi_tuong": None}]:
@@ -744,20 +752,24 @@ class H_NutBam(_KhongGhiLog, unittest.TestCase):
             os.unlink(self.tmp.name)
         super().tearDown()
 
-    def test_nut_bam_co_du_hai_lua_chon_tat(self):
-        """HAI lua chon tat (Dai chot 02/10/2026) + nut bo qua.
+    def test_nut_bam_MOI_NUT_MOT_HANG(self):
+        """Dai yeu cau 02/10/2026: 'hieu ung nut ro rang hon'.
 
-        Hang 1: "Tat nhom" (giu ngan sach) | "Tat + ha ngan sach"
-        Hang 2: "Bo qua"
+        Hai nut chung mot hang thi moi nut chi rong bang nua tin nhan, chu bi thu
+        nho va de bam nham. Moi nut mot hang => nut rong het co tin nhan.
         """
         import json as _json
         d = _json.loads(agent_xin_phep.nut_bam(ID))
         hang = d["inline_keyboard"]
-        self.assertEqual(len(hang), 2)
-        self.assertEqual(len(hang[0]), 2)
-        self.assertEqual(hang[0][0]["callback_data"], f"tat:{ID}")
-        self.assertEqual(hang[0][1]["callback_data"], f"tathns:{ID}")
-        self.assertEqual(hang[1][0]["callback_data"], f"boqua:{ID}")
+        self.assertEqual(len(hang), 3)
+        for h in hang:
+            self.assertEqual(len(h), 1, "moi hang chi duoc co MOT nut")
+
+    def test_nut_bam_dung_ma_nhom(self):
+        import json as _json
+        hang = _json.loads(agent_xin_phep.nut_bam(ID))["inline_keyboard"]
+        self.assertEqual([h[0]["callback_data"] for h in hang],
+                         [f"tat:{ID}", f"tathns:{ID}", f"boqua:{ID}"])
 
     def test_tat_thuong_va_tat_ha_ngan_sach_la_HAI_ket_qua_khac_nhau(self):
         """Bam 2 nut khac nhau phai ra 2 ket qua khac nhau.
@@ -1620,12 +1632,20 @@ class L_ThuTuTatVaNhanhLoi(_KhongGhiLog, unittest.TestCase):
 class M_NutBaoLoi(unittest.TestCase):
     """Hai nut tren TIN BAO LOI (Dai chot 02/10/2026)."""
 
-    def test_co_dung_hai_nut(self):
+    def test_co_dung_hai_nut_MOI_NUT_MOT_HANG(self):
         import json as _json
-        hang = _json.loads(agent_xin_phep.nut_loi(ID))["inline_keyboard"][0]
+        hang = _json.loads(agent_xin_phep.nut_loi(ID))["inline_keyboard"]
         self.assertEqual(len(hang), 2)
-        self.assertEqual(hang[0]["callback_data"], f"quetlai:{ID}")
-        self.assertEqual(hang[1]["callback_data"], f"boqua24:{ID}")
+        for h in hang:
+            self.assertEqual(len(h), 1)
+        self.assertEqual(hang[0][0]["callback_data"], f"quetlai:{ID}")
+        self.assertEqual(hang[1][0]["callback_data"], f"boqua24:{ID}")
+
+    def test_tin_loi_khong_lap_lai_ten_nut_trong_chu(self):
+        """Nut da ghi ro roi thi phan chu khong can liet ke lai."""
+        bg = {"doi_tuong": {"id": ID, "ten": TEN}}
+        t = agent_xin_phep.soan_tin_loi(bg, "loi gi do")
+        self.assertNotIn("Đại chọn bên dưới", t)
 
     def test_doc_duoc_hai_lenh_moi(self):
         self.assertEqual(lenh_telegram.doc_tra_loi(f"quetlai:{ID}", [ID]),

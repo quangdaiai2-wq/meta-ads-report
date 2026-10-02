@@ -26,33 +26,40 @@ def nut_bam(ma):
       - "Tat nhom"              : tat adset + tat quang cao + doi ten, GIU nguyen sach
       - "Tat + ha ngan sach"    : nhu tren, VA ha ngan sach ve 27.000d
 
-    Vi sao de 2 lua chon: co lan Dai chi muon dung nhom lai de xem tinh hinh roi
-    bat lai — ha ngan sach ve san roi bat lai thi phai nang lai tu dau.
+    ⚠️ MOI NUT MOT HANG (Dai yeu cau 02/10/2026: "hieu ung nut ro rang hon").
+    Dat hai nut chung mot hang thi moi nut chi rong bang nua tin nhan, chu bi thu
+    nho va de bam nham. Moi nut mot hang => nut rong het co tin nhan, chu to, de
+    bam hon han.
+
+    ⚠️ Telegram KHONG cho doi mau nut. Da tra tai lieu Bot API: `InlineKeyboardButton`
+    khong co truong mau nao (Bot API 10.3 moi chi them truong `disabled`). Nen cach
+    duy nhat de nut ro hon la CHU va BO CUC — dung hua sua duoc mau.
 
     Du lieu nut co dang "tat:<ma>" / "tathns:<ma>" / "boqua:<ma>". Ham doc lenh
     (`lenh_telegram.doc_tra_loi`) da biet doi dau ":" thanh dau cach, nen mot
     ham doc duoc ca lenh go tay lan nut bam.
     """
     return json.dumps({"inline_keyboard": [
-        [
-            {"text": "\u23f8 Tắt nhóm", "callback_data": f"tat:{ma}"},
-            {"text": "\u23f8\U0001f4b0 Tắt + hạ ngân sách", "callback_data": f"tathns:{ma}"},
-        ],
-        [
-            {"text": "\u23ed Bỏ qua", "callback_data": f"boqua:{ma}"},
-        ],
+        [{"text": "\u23f8 TẮT NHÓM (giữ ngân sách)",
+          "callback_data": f"tat:{ma}"}],
+        [{"text": "\U0001f4b0 TẮT NHÓM + HẠ NGÂN SÁCH",
+          "callback_data": f"tathns:{ma}"}],
+        [{"text": "\u23ed Bỏ qua",
+          "callback_data": f"boqua:{ma}"}],
     ]}, ensure_ascii=False)
 
 
 def soan_tin(de_xuat, ghi_chu=None):
     """Soan tin Telegram xin phep. Tra ve chuoi (rong neu de xuat hong).
 
+    ⚠️ KHONG con dong "Hoac go tay: tat <ma> / bo qua <ma>" (Dai bo 02/10/2026 —
+    "khong can thiet"). Nut bam da lam duoc het, va ten nut ghi ro tung lua chon.
+
     `ghi_chu`: them mot dong cuoi. Dung de noi ro dang o CHE DO TAP SU — neu
     khong, Dai tra loi "tat ..." roi khong thay gi xay ra se tuong he thong hong.
     """
     try:
         ten = de_xuat["doi_tuong"]["ten"]
-        ma = de_xuat["doi_tuong"]["id"]
         ly_do = de_xuat.get("ly_do", "")
     except (KeyError, TypeError):
         return ""
@@ -63,13 +70,7 @@ def soan_tin(de_xuat, ghi_chu=None):
         f"Nhóm: {ten}",
         ly_do,
         "",
-        "Chọn một trong hai:",
-        "  \u23f8 Tắt nhóm            — giữ nguyên ngân sách",
-        "  \u23f8\U0001f4b0 Tắt + hạ ngân sách  — hạ về 27.000đ",
-        "",
-        "Hoặc gõ tay:",
-        f"  tắt {ma}",
-        f"  bỏ qua {ma}",
+        "Chọn bên dưới. Hạ ngân sách = hạ về 27.000đ.",
     ]
     if ghi_chu:
         dong += ["", ghi_chu]
@@ -83,11 +84,15 @@ def nut_loi(ma):
     Dai muon lam gi tiep:
       - "Tiep tuc quet lai lan sau" : xoa lenh bo qua, de lan quet sau hoi lai
       - "Bo qua 24h"                : khong xet nhom nay trong 24 gio
+
+    Moi nut MOT HANG — cung ly do nhu `nut_bam`.
     """
-    return json.dumps({"inline_keyboard": [[
-        {"text": "\U0001f501 Tiếp tục quét lại lần sau", "callback_data": f"quetlai:{ma}"},
-        {"text": "\u23f8 Bỏ qua 24h", "callback_data": f"boqua24:{ma}"},
-    ]]}, ensure_ascii=False)
+    return json.dumps({"inline_keyboard": [
+        [{"text": "\U0001f501 Tiếp tục quét lại lần sau",
+          "callback_data": f"quetlai:{ma}"}],
+        [{"text": "\u23f8 Bỏ qua 24h",
+          "callback_data": f"boqua24:{ma}"}],
+    ]}, ensure_ascii=False)
 
 
 def soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan=None, chi_tiet=None):
@@ -113,9 +118,6 @@ def soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan=None, chi_tiet=None):
     dong += [
         "",
         "Agent KHÔNG tắt gì cả (nhóm và quảng cáo vẫn nguyên).",
-        "Đại chọn bên dưới:",
-        "  \U0001f501 Tiếp tục quét lại lần sau",
-        "  \u23f8 Bỏ qua 24h",
     ]
     return "\n".join(dong)
 
