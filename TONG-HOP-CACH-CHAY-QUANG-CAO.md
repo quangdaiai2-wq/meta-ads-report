@@ -272,9 +272,9 @@ vào TH3 dù nó có tin nhắn hay không.
 
 | | Điều kiện | Ngưỡng báo | Tên mới khi tắt |
 |---|---|---|---|
-| **TH3** | Đã có lượt mua trong tháng | **giá mỗi lượt mua (tính theo THÁNG)** ≥ **390.000đ** | `<x>/450 X<tháng>` |
-| **TH2** | Có tin nhắn (từ 1 trở lên), chưa ra lượt mua | chi tiêu **hôm nay** ≥ **290.000đ** | `0/350 X<tháng> TN` |
-| **TH1** | Không có tin nhắn nào | chi tiêu **hôm nay** ≥ **70.000đ** | `0/<gấp đôi chi tiêu> X<tháng>` |
+| **TH3** | Đã có lượt mua trong tháng | **giá mỗi lượt mua (tính theo THÁNG)** ≥ **390.000đ** | `<x>/450 X<tháng>-<năm>` |
+| **TH2** | Có tin nhắn (từ 1 trở lên), chưa ra lượt mua | chi tiêu **hôm nay** ≥ **290.000đ** | `0/350 X<tháng>-<năm> TN` |
+| **TH1** | Không có tin nhắn nào | chi tiêu **hôm nay** ≥ **70.000đ** | `0/<gấp đôi chi tiêu> X<tháng>-<năm>` |
 
 **Bốn điều Đại xác nhận rõ:**
 1. **Ngưỡng CỐ ĐỊNH cho mọi nhóm** — không đọc từ `y` trong tên nhóm nữa.
@@ -285,11 +285,41 @@ vào TH3 dù nó có tin nhắn hay không.
 **"Tin nhắn" đếm CẢ HAI chỉ số:** *Người liên hệ nhắn tin mới* **hoặc** *Lượt bắt đầu cuộc trò
 chuyện qua tin nhắn*. (Bản cũ **bỏ sót** chỉ số thứ nhất.)
 
-**Khi tắt thì làm 4 việc** (khớp đúng thao tác thật của Đại trong sổ):
-1. Tắt **quảng cáo** (ad) bên trong
-2. Tắt **nhóm quảng cáo** (adset)
+**Khi tắt NHÓM thì làm 4 việc** (khớp đúng thao tác thật của Đại trong sổ):
+1. Tắt **nhóm quảng cáo** (adset)
+2. Tắt **quảng cáo** (ad) bên trong
 3. Hạ ngân sách về **27.000đ**
-4. **Đổi tên** thành `<tên cũ> x/y X<tháng>`
+4. **Đổi tên** thành `<tên cũ> x/y X<tháng>-<năm>`
+
+⚠️ **Thứ tự BẮT BUỘC: tắt NHÓM trước, xong mới tắt QUẢNG CÁO** (Đại đổi 02/10/2026).
+Bản cũ làm ngược — nếu bước tắt nhóm bị Meta từ chối thì quảng cáo đã tắt mất rồi,
+nhóm còn chạy mà không còn quảng cáo ⇒ **trạng thái nửa vời**.
+
+#### 🔴 3.4a. XÉT THEO TỪNG QUẢNG CÁO — Đại chốt 02/10/2026
+
+> Nguyên văn: *"Bao giờ có từ 02 quảng cáo trở lên trong nhóm thì tự động chuyển sang
+> xét duyệt như vậy."*
+
+| Nhóm có | Nhóm chạm ngưỡng | Hành động |
+|---|---|---|
+| **≥ 2 quảng cáo**, có ad chạm | có | **TẮT LẺ** ad đó — KHÔNG hạ ngân sách, KHÔNG đổi tên nhóm |
+| **≥ 2 quảng cáo**, không ad nào chạm | có | TẮT CẢ NHÓM + hạ 27.000đ + đổi tên |
+| **1 hoặc 0 quảng cáo** | có | TẮT CẢ NHÓM + hạ 27.000đ + đổi tên |
+
+- **Mỗi quảng cáo tự chọn mốc của chính nó** (70.000đ / 290.000đ / TH3) — KHÔNG mượn mốc nhóm.
+- **Tắt lẻ = chỉ TẮT + ĐỔI TÊN.** Hạ ngân sách là việc của **CẢ NHÓM**.
+- **Nhưng nếu TỔNG chi tiêu cả nhóm chạm ngưỡng ⇒ tắt CẢ NHÓM.** Ví dụ qc1 200k/1 tin +
+  qc2 90k/1 tin = 290k ⇒ chạm TH2 của nhóm ⇒ tắt cả nhóm.
+- **Vì sao ranh giới ở số 2:** tắt lẻ chỉ có nghĩa khi **có thứ để bảo vệ** — một ad khác
+  còn cơ hội. Nhóm 1 ad thì tắt lẻ cũng làm nhóm ngừng chi tiêu y như tắt nhóm, mà
+  **lặp vô tận**: ad = 100% chi tiêu nhóm, VÀ insights THÁNG còn giữ dòng lịch sử của ad
+  đã tắt ⇒ số không đổi ⇒ đề xuất lại y hệt ở lần quét sau.
+  *(Đo thật 02/10/2026 trên 82 nhóm thuộc phạm vi: 66 nhóm 0 ad · 16 nhóm đúng 1 ad ·
+  0 nhóm ≥ 2. Cả 16 nhóm một-ad đều có chi tiêu ad = 100,0% chi tiêu nhóm.)*
+- ⚠️ **Số quảng cáo** tính theo dòng `level=ad` insights **tháng**, nên **ad đã tắt vẫn còn
+  trong danh sách** (Meta giữ lịch sử). Đó chính là lý do luật "lần sau xét lại" bị bỏ.
+- ⚠️ **Phạm vi LUÔN kiểm theo TÊN NHÓM**, tuyệt đối **không** kiểm theo tên quảng cáo —
+  tên ad do Meta tự sinh (`Quảng cáo Lượt tương tác mới`), **không bao giờ có `dainq`**.
 
 **TH1 ghi `y` ĐỘNG:** gấp đôi số tiền **đang** chi tiêu lúc tắt — chạm ngưỡng ở 70.000đ thì ra
 `0/140`; phát hiện muộn ở 85.000đ thì ra `0/170`. TH2/TH3 ghi **cột mốc chẵn cố định** 350 và 450.
@@ -304,6 +334,8 @@ chuyện qua tin nhắn*. (Bản cũ **bỏ sót** chỉ số thứ nhất.)
 | Đếm tin nhắn | chỉ 1 chỉ số | **cả 2 chỉ số** |
 | Tắt quảng cáo | không | **có** |
 | Đổi tên nhóm | không | **có** |
+| Hậu tố tên | `X<tháng>` | `X<tháng>-<năm>` — **kèm năm, gạch nối** (02/10) |
+| Cấp xét | chỉ cấp NHÓM | **cấp QUẢNG CÁO** khi nhóm có ≥ 2 ad (02/10) |
 
 ---
 
