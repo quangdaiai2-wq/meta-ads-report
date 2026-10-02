@@ -1,413 +1,239 @@
-# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 02/10/2026 (công cụ đổi chế độ)
+# HƯỚNG DẪN MÁY NHÀ — BẢN 02/10/2026
 
-**Dành cho:** Đại (người không cần biết code) **và** trợ lý AI trên máy nhà.
+**Dành cho:** Đại (không cần biết code).
 
-> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy một bản cập nhật. Đọc mục
-> **02/10/2026** ngay dưới đây trước. Hai mục cũ hơn (01/10 và 29/09) nằm phía dưới.
+> **Nếu bạn là trợ lý AI trên máy nhà đang đọc file này:**
+> đọc hết file rồi làm theo đúng thứ tự ở **PHẦN B**. Không bỏ bước nào.
 
-**Ngày máy công ty cài đặt:** 14/09/2026. Kho GitHub: `meta-ads-report`, nhánh `main`.
-**Mốc mới nhất đã đẩy:** **`d1d42c7`** (02/10/2026).
+Máy công ty đã đẩy tới mốc **`16aa0ff`** (02/10/2026). Đây là bản mới nhất.
+**Kho GitHub:** `meta-ads-report`, nhánh `main`.
 
 ---
 
-## 🆕 CẬP NHẬT NGÀY 02/10/2026 — công cụ đổi chế độ, và một điều phải hiểu cho đúng
+## PHẦN A — HIỂU ĐÚNG MỘT ĐIỀU TRƯỚC KHI LÀM
 
-### ⚠️ ĐIỀU QUAN TRỌNG NHẤT: GitHub **KHÔNG** chứa cấu hình
+### ⚠️ GitHub KHÔNG chứa cấu hình
 
-Rất dễ hiểu nhầm chỗ này, nên nói thẳng:
-
-> **File `.env` KHÔNG BAO GIỜ lên GitHub.** Nó chứa token Telegram, token Meta, chìa khoá AI —
-> `.gitignore` chặn lại để không lộ bí mật. Trên GitHub chỉ có **`.env.example`** — một file MẪU,
-> không phải công tắc thật.
-
-Nghĩa là:
+> **File `.env` KHÔNG BAO GIỜ lên GitHub** — nó chứa token Telegram, token Meta, chìa khoá AI.
+> `.gitignore` chặn lại để không lộ bí mật. Trên GitHub chỉ có **`.env.example`** — file MẪU,
+> **không phải công tắc thật**.
 
 | | Máy công ty | Máy nhà |
 |---|---|---|
 | Code | `git pull` từ GitHub | `git pull` từ GitHub |
 | `.env` | **riêng của máy này** | **riêng của máy này** |
 
-⇒ **`git pull` không bao giờ làm đổi chế độ chạy.** Hai máy có thể đang ở hai chế độ khác nhau —
-điều đó **đúng thiết kế**, không phải lỗi. Muốn đổi chế độ thì phải sửa `.env` **của chính máy đó**.
+⇒ **`git pull` KHÔNG BAO GIỜ làm đổi chế độ chạy.** Muốn đổi thì phải sửa `.env` **của chính máy đó**.
+Hai máy ở hai chế độ khác nhau là **đúng thiết kế**, không phải lỗi.
 
-### 🔧 Công cụ mới — bấm một lần, không cần mở Notepad
+### ⚠️ Sau khi `git pull` xong, BẮT BUỘC khởi động lại agent
 
-Từ bản này, máy nhà **không cần sửa `.env` bằng tay nữa**. Sau khi `git pull`, trong thư mục sẽ có:
+Đây là **bài học đắt nhất ngày 02/10/2026**, đã gây lỗi thật:
 
-| File | Việc nó làm | Có hỏi lại không |
-|---|---|---|
-| `chuyen-sang-lam-that.bat` | Agent **TẮT NHÓM THẬT** trên Meta | **Có** — phải gõ đúng chữ `co` |
-| `chuyen-sang-tap-su.bat` | Agent **chỉ nói**, không gửi lệnh nào | Không (đây là chiều an toàn) |
+> Python nạp code vào bộ nhớ **MỘT LẦN** lúc khởi động. Sửa file trên ổ đĩa xong, tiến trình đang chạy
+> **vẫn giữ bản cũ trong RAM** và tiếp tục làm theo code cũ.
+>
+> Máy công ty đã dính đúng lỗi này: agent khởi động 13:39, code sửa lúc 15:37, nhưng đến 16:30
+> agent **vẫn ghi tên nhóm sai** — vì chưa ai khởi động lại.
 
-Bấm đúp vào file — nó tự làm hết. Nó còn **in ra chế độ đang có** trước khi đổi, và **sao lưu**
-`.env` thành `.env.bak-truoc-doi-che-do`.
-
-Đổi xong **không cần khởi động lại agent** — agent tự đọc lại `.env` trong vòng 15 giây.
-
-> Chi tiết bên trong: nó chỉ sửa **đúng một dòng** `AGENT_TAP_SU` trong file `.env`. Mọi thứ khác
-> — token, chìa khoá AI, các dòng chú thích — **giữ nguyên từng ký tự**.
-
-### Máy nhà cần làm — 3 bước
-
-1. **`git pull`** → nhận tới `d1d42c7` trở lên.
-2. Bấm **`chuyen-sang-tap-su.bat`** nếu muốn chắc chắn đang ở chế độ an toàn — hoặc
-   **`chuyen-sang-lam-that.bat`** nếu muốn agent tắt nhóm thật.
-3. Mở `logs\baocao.log`, tìm dòng `AGENT: N nhom cham nguong — ...` để biết agent có làm việc không.
-
-### 🆕 Cập nhật chiều 02/10/2026 — có gì mới
-
-| Thay đổi | Ý nghĩa với máy nhà |
-|---|---|
-| **Nút Telegram cho chọn 2 kiểu tắt** | Bấm *Tắt nhóm* (giữ ngân sách) hoặc *Tắt + hạ ngân sách* |
-| **Tin Telegram hiện ID CHIẾN DỊCH** | Tra trên Meta bằng ID chiến dịch, dễ hơn ID nhóm |
-| **Nhịp quét 15 phút** (trước 30) | Sửa `AGENT_NHIP_PHUT=15` trong `.env` máy nhà |
-| **Gặp lỗi thì tách lệnh, vẫn tắt được nhóm** | Nhóm vừa tạo trong ngày không còn bị kẹt |
-
-⚠️ **Máy nhà nhớ đổi `AGENT_NHIP_PHUT` trong `.env` của MÌNH.** File `.env` không lên GitHub,
-nên `git pull` **không** đổi giúp. Sửa `AGENT_NHIP_PHUT=30` thành `=15`.
-(Đổi xong **không cần khởi động lại agent** — agent tự đọc lại `.env` trong 15 giây.)
-
-### ⚠️ Trước khi cho máy nhà chạy THẬT — đọc dòng này
-
-Cả hai máy cùng trỏ vào **một tài khoản Meta**. Nếu cả hai cùng chạy THẬT thì cùng lúc có hai agent
-cùng tắt nhóm — **có thể cùng tác động vào một nhóm**. Bot Telegram thì riêng nên không nuốt tin
-của nhau, nhưng Meta thì chung.
-
-Đại nên chọn: **một máy chạy thật, máy kia chỉ nói** — hoặc chấp nhận hai máy cùng chạy.
-
-### Sửa thêm trong bản này
-
-- **4 file `.bat` có ký tự lạ** (dấu gạch dài, dấu chấm giữa) — cmd.exe đọc lệch dòng và báo
-  *"The syntax of the command is incorrect."* Nay **tất cả file `.bat` đều là chữ thuần**, không
-  còn ký tự lạ nào.
-- **Lỗi "agent chỉ đọc `.env` một lần"** đã sửa ở bản `a7ca047`: đổi khoá AI / `TELEGRAM_*` /
-  `META_*` trong `.env` nay **có tác dụng ngay**, không cần khởi động lại agent nữa.
+⚠️ **KHÁC với `.env`:** từ 01/10, `.env` được đọc lại **mỗi 15 giây** nên sửa `.env` là **ăn ngay**,
+không cần khởi động lại. Nhưng **code thì khác** — **sửa code ⇒ phải khởi động lại agent. Không ngoại lệ.**
 
 ---
 
-## 🆕 CẬP NHẬT NGÀY 01/10/2026 — ĐỌC PHẦN NÀY TRƯỚC
+## PHẦN B — MÁY NHÀ CẦN LÀM (5 BƯỚC, ĐÚNG THỨ TỰ)
 
-### ⚠️ Vì sao bản này QUAN TRỌNG hơn các bản trước
+### Bước 1 — Kéo code mới
 
-Luật tắt nhóm **đã đổi hoàn toàn**. Nếu máy nhà còn chạy code cũ:
+Mở cửa sổ lệnh **tại đúng thư mục dự án** rồi gõ:
 
-| | Code cũ (đang có ở máy nhà) | Luật mới |
-|---|---|---|
-| Nhóm có tin nhắn, chưa ra đơn | tắt khi chi **70.000đ** | tắt khi chi **290.000đ** |
-| Nhóm không có tin nhắn | tắt khi chi **80.000đ** | tắt khi chi **70.000đ** |
-| Nhóm đã có đơn | giá mỗi đơn ≥ **400.000đ** | giá mỗi đơn ≥ **390.000đ** |
-| Đếm tin nhắn | **chỉ 1** chỉ số | **cả 2** chỉ số |
-| Khi tắt | tắt nhóm + hạ ngân sách | tắt **quảng cáo** + tắt nhóm + hạ ngân sách + **đổi tên** |
-
-⇒ **Code cũ sẽ tắt oan** những nhóm mới chi 70.000đ mà đã có tin nhắn. Phải cập nhật.
-
-### Máy nhà cần làm — 4 bước
-
-**Bước 1 — Kéo code mới:**
 ```
 git pull
 ```
-Phải thấy mốc **`bca174c`**. Nếu chưa thấy, gõ `git log --oneline -1` để kiểm.
 
-**Bước 2 — Sửa `.env` (`.env` KHÔNG đi theo `git pull`):**
-Bấm `mo-file-env.bat`, tìm dòng `AGENT_TOI_DA_NGAY=3` và đổi thành:
-```
-AGENT_TOI_DA_NGAY=0
-```
-`0` nghĩa là **KHÔNG GIỚI HẠN** — agent được hỏi Đại về mọi nhóm chạm ngưỡng, không bị im lặng
-sau 3 nhóm như trước. Nếu máy nhà **chưa có** dòng này thì thêm vào, thiếu cũng chạy.
+**Kiểm tra:** gõ tiếp dòng này, phải thấy mốc `16aa0ff`:
 
-**Bước 3 — Khởi động lại agent** (bắt buộc — đây là **đổi code**, không phải chỉ đổi `.env`):
-Bấm `khoi-dong-lai-agent.bat`.
-
-**Bước 4 — Kiểm chứng:**
-Mở `logs\baocao.log`, tìm dòng mới nhất có dạng:
 ```
+git log --oneline -1
+```
+
+### Bước 2 — Sửa mốc giờ báo cáo trong `.env`
+
+Trong 5 mục cần sửa, còn thiếu dòng này:
+
+```
+REPORT_SLOTS=8,17
+```
+
+Nếu máy nhà đang là `8,12,17` thì đổi còn `8,17`. **Mốc 12h đã bỏ từ 02/10/2026** trên cả hai máy.
+
+**Cách làm:** bấm đúp file **`mo-file-env.bat`** — nó tự mở Notepad đúng file `.env`.
+Tìm dòng `REPORT_SLOTS`, sửa thành `REPORT_SLOTS=8,17`, bấm **Ctrl + S**, đóng Notepad.
+
+⚠️ `.env` **không** đi theo `git pull` (xem PHẦN A). Phải tự sửa tay.
+
+### Bước 3 — Sửa nhịp quét
+
+Cũng trong `.env`, tìm dòng `AGENT_NHIP_PHUT`:
+
+```
+AGENT_NHIP_PHUT=15
+```
+
+Trước đây là `30`. **Nhịp 30 phút quá thưa** — Đại đã từng tự tay tắt 12 nhóm trong một buổi sáng
+trước khi agent kịp quét. Nay đổi còn **15 phút**.
+
+⚠️ Nếu `.env` máy nhà **chưa có** dòng này thì thêm vào cuối file.
+
+### Bước 4 — Sửa phạm vi lọc
+
+Kiểm tra dòng này trong `.env`:
+
+```
+FILTER_INCLUDE=dainq
+```
+
+⚠️ Nếu máy nhà đang là `` (mã tài khoản) thì đổi thành **`dainq`**.
+Phạm vi đúng là **tên đối tượng chứa `dainq`**, lọc ở **cấp chiến dịch/nhóm**, **KHÔNG** lọc theo tên quảng cáo.
+
+### Bước 5 — Chọn chế độ chạy, rồi khởi động lại agent
+
+Có **2 lựa chọn**. Bấm đúp **đúng một** file:
+
+| Muốn gì | Bấm file | Có hỏi lại không |
+|---|---|---|
+| Agent **TẮT NHÓM THẬT** trên Meta | `chuyen-sang-lam-that.bat` | **Có** — phải gõ đúng chữ `co` |
+| Agent **chỉ nói**, không gửi lệnh nào | `chuyen-sang-tap-su.bat` | Không (đây là chiều an toàn) |
+
+Hai file này chỉ sửa **đúng một dòng** `AGENT_TAP_SU` trong `.env`, **sao lưu** `.env` thành
+`.env.bak-truoc-doi-che-do`, và in ra chế độ đang có trước khi đổi.
+
+**Rồi BẮT BUỘC bấm `khoi-dong-lai-agent.bat`** (lý do ở PHẦN A — bước này không được bỏ).
+
+### Bước 6 — Kiểm chứng
+
+Mở file `logs\baocao.log`, tìm dòng mới nhất có dạng:
+
+```
+AGENT: khoi dong — muc 2 — LAM THAT
 AGENT: N nhom cham nguong — hoi X, bo qua Y (dang cho Dai tra loi), chan Z (rao an toan)
 ```
-Dòng này **mới có từ hôm nay**. Thấy nó là code mới đã chạy. Từ nay **mỗi lần quét đều ghi dòng này**,
-nên nhìn vào là biết agent có làm việc hay không — không còn cảnh im lặng mà không rõ vì sao.
 
-### Những gì đã sửa trong bản này
+- Dòng `khoi dong` có **giờ mới** ⇒ agent đã nạp code mới. ✅
+- Dòng `N nhom cham nguong` **mới có từ 01/10** ⇒ code mới đã chạy.
 
-1. **Luật tắt nhóm mới** — ba trường hợp TH1/TH2/TH3 (bảng trên).
-2. **Tắt quảng cáo + đổi tên nhóm** — agent nay làm đủ 4 việc như Đại vẫn làm tay.
-3. **Bỏ trần đề xuất** — trước đây hết 3 nhóm/ngày là agent **im lặng hoàn toàn**, kể cả khi tìm ra
-   nhóm cần tắt. Nay không giới hạn, và mọi lý do dừng đều được ghi log.
-4. **Sửa phép so sánh của báo cáo** — trước đây so 1 ngày với 7 ngày nên cột chênh lệch luôn ra −80%.
-   Nay so **ngày hôm qua với ngày hôm trước**.
-5. **Thêm dòng "chi phí mỗi đơn" vào bảng so sánh** — đây là thủ phạm chính làm phần nhận định luôn
-   viết tiêu cực. Trước đây mọi dòng khác đều giảm nên AI kết luận "kém hiệu quả", trong khi chi phí
-   mỗi đơn lại rẻ đi.
-6. **Chờ lâu hơn khi Meta chặn** — Meta giới hạn ghi ~1 lần/30 giây; code cũ chờ 5–15 giây, không đủ.
-
-### ⚠️ Một điều máy nhà cần biết về token
-
-Token Meta của máy nhà hết hạn **10/11/2026** (máy công ty **** — hai máy khác ngày).
-Và từ 30/09/2026 token **đã có quyền GHI** (`ads_management`), nên agent **tắt nhóm thật** được.
-Kiểm tra token còn sống hay không: nhắn bot chữ `token`.
+⚠️ **Đừng nhầm file `logs\agent-dang-chay.lock` với giờ khởi động.** File đó ghi **nhịp quét gần nhất**,
+không phải giờ khởi động. Muốn biết giờ khởi động thật thì tìm dòng `AGENT: khoi dong` trong `baocao.log`.
 
 ---
 
-## 📅 CẬP NHẬT NGÀY 29/09/2026 — nếu máy nhà CHƯA làm bản này
+## PHẦN C — LUẬT TẮT NHÓM HIỆN HÀNH (xét theo thứ tự TH3 → TH2 → TH1)
 
-Nếu máy nhà đã làm xong bản 28/09 (Giai đoạn 2) thì chỉ còn **BA bước nhỏ**:
+| TH | Điều kiện | Ngưỡng | Tên mới |
+|---|---|---|---|
+| **TH3** | Có lượt mua tháng | giá/lượt mua **tháng** ≥ **390.000đ** | `<x>/450 X<tháng>-<năm>` |
+| **TH2** | Có tin nhắn ≥1, chưa ra lượt mua | chi tiêu **hôm nay** ≥ **290.000đ** | `0/350 X<tháng>-<năm> TN` |
+| **TH1** | Không có tin nhắn nào | chi tiêu **hôm nay** ≥ **70.000đ** | `0/<2×chi tiêu> X<tháng>-<năm>` |
 
-1. **`git pull`** → nhận Giai đoạn 3 + 4 + 5.
-2. **Thêm `GEMINI_API_KEY` vào `.env`** — chìa khoá AI, lấy theo `HUONG-DAN-LAY-CHIA-KHOA-AI.md`
-   (khoảng 5 phút, có bản miễn phí). **Không có chìa khoá thì báo cáo vẫn gửi đầy đủ**, chỉ thiếu
-   mục NHẬN ĐỊNH và bot không trả lời được câu hỏi về số liệu.
-3. **Nhắn thử bot một chữ `token`** để xác nhận (xem mục "Hai lệnh nhanh" bên dưới).
+**Những điểm đã đổi so với bản cũ ở máy nhà:**
 
-**Không phải bấm lại `cai-dat-nguoi-truc.bat`**, không phải sửa gì khác.
+1. **CẢ BA trường hợp đều ghi NĂM** vào tên nhóm. Ví dụ: `0/350 X10-26 TN` (X10 = tháng 10, 26 = năm 2026).
+   Luật cũ *"TH1/TH3 không ghi năm"* **đã bỏ**.
+2. **Xét ngưỡng theo TỪNG QUẢNG CÁO** (mới từ 02/10):
+   - Nhóm có **≥2 quảng cáo** và có quảng cáo chạm ngưỡng ⇒ **tắt LẺ quảng cáo đó**, giữ nhóm.
+   - **Tắt lẻ quảng cáo = CHỈ tắt + đổi tên. KHÔNG hạ ngân sách** (hạ ngân sách là việc của cả nhóm).
+   - Nhóm **0 hoặc 1 quảng cáo** ⇒ tắt **CẢ NHÓM** như cũ.
+3. **Ngưỡng CỐ ĐỊNH** cho mọi nhóm — không đọc từ số `y` trong tên nữa.
+4. **Thứ tự khi tắt: tắt NHÓM trước, xong mới tắt QUẢNG CÁO.** Đừng làm ngược.
+5. **"Tin nhắn" đếm CẢ HAI** chỉ số: `messaging_first_reply` **hoặc** `messaging_conversation_started_7d`.
 
-### Có gì mới kể từ bản 28/09
+**Phạm vi được đụng tới:** tên đối tượng chứa `dainq` HOẶC bắt đầu bằng mã content viết hoa
+HOẶC có `new - dainq`. Lọc cấp **chiến dịch/nhóm**, **KHÔNG** theo tên quảng cáo.
 
-| Giai đoạn | Có gì mới |
-|---|---|
-| **3** | Mục `🔵 NHẬN ĐỊNH` trong báo cáo nay do AI viết 3–5 câu, có so sánh với kỳ trước (chỉ ở mốc 8h) |
-| **4** | **Nhắn bot hỏi được số liệu** bằng tiếng Việt: *"camp nào tệ nhất tuần này?"* → bot trả lời có số thật |
-| **5** | **Tự xử lý lỗi**: Meta chặn tạm thì tự chờ rồi thử lại; token chết thì không thử lại vô ích; số liệu trông sai thì cảnh báo; cùng một lỗi chỉ nhắn **một tin** thay vì 9 tin mỗi ngày |
+---
 
-### Hai lệnh nhanh mới — **không tốn lượt AI**
+## PHẦN D — NÚT BẤM TRÊN TELEGRAM
 
-| Nhắn cho bot | Bot trả lời |
-|---|---|
-| `còn sống không?` | Máy nào, đã chạy bao lâu, hôm nay đã gửi mốc nào |
-| `token` | Token Meta còn sống bao nhiêu ngày, hết hạn ngày nào, cần làm gì |
+Tin xin phép có **2 kiểu tắt**, **mỗi nút một hàng**:
 
-### ⛔ Điều quan trọng nhất về token — đã kiểm chứng
+```
+⏸ TẮT NHÓM (giữ ngân sách)        → tắt nhóm + tắt quảng cáo + đổi tên, GIỮ ngân sách
+💰 TẮT NHÓM + HẠ NGÂN SÁCH         → như trên + hạ ngân sách 27.000đ
+⏭ Bỏ qua
+```
 
-**Hệ thống KHÔNG tự gia hạn token được. Meta không cho.** Máy công ty đã thử thật ngày 29/09/2026:
-Meta trả về token mới nhưng **giữ nguyên ngày hết hạn cũ** (lệch **+0 giây**, thử hai lần đều vậy).
+⚠️ **Hai nút trả HAI kết quả khác nhau — đừng gộp lại.**
 
-⇒ **Vẫn phải làm tay mỗi 60 ngày.** Nhưng hệ thống nay nhắc **hai mức** cho bạn:
-- Còn dưới **30 ngày** → nhắc nhẹ một lần mỗi ngày ở báo cáo buổi sáng
-- Còn dưới **7 ngày** → nhắc ở **mọi** báo cáo
+**Meta TỪ CHỐI thì KHÔNG tắt gì cả.** Tin báo lỗi gồm **lỗi Meta nguyên văn** + **đoán nguyên nhân**,
+kèm 2 nút `quét lại` / `bỏ qua 24h`. Không bấm gì ⇒ 15 phút sau agent hỏi lại.
 
-Và bạn chủ động kiểm được bất cứ lúc nào bằng cách nhắn chữ `token`.
+⚠️ **Telegram KHÔNG cho đổi màu nút.** Đừng tìm cách đổi màu — chỉ làm rõ bằng **chữ và bố cục**.
 
-> 🔎 Có **một hướng chưa thử**: token "System User" trong Business Manager có tuỳ chọn không hết hạn.
-> **Chưa ai thử, chưa hứa gì.** Ghi lại đây để lúc nào rảnh thì nghiên cứu.
+**Lệnh nhắn cho bot:** *"báo cáo"* → gửi tin + **file HTML**; *"báo cáo 20/09/2026"* → lấy thẳng từ Meta.
+⚠️ **Chỉ nhận ngày ĐỦ năm.** *"báo cáo hôm qua"* = xin FILE; *"báo cáo hôm qua thế nào?"* = câu hỏi.
 
-### Token máy nhà hết hạn ngày nào?
+---
+
+## PHẦN E — ⚠️ ĐỌC TRƯỚC KHI CHO MÁY NHÀ CHẠY THẬT
+
+### ⚠️ Hai máy cùng chạy thật trên MỘT tài khoản Meta
+
+Cả hai máy cùng trỏ vào **một tài khoản Meta**. Nếu cả hai cùng chạy THẬT thì:
+
+- Bot Telegram **riêng** ⇒ không nuốt tin của nhau ✅
+- Meta thì **chung** ⇒ **hai agent có thể cùng tác động vào một nhóm** ⚠️
+
+Ngày 02/10/2026 đã thấy dấu hiệu này thật: một nhóm bị tắt tự động, nhưng sau đó **được bật lại thủ công**
+và **ngân sách trở về 400.000đ** — nhiều khả năng do máy kia làm.
+
+⇒ **Đại nên chọn: MỘT máy chạy thật, máy kia chỉ nói.** Hoặc chấp nhận hai máy cùng chạy và tự theo dõi.
+
+### Token máy nhà hết hạn ngày nào
 
 | Máy | Token hết hạn |
 |---|---|
 | **Máy nhà** | **10/11/2026** |
 | Máy công ty |  |
 
----
+Kiểm tra bất cứ lúc nào: **nhắn bot chữ `token`**.
 
-## ⚠️ CẬP NHẬT NGÀY 28/09/2026 — nếu máy nhà CHƯA làm bản này
+⛔ **Hệ thống KHÔNG tự gia hạn token được. Meta không cho.** Máy công ty đã thử thật 29/09/2026:
+Meta trả token mới nhưng **giữ nguyên ngày hết hạn cũ** (lệch **+0 giây**). Vẫn phải làm tay mỗi 60 ngày.
+Hệ thống nhắc hai mức: còn dưới **30 ngày** → nhắc mỗi ngày; còn dưới **7 ngày** → nhắc mọi báo cáo.
 
-Bản 28/09 sửa hai lỗi đang chạy thật. Bản 28/09 (Giai đoạn 2) thay **cách hệ thống chạy**:
-không còn ba lịch Windows rời rạc mà là **một tiến trình thường trú**. Vì vậy máy nhà **PHẢI
-chạy lại `cai-dat-nguoi-truc.bat`**.
+### Thứ tự khởi động lại BẮT BUỘC
 
-**BỐN bước, theo đúng thứ tự:**
-
-1. **`git pull`** tại thư mục dự án → nhận code mới.
-2. **Thêm một dòng vào `.env`** (làm ở bước 2b bên dưới). **Đây là bước MỚI, bắt buộc** — bỏ qua
-   thì mốc 22h quay trở lại máy nhà.
-3. **Bấm đúp `cai-dat-nguoi-truc.bat`.** Nếu báo lỗi quyền thì chuột phải → Run as administrator.
-   File này tạo **một** lịch duy nhất tên `NguoiTruc`, **xoá ba lịch cũ**, và **khởi động
-   Người trực ngay**. Phải chạy bước này, vì lịch cũ không biết gì về nhau nên vẫn còn hai lỗi:
-   báo cáo trùng, và mốc 8h chạy bù sai.
-4. **Kiểm tra kết quả.** File in ra phần đọc lại lịch:
-
-   ```
-   Ten lich    : NguoiTruc
-   Trang thai  : Running
-   Tham so     : "D:\...\nguoi_truc.py"
-   So trigger  : 2
-   Tien trinh   : dang chay (PID ...)
-   ```
-
-   **Ba dòng phải đúng:**
-   - `Tham so` phải **kết thúc bằng `nguoi_truc.py"`** (có dấu nháy đóng). Thiếu dấu nháy đó thì
-     đường dẫn có khoảng trắng bị Windows cắt làm hai, lịch không chạy được.
-   - `So trigger` phải là **`2`** — một cái chạy khi đăng nhập, một cái lặp mỗi 5 phút để tự bật
-     lại nếu tiến trình chết.
-   - `Trang thai` phải là `Running` và có dòng `Tien trinh: dang chay`.
-
-### Bước 2b — Thêm dòng `REPORT_SLOTS` vào `.env` (BẮT BUỘC)
-
-`.env` là file riêng của từng máy, **không** nằm trên GitHub, nên `git pull` **không** mang dòng
-này sang máy nhà. Phải tự thêm.
-
-**Cách làm:**
-
-1. Mở **Notepad**
-2. Kéo file `.env` trong thư mục dự án thả vào cửa sổ Notepad (hoặc File → Open → chọn `.env`)
-3. Xuống **cuối file**, thêm một dòng mới:
+⚠️ **Từ 01/10, AGENT là nơi DUY NHẤT đọc Telegram.** Vì vậy khi khởi động lại:
 
 ```
-REPORT_SLOTS=8,12,17
+1. Dừng CẢ HAI  (người trực + agent)
+2. Bật NGƯỜI TRỰC trước
+3. Rồi mới bật AGENT
 ```
 
-4. Bấm **Ctrl + S**, rồi đóng Notepad
-
-**Kiểm tra lại** — mở cửa sổ lệnh tại thư mục dự án, dán dòng này:
-
-```powershell
-python -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
-```
-
-Nếu báo lỗi `python is not recognized`, dùng đường dẫn đầy đủ (đường dẫn Python trên máy nhà
-có thể khác máy công ty — xem lại mục cài Python ở đầu file này):
-
-```powershell
-& "C:\Users\nguye\.workbuddy-ai\binaries\python\versions\3.13.12\python.exe" -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
-```
-
-Kết quả phải in ra **`[8, 12, 17]`**. Nếu in ra `[8, 12, 17, 22]` thì dòng vừa thêm bị sai chính tả
-(phải đúng `REPORT_SLOTS`, chữ in hoa, không có dấu cách quanh dấu `=`).
-
-**Một điều cần biết trước khi bấm bước 3:**
-
-- **Cả hai máy dùng chung ba mốc 8h, 12h, 17h.** Đại đã chốt bỏ mốc 22h ở cả hai máy ngày
-  28/09/2026. Nếu thiếu dòng `REPORT_SLOTS` trong `.env`, hệ thống dùng mặc định `8,12,17,22`
-  — tức **mốc 22h quay trở lại**.
-- **Không cần tính năng "tự thức máy" nữa.** Người trực chạy suốt khi máy bật; máy tắt thì
-  không có báo cáo, nhưng khi bật lại nó gửi bù đúng **một** báo cáo cho mốc gần nhất bị lỡ.
-- **Sau khi bấm file xong hãy nhắn thử bot** câu `còn sống không?`. Phải nhắn **sau**, vì Người
-  trực bỏ qua mọi tin nhắn đến trước lúc nó khởi động — nhắn trước là mất tin, không phải lỗi.
+Làm ngược lại ⇒ **hai bên nuốt tin của nhau**.
 
 ---
 
-## PHẦN 1 — VIỆC MÁY NHÀ CẦN LÀM (bản 14/09 — nay đã cũ)
-
-### Bước 1: Cập nhật code
-
-Mở cửa sổ lệnh **tại đúng thư mục dự án** rồi chạy:
-
-```powershell
-git pull
-```
-
-**Kết quả mong đợi:** thấy danh sách file thay đổi, trong đó có `report.py`, `nguoi_truc.py`,
-`cai-dat-nguoi-truc.bat` và `tests/test_nguoi_truc.py`.
-
-> ⚠️ **Câu dưới đây đúng cho bản 14/09, KHÔNG đúng cho bản 28/09.**
-> Bản 28/09 (Giai đoạn 2) đổi **cách hệ thống chạy**, nên máy nhà **phải** bấm
-> `cai-dat-nguoi-truc.bat`. Chỉ `git pull` là **chưa đủ** — xem mục "CẬP NHẬT NGÀY 28/09/2026"
-> ở đầu file.
-
-### Bước 2: Kiểm tra token của máy nhà
-
-```powershell
-python kiem-tra-token.py
-```
-
-Lệnh này cho biết token máy nhà **còn sống bao lâu** — điều mà `test_meta.py` không làm được.
-
-> ⚠️ **Quan trọng:** nếu nó báo token chỉ còn **vài giờ**, nghĩa là token máy nhà cũng đang là
-> loại ngắn hạn. Phải chạy ngay `python doi-token-60-ngay.py` rồi kiểm lại.
->
-> Ngày 14/09, token máy công ty đã suýt chết vì đúng lý do này: nó chỉ còn sống 1 giờ 44 phút
-> mà mọi bài kiểm tra đều báo ĐẠT.
-
----
-
-## PHẦN 2 — CÓ GÌ MỚI TRONG 3 BẢN CẬP NHẬT
-
-| # | Thay đổi | Vì sao |
-|---|---|---|
-| 1 | `report.py` chỉ gọi Meta API **1 lần** thay vì 2 | Trước đây mỗi lần chạy tốn gấp đôi hạn mức gọi Meta, và số liệu trên tin nhắn Telegram có thể **lệch** với file HTML đính kèm. Nay hai đầu ra luôn khớp nhau. |
-| 2 | Thêm file **`kiem-tra-token.py`** | Kiểm cả 2 nhóm token và cho biết token Meta còn sống bao lâu. Chạy sau mỗi lần lấy token mới. |
-| 3 | **Cảnh báo trước khi token hết hạn** | Trước đây hệ thống chỉ báo **sau khi** token đã chết. Nay nếu token còn dưới **7 ngày**, mỗi báo cáo sẽ kèm một dòng cảnh báo vàng ở đầu tin nhắn. |
-
-Xem chi tiết từng bản: `git log --oneline -5`
-
----
-
-## PHẦN 3 — TOKEN CỦA MÁY NHÀ
-
-### Ngày hết hạn: 10/11/2026
-
-Từ 14/09/2026, **hai máy dùng hai token khác nhau và hết hạn khác ngày**:
-
-| Máy | Token hết hạn |
-|---|---|
-| **Máy nhà** | **10/11/2026** |
-| Máy công ty |  |
-
-⇒ **Không còn chuyện "cả hai máy cùng ngừng hoạt động"** như tài liệu cũ ghi. Máy nhà sẽ
-hết hạn trước 3 ngày — thực ra tốt hơn, vì bạn còn thời gian xử lý trước khi máy kia cũng tới hạn.
-
----
-
-## PHẦN 4 — THÔNG BÁO TOKEN HẾT HẠN ĐI ĐÂU?
-
-### Mỗi máy gửi qua bot Telegram riêng của máy đó
-
-`report.py` đọc `TELEGRAM_BOT_TOKEN` trong file `.env` **của chính máy đang chạy**. Nên:
-
-- Máy **nhà** → cảnh báo nằm trong khung chat với **bot Home**
-- Máy **công ty** → cảnh báo nằm trong khung chat với **bot Company**
-
-Hai máy không lẫn vào nhau. Mở đúng khung chat của bot là thấy.
-
-### Có 2 loại cảnh báo
-
-| Loại | Khi nào | Nội dung |
-|---|---|---|
-| 🟡 **Cảnh báo sớm** | Token còn dưới **7 ngày** | Nằm ở **đầu** mỗi báo cáo, kèm hướng dẫn lấy token mới |
-| 🔴 **Báo lỗi** | Token **đã chết**, lần chạy thất bại | Tin nhắn riêng, nội dung tuỳ lỗi Meta trả về |
-
-### ⚠️ Giới hạn phải biết
-
-**Cả hai loại cảnh báo đều chỉ gửi được khi có một lần chạy báo cáo.** Nghĩa là:
-
-- Máy **tắt** hoặc **đăng xuất Windows** đúng lúc đó ⇒ **không có cảnh báo nào**.
-- Nếu máy tắt nhiều ngày, bạn chỉ biết khi tự để ý là báo cáo không về.
-
-⇒ **Đừng phụ thuộc hoàn toàn vào cảnh báo.** Thỉnh thoảng mở Telegram xem báo cáo có về đều không.
-
----
-
-## PHẦN 5 — KHI CẦN LẤY TOKEN META MỚI
-
-1. Làm theo `HUONG-DAN-DIEN-TOKEN.md` — **chỉ làm ở MỘT máy**
-2. Chạy `python kiem-tra-token.py` để xác nhận token mới sống được 60 ngày
-3. **Copy file `.env` sang máy kia bằng USB**
-
-> ❌ **Đừng** gửi file `.env` qua Telegram / Zalo / email / chat AI.
-> Đó là gửi mật khẩu tài khoản quảng cáo qua mạng.
->
-> ✅ Sau khi copy sang máy kia, chạy `python kiem-tra-token.py` ở máy đó để chắc chắn.
-
----
-
-## PHẦN 6 — MỐC THỜI GIAN
-
-| Thời điểm | Việc |
-|---|---|
-| **Tối 14/09/2026** | Chạy `git pull` + `python kiem-tra-token.py` ở máy nhà |
-| **10/11/2026** | ⚠️ Token Meta **máy nhà** hết hạn |
-| **** | ⚠️ Token Meta **máy công ty** hết hạn |
-
-Hệ thống sẽ **tự nhắn cảnh báo trước 7 ngày** — bạn không cần tự nhớ ngày.
-
----
-
-## TÓM TẮT NHANH
+## TÓM TẮT NHANH — DÁN VÀO CỬA SỔ LỆNH
 
 ```
-MÁY NHÀ — BẢN 28/09 (mới nhất, làm theo mục đầu file)
-├── git pull                                        ← nhận code mới
-├── thêm dòng REPORT_SLOTS=8,12,17 vào cuối .env     ← BẮT BUỘC, git pull không mang dòng này sang
-├── cai-dat-nguoi-truc.bat (Run as administrator)   ← PHẢI chạy: tạo Người trực, xoá 3 lịch cũ
-├── nhìn "Tham so": phải kết thúc bằng nguoi_truc.py"
-└── nhìn "Trang thai": phải là Running + có dòng "Tien trinh: dang chay"
+MÁY NHÀ — BẢN 02/10/2026
 
-KIỂM TRA NHANH (dán vào cửa sổ lệnh tại thư mục dự án):
-   python -c "import report; print(report.doc_moc_tu_env(report.load_env('.env')))"
-   → phải in ra [8, 12, 17]
+1. git pull                                    ← phải thấy mốc 16aa0ff
+2. mo-file-env.bat  →  sửa REPORT_SLOTS=8,17        ← mốc 12h đã bỏ
+3.                    sửa AGENT_NHIP_PHUT=15        ← trước là 30
+4.                    kiểm FILTER_INCLUDE=dainq      ← không phải tên tài khoản
+5. chuyen-sang-lam-that.bat  (hoặc tap-su)     ← chọn chế độ
+6. khoi-dong-lai-agent.bat                     ← BẮT BUỘC, sửa code phải khởi động lại
+7. mở logs\baocao.log → thấy dòng "AGENT: khoi dong" giờ MỚI là xong
+```
 
-KHÔNG cần: bat-chay-bu.bat, bat-danh-thuc-may.bat (Người trực chạy suốt, không cần đánh thức máy)
-KHÔNG cần: sửa token trong .env (token máy nhà không đổi)
+**Công cụ kiểm tra (chỉ đọc, không gửi lệnh nào lên Meta):**
+
+```
+kiem-tra-ten-nhom.bat     → quét tên nhóm thiếu năm
+chay-kiem-thu.bat         → chạy toàn bộ bài kiểm thử
 ```
 
 **Xong.**
