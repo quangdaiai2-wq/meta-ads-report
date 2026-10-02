@@ -80,7 +80,7 @@ def doc_nhom_dang_chay(env):
     loc = json.dumps([{"field": "effective_status", "operator": "IN",
                        "value": ["ACTIVE"]}])
     return _doc_het(env, f"{acc}/adsets", {
-        "fields": "id,name,effective_status,daily_budget",
+        "fields": "id,name,effective_status,daily_budget,campaign_id",
         "filtering": loc,
         "limit": 200,
     })

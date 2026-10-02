@@ -1,7 +1,51 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 02/10/2026 — **CÔNG CỤ ĐỔI CHẾ ĐỘ AGENT + DỌN KÝ TỰ LẠ TRONG FILE `.bat`**.
-Đã đẩy GitHub tới **`d1d42c7`**. Bộ kiểm thử: **662/662 đạt**.
+**Cập nhật lần cuối:** 02/10/2026 (chiều) — **NÚT CHỌN 2 KIỂU TẮT + HIỆN ID CHIẾN DỊCH + SỬA LỖI GHI META
++ NHỊP QUÉT 15 PHÚT**. Đã đẩy GitHub tới **`d1d42c7`** (sáng) và bản chiều ngay sau đó.
+Bộ kiểm thử: **682/682 đạt** (trước: 662).
+
+🆕 **1. Nút Telegram nay cho CHỌN 2 kiểu tắt** (Đại yêu cầu):
+```
+[ ⏸ Tắt nhóm ]  [ ⏸💰 Tắt + hạ ngân sách ]
+[ ⏭ Bỏ qua ]
+```
+- **Tắt nhóm** → tắt adset + tắt quảng cáo + đổi tên, **GIỮ NGUYÊN ngân sách**.
+- **Tắt + hạ ngân sách** → như trên, **thêm** hạ ngân sách về 27.000đ (như cũ).
+Lý do Đại cần: có lần chỉ muốn dừng nhóm để xem tình hình rồi bật lại — hạ ngân sách về sàn
+rồi bật lại thì phải nâng lên từ đầu.
+⚠️ Hai nút trả về **hai kết quả khác nhau** (`dong_y` và `dong_y_ha_ngan_sach`). Có bài kiểm thử
+riêng khẳng định `tathns` **không bị đọc nhầm** thành `tat`.
+
+🆕 **2. Tin Telegram hiện ID CHIẾN DỊCH** thay cho ID nhóm (Đại tra trên Meta dễ hơn):
+```
+✅ ĐÃ TẮT NHÓM
+Chiến dịch: 120250370603560509      <-- tra cái này
+Nhóm: 2026 - 09 - 12 - dainq - Scale - Offline A4
+```
+⚠️ ID nhóm **vẫn được giữ** trong `callback_data` và trong sổ — chỉ đổi phần hiển thị.
+
+🐛 **3. Sửa lỗi ghi Meta — LỖI THẬT nặng nhất hôm nay.**
+Nhóm `120250277820620509` (tạo trong ngày 02/10): lệnh **gộp 3 trường** bị Meta từ chối
+*"Invalid parameter"*; **38 giây sau Đại phải tự tắt tay**. Thử lại lúc 11:35 thì **cả ba cách
+đều thành công** ⇒ chỉ **một trường** trong lệnh gộp bị chặn, không phải cả lệnh.
+- **Nay khi gộp lỗi thì TÁCH LỆNH**: gửi `status` (+`name`) trước — việc CHÍNH; rồi `daily_budget`
+  riêng. **Không để "không hạ được ngân sách" làm hỏng việc TẮT NHÓM.**
+- **Ghi log lỗi ĐẦY ĐỦ**: trước chỉ ghi `message` = *"Invalid parameter"* (vô nghĩa); nay gom cả
+  `code`, `error_subcode`, `error_user_msg`, `error_data`.
+- Thêm trường `da_tat` / `da_ha_ngan_sach` **riêng biệt** trong chi tiết, để nói rõ đã làm được gì.
+
+⏱ **4. Nhịp quét 30 → 15 phút.** Lý do có bằng chứng: hôm nay Đại **tự tay tắt 12 nhóm**
+(08:22 · 08:37 · 09:16 · 09:19 · 09:21 · 09:23 · 10:15 · 10:15 · 10:17 · 10:46 · 10:52 · 11:26)
+trong khi agent chỉ hỏi 4 lần. Tên các nhóm Đại tắt **đều đúng dạng của luật** ⇒ luật không sai,
+agent chỉ **chậm chân** (chỉ xét nhóm đang ACTIVE, mà Đại tắt trước khi agent kịp quét).
+📊 **Đo thật:** một vòng quét gọi **3 lần ĐỌC**; 21 lần gọi chỉ ăn **1%** hạn mức
+(`x-business-use-case-usage`). ⇒ **Nhịp 5 phút cũng chỉ ~4% hạn mức mỗi giờ.** Meta chỉ giới hạn GHI.
+⚠️ Meta báo `v21.0 has been deprecated` và **tự nâng lên v26.0** — code đang ghi cứng `v21.0`.
+**Chưa sửa** (việc riêng, cần dựng thử vì đổi hành vi API).
+
+📌 **Máy nhà:** `git pull` để nhận bản mới. Máy nhà **đã tự cập nhật code một lần**
+(commit `0bd2b59` sửa `kiem-tra-quyen-ghi.py`) — nhưng **`.env` thì không tự đổi được**, phải bấm
+file `.bat` mới (xem `HUONG-DAN-MAY-NHA.md`).
 
 🐛 **2 LỖI THẬT đã bắt và sửa hôm nay:**
 1. **Bẫy "agent chỉ đọc `.env` một lần"** (sửa ở `a7ca047`) — đổi khoá AI / `TELEGRAM_*` / `META_*`

@@ -49,10 +49,23 @@ Bấm đúp vào file — nó tự làm hết. Nó còn **in ra chế độ đan
 
 ### Máy nhà cần làm — 3 bước
 
-1. **`git pull`** → nhận tới `d1d42c7`.
+1. **`git pull`** → nhận tới `d1d42c7` trở lên.
 2. Bấm **`chuyen-sang-tap-su.bat`** nếu muốn chắc chắn đang ở chế độ an toàn — hoặc
    **`chuyen-sang-lam-that.bat`** nếu muốn agent tắt nhóm thật.
 3. Mở `logs\baocao.log`, tìm dòng `AGENT: N nhom cham nguong — ...` để biết agent có làm việc không.
+
+### 🆕 Cập nhật chiều 02/10/2026 — có gì mới
+
+| Thay đổi | Ý nghĩa với máy nhà |
+|---|---|
+| **Nút Telegram cho chọn 2 kiểu tắt** | Bấm *Tắt nhóm* (giữ ngân sách) hoặc *Tắt + hạ ngân sách* |
+| **Tin Telegram hiện ID CHIẾN DỊCH** | Tra trên Meta bằng ID chiến dịch, dễ hơn ID nhóm |
+| **Nhịp quét 15 phút** (trước 30) | Sửa `AGENT_NHIP_PHUT=15` trong `.env` máy nhà |
+| **Gặp lỗi thì tách lệnh, vẫn tắt được nhóm** | Nhóm vừa tạo trong ngày không còn bị kẹt |
+
+⚠️ **Máy nhà nhớ đổi `AGENT_NHIP_PHUT` trong `.env` của MÌNH.** File `.env` không lên GitHub,
+nên `git pull` **không** đổi giúp. Sửa `AGENT_NHIP_PHUT=30` thành `=15`.
+(Đổi xong **không cần khởi động lại agent** — agent tự đọc lại `.env` trong 15 giây.)
 
 ### ⚠️ Trước khi cho máy nhà chạy THẬT — đọc dòng này
 

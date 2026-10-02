@@ -15,20 +15,32 @@ import nguoi_truc
 from lenh_telegram import bo_dau, doc_tra_loi, la_lenh   # noqa: F401 (dung lai)
 
 __all__ = ["bo_dau", "doc_tra_loi", "la_lenh", "soan_tin", "nut_bam",
-           "gui_xin_phep", "sua_ket_qua", "quet_tra_loi"]
+           "gui_xin_phep", "sua_ket_qua", "quet_tra_loi", "dong_doi_tuong"]
 
 
 def nut_bam(ma):
-    """Ban phim noi 2 nut cho tin xin phep. Tra ve chuoi JSON.
+    """Ban phim cho tin xin phep. Tra ve chuoi JSON.
 
-    Du lieu nut co dang "tat:<ma>" / "boqua:<ma>". Ham doc lenh
+    HAI lua chon tat (Dai chot 02/10/2026):
+      - "Tat nhom"              : tat adset + tat quang cao + doi ten, GIU nguyen sach
+      - "Tat + ha ngan sach"    : nhu tren, VA ha ngan sach ve 27.000d
+
+    Vi sao de 2 lua chon: co lan Dai chi muon dung nhom lai de xem tinh hinh roi
+    bat lai — ha ngan sach ve san roi bat lai thi phai nang lai tu dau.
+
+    Du lieu nut co dang "tat:<ma>" / "tathns:<ma>" / "boqua:<ma>". Ham doc lenh
     (`lenh_telegram.doc_tra_loi`) da biet doi dau ":" thanh dau cach, nen mot
     ham doc duoc ca lenh go tay lan nut bam.
     """
-    return json.dumps({"inline_keyboard": [[
-        {"text": "\u2705 Tắt nhóm", "callback_data": f"tat:{ma}"},
-        {"text": "\u23ed Bỏ qua", "callback_data": f"boqua:{ma}"},
-    ]]}, ensure_ascii=False)
+    return json.dumps({"inline_keyboard": [
+        [
+            {"text": "\u23f8 Tắt nhóm", "callback_data": f"tat:{ma}"},
+            {"text": "\u23f8\U0001f4b0 Tắt + hạ ngân sách", "callback_data": f"tathns:{ma}"},
+        ],
+        [
+            {"text": "\u23ed Bỏ qua", "callback_data": f"boqua:{ma}"},
+        ],
+    ]}, ensure_ascii=False)
 
 
 def soan_tin(de_xuat, ghi_chu=None):
@@ -46,18 +58,31 @@ def soan_tin(de_xuat, ghi_chu=None):
     dong = [
         "\u26a0\ufe0f XIN PHÉP TẮT NHÓM",
         "",
+        *dong_doi_tuong(de_xuat),
         f"Nhóm: {ten}",
         ly_do,
         "",
-        "Đề xuất: TẮT nhóm + hạ ngân sách về 27.000đ",
+        "Chọn một trong hai:",
+        "  \u23f8 Tắt nhóm            — giữ nguyên ngân sách",
+        "  \u23f8\U0001f4b0 Tắt + hạ ngân sách  — hạ về 27.000đ",
         "",
-        "Trả lời:",
+        "Hoặc gõ tay:",
         f"  tắt {ma}",
         f"  bỏ qua {ma}",
     ]
     if ghi_chu:
         dong += ["", ghi_chu]
     return "\n".join(dong)
+
+
+def dong_doi_tuong(de_xuat):
+    """Dong hien ID CHIEN DICH (Dai chot 02/10/2026).
+
+    Dai tra tren Meta bang ID chien dich de hon ID nhom. Neu khong doc duoc
+    campaign_id thi tra ve danh sach rong — tin nhan van gui duoc binh thuong.
+    """
+    cid = ((de_xuat.get("doi_tuong") or {}).get("campaign_id") or "").strip()
+    return [f"Chiến dịch: {cid}"] if cid else []
 
 
 def nut_hoan_tac(ma):

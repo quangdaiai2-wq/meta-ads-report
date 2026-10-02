@@ -100,26 +100,63 @@ def doc_quang_cao(env, ma_nhom):
     return (d or {}).get("data", []) or [], None
 
 
+def mo_ta_loi(err):
+    """Gom MOI thong tin loi Meta tra ve thanh mot chuoi de doc.
+
+    LOI THAT 02/10/2026: code cu chi ghi `loi.get('message')` nen nhat duoc
+    dung chu "Invalid parameter" — khong biet tham so nao sai, khong the sua.
+    Meta con tra `code`, `error_subcode`, `error_user_msg`, `error_data`.
+    """
+    if not isinstance(err, dict):
+        return str(err)
+    phan = [str(err.get("message") or err)]
+    for nhan, khoa in (("ma", "code"), ("ma phu", "error_subcode"),
+                       ("chi tiet", "error_user_msg")):
+        v = err.get(khoa)
+        if v not in (None, "", 0, "0"):
+            phan.append(f"{nhan}={v}")
+    if err.get("error_data"):
+        phan.append(f"du lieu={err['error_data']}")
+    return " | ".join(phan)
+
+
 def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=None,
                                  ngu_fn=None):
-    """Tat/bat nhom + dat ngan sach + (tuy chon) doi ten, roi DOC LAI kiem.
+    """Tat/bat nhom + (tuy chon) dat ngan sach + (tuy chon) doi ten, roi DOC LAI kiem.
 
-    GOP CA BA vao MOT lan goi — da kiem chung that 01/10/2026 rang Meta nhan
-    `name` + `status` + `daily_budget` cung luc. Nho vay tiet kiem 2/3 so lan
-    ghi, rat quan trong vi Meta gioi han ghi rat chat.
+    `ngan_sach=None` nghia la KHONG DUNG TOI NGAN SACH — chi tat nhom va doi ten.
+
+    LAN 1: GOP CA BA vao MOT lan goi — da kiem chung that 01/10/2026 rang Meta
+    nhan `name` + `status` + `daily_budget` cung luc. Tiet kiem 2/3 so lan ghi,
+    rat quan trong vi Meta gioi han ghi rat chat.
+
+    LAN 2 (CHI KHI LAN 1 LOI): TACH LENH. LOI THAT 02/10/2026 — nhom
+    `120250277820620509` vua tao trong ngay, lenh gop bi Meta tu choi
+    "Invalid parameter"; 38 giay sau Dai tu tat duoc nhom do bang tay, va thu
+    lai luc 11:35 thi ca ba cach deu thanh cong. Nghia la CHI MOT TRUONG trong
+    lenh gop bi chan, khong phai ca lenh.
+    Vi vay khi gop loi thi thu lai theo thu tu UU TIEN:
+        (1) `status` (+ `name`)  — viec CHINH, phai xong truoc
+        (2) `daily_budget`       — viec PHU
+    Khong duoc de "khong ha duoc ngan sach" lam hong ca viec TAT NHOM.
 
     Tra ve (thanh_cong: bool, ket_qua: str, chi_tiet: dict)
+    `chi_tiet` co `da_tat` va `da_ha_ngan_sach` RIENG, de noi ro da lam duoc gi.
     KHONG BAO GIO nem loi.
     """
-    chi_tiet = {"id": str(ma_nhom), "ngan_sach_dat": int(ngan_sach)}
+    chi_tiet = {"id": str(ma_nhom), "da_tat": False, "da_ha_ngan_sach": False}
+    if ngan_sach is not None:
+        chi_tiet["ngan_sach_dat"] = int(ngan_sach)
     try:
         tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
         if not tok:
             return False, "thieu META_ADS_ACCESS_TOKEN trong .env", chi_tiet
         if not str(ma_nhom).strip():
             return False, "thieu ma nhom quang cao", chi_tiet
-        if not (0 < int(ngan_sach)):
+        if ngan_sach is not None and not (0 < int(ngan_sach)):
             return False, "ngan sach phai la so duong", chi_tiet
+
+        ngu = ngu_fn or time.sleep
 
         truoc, _ = doc_lai_nhom(env, ma_nhom)
         if truoc:
@@ -131,19 +168,38 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
             chi_tiet["trang_thai_truoc"] = truoc.get("status") or truoc.get("effective_status")
             chi_tiet["ngan_sach_truoc"] = truoc.get("daily_budget")
 
-        goi = {
-            "access_token": tok,
-            "status": trang_thai,
-            "daily_budget": str(int(ngan_sach)),
-        }
+        # ---------- LAN 1: GOP ----------
+        goi = {"access_token": tok, "status": trang_thai}
+        if ngan_sach is not None:
+            goi["daily_budget"] = str(int(ngan_sach))
         if ten_moi:
             goi["name"] = str(ten_moi)
             chi_tiet["ten_dat"] = str(ten_moi)
 
-        _, loi = api_post(str(ma_nhom), goi, ngu_fn)
+        _, loi = api_post(str(ma_nhom), goi, ngu)
         if loi:
-            return False, f"Meta tu choi: {loi.get('message') or loi}", chi_tiet
+            chi_tiet["loi_gop"] = mo_ta_loi(loi)
+            # ---------- LAN 2: TACH — uu tien TAT NHOM ----------
+            goi_tat = {"access_token": tok, "status": trang_thai}
+            if ten_moi:
+                goi_tat["name"] = str(ten_moi)
+            ngu(CHO_GIUA_HAI_LAN_GHI)
+            _, loi_tat = api_post(str(ma_nhom), goi_tat, ngu)
+            if loi_tat:
+                chi_tiet["loi_tach"] = mo_ta_loi(loi_tat)
+                return (False,
+                        f"Meta từ chối: {mo_ta_loi(loi)} "
+                        f"(thử tách lệnh cũng bị từ chối: {mo_ta_loi(loi_tat)})",
+                        chi_tiet)
+            # Tat da xong. Con ngan sach thi lam RIENG, loi cung khong sao.
+            if ngan_sach is not None:
+                ngu(CHO_GIUA_HAI_LAN_GHI)
+                _, loi_ns = api_post(str(ma_nhom), {
+                    "access_token": tok, "daily_budget": str(int(ngan_sach))}, ngu)
+                if loi_ns:
+                    chi_tiet["loi_ngan_sach"] = mo_ta_loi(loi_ns)
 
+        # ---------- DOC LAI — nguon su that ----------
         sau, loi2 = doc_lai_nhom(env, ma_nhom)
         if sau is None:
             return True, ("da gui lenh, nhung doc lai khong duoc: "
@@ -152,11 +208,26 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
         chi_tiet["trang_thai_sau"] = sau.get("status") or sau.get("effective_status")
         chi_tiet["ngan_sach_sau"] = sau.get("daily_budget")
         chi_tiet["ten_sau"] = sau.get("name")
-        dung_trang_thai = str(sau.get("status") or "").upper() == str(trang_thai).upper()
-        dung_ngan_sach = str(sau.get("daily_budget") or "") == str(int(ngan_sach))
+        dung_trang_thai = (str(sau.get("status") or "").upper()
+                           == str(trang_thai).upper())
+        dung_ngan_sach = (ngan_sach is None
+                          or str(sau.get("daily_budget") or "") == str(int(ngan_sach)))
         dung_ten = (not ten_moi) or (sau.get("name") == ten_moi)
+        chi_tiet["da_tat"] = dung_trang_thai
+        # `da_ha_ngan_sach` chi TRUE khi THUC SU co ha ngan sach. Khi
+        # `ngan_sach is None` (Dai chon "chi tat") thi day la FALSE — noi
+        # "da_ha_ngan_sach=True" se khien nguoi doc tuong ngan sach bi doi.
+        chi_tiet["da_ha_ngan_sach"] = (ngan_sach is not None) and dung_ngan_sach
+
         if dung_trang_thai and dung_ngan_sach and dung_ten:
             return True, "thanh cong (doc lai thay dung trang thai va ngan sach)", chi_tiet
+
+        if dung_trang_thai and dung_ten and not dung_ngan_sach:
+            # TAT duoc la xong viec chinh. Noi ro phan con thieu, dung bao that bai.
+            ly = chi_tiet.get("loi_ngan_sach") or "Meta khong nhan"
+            return True, (f"da tat nhom, NHUNG chua ha duoc ngan sach "
+                          f"({ly}) — ngan sach dang {chi_tiet['ngan_sach_sau']}"), chi_tiet
+
         return False, (f"doc lai KHONG khop: trang thai={chi_tiet['trang_thai_sau']}, "
                        f"ngan sach={chi_tiet['ngan_sach_sau']}, "
                        f"ten={chi_tiet.get('ten_sau')!r}"), chi_tiet
@@ -166,10 +237,12 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
 
 def tam_dung_va_ha_ngan_sach(env, ma_nhom, ngan_sach=NGAN_SACH_HA, ten_moi=None,
                              ngu_fn=None):
-    """TAT nhom + HA ngan sach ve 27.000d + (tuy chon) DOI TEN, roi doc lai kiem.
+    """TAT nhom + (tuy chon) HA ngan sach + (tuy chon) DOI TEN, roi doc lai kiem.
+
+    `ngan_sach=None` = chi tat nhom, GIU NGUYEN ngan sach (Dai chot 02/10/2026).
 
     Dong tac that cua Dai: do tren 75 lan, 72/75 lan ha ngan sach DI KEM tat
-    nhom, lech nhau trung vi 6 giay. Nen lam ca ba trong MOT lan goi.
+    nhom, lech nhau trung vi 6 giay. Nen mac dinh lam ca ba trong MOT lan goi.
     """
     return _doi_trang_thai_va_ngan_sach(env, ma_nhom, "PAUSED", ngan_sach,
                                         ten_moi, ngu_fn)

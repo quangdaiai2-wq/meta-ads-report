@@ -15,11 +15,15 @@ import re
 import unicodedata
 
 DONG_Y = ("tat", "tat di", "dong y")
+# Nut "Tat + ha ngan sach". Phai kiem TRUOC DONG_Y de chac chan khong bi lot
+# vao "tat". (Thuc te `phan[:len(bx)] == bx` so khop CA TU, nen "tathns" khong
+# khop "tat"; nhung cu de truoc cho an toan ve sau.)
+DONG_Y_HA_NGAN_SACH = ("tathns",)
 TU_CHOI = ("bo qua", "boqua", "thoi", "de sau", "khong")
 HOAN_TAC = ("batlai", "bat lai", "hoan tac", "undo")
 
 # Lenh phai co dang: <dong tu> <cum so dai>  — vd "tắt 120250506886650509"
-RE_LENH = re.compile(r"^(tat|bo qua|boqua|thoi|batlai|bat lai|hoan tac)\s+\d{6,}",
+RE_LENH = re.compile(r"^(tat|tathns|bo qua|boqua|thoi|batlai|bat lai|hoan tac)\s+\d{6,}",
                      re.IGNORECASE)
 
 
@@ -76,10 +80,11 @@ def doc_tra_loi(text, dang_cho):
     """Tra ve (ket_qua, ma).
 
     ket_qua:
-      "dong_y"     — Dai dong y tat dung nhom dang cho
-      "tu_choi"    — Dai noi bo qua
-      "khong_khop" — dung cu phap nhung ma nhom khac
-      "khong_hieu" — khong doc duoc
+      "dong_y"               — Dai dong y TAT nhom (giu nguyen ngan sach)
+      "dong_y_ha_ngan_sach"  — Dai dong y TAT nhom + HA NGAN SACH
+      "tu_choi"              — Dai noi bo qua
+      "khong_khop"           — dung cu phap nhung ma nhom khac
+      "khong_hieu"           — khong doc duoc
     """
     if not isinstance(text, str) or not isinstance(dang_cho, (list, tuple, set)):
         return "khong_hieu", None
@@ -106,6 +111,15 @@ def doc_tra_loi(text, dang_cho):
             if ma is None:
                 return "tu_choi", None
             return ("tu_choi", ma) if ma in dang_cho else ("khong_khop", ma)
+
+    # KIEM TRUOC DONG_Y: nut "tat + ha ngan sach" tra ve ket qua rieng, de
+    # agent biet co ha ngan sach hay khong.
+    for x in DONG_Y_HA_NGAN_SACH:
+        bx = bo_dau(x).split()
+        if bx and phan[:len(bx)] == bx:
+            if ma is None:
+                return "khong_hieu", None
+            return ("dong_y_ha_ngan_sach", ma) if ma in dang_cho else ("khong_khop", ma)
 
     for x in DONG_Y:
         bx = bo_dau(x).split()

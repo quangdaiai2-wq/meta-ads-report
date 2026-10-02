@@ -204,6 +204,23 @@ class B_DocTraLoi(unittest.TestCase):
         self.assertIn("XIN PHÉP TẮT NHÓM", t)
         self.assertIn("27.000", t)
 
+    def test_soan_tin_hien_ID_CHIEN_DICH(self):
+        """Dai chot 02/10/2026: tra tren Meta bang ID chien dich cho de."""
+        d = dx()
+        d["doi_tuong"]["campaign_id"] = "120250370603560509"
+        t = agent_xin_phep.soan_tin(d)
+        self.assertIn("Chiến dịch: 120250370603560509", t)
+
+    def test_thieu_campaign_id_thi_khong_no_ra_va_van_gui_duoc(self):
+        t = agent_xin_phep.soan_tin(dx())          # dx() khong co campaign_id
+        self.assertNotIn("Chiến dịch:", t)
+        self.assertIn("XIN PHÉP TẮT NHÓM", t)
+
+    def test_soan_tin_noi_ro_HAI_lua_chon(self):
+        t = agent_xin_phep.soan_tin(dx())
+        self.assertIn("Tắt nhóm", t)
+        self.assertIn("Tắt + hạ ngân sách", t)
+
     def test_soan_tin_voi_de_xuat_hong_tra_ve_rong(self):
         for xau in [None, {}, "chuoi", {"doi_tuong": None}]:
             self.assertEqual(agent_xin_phep.soan_tin(xau), "")
@@ -727,13 +744,46 @@ class H_NutBam(_KhongGhiLog, unittest.TestCase):
             os.unlink(self.tmp.name)
         super().tearDown()
 
-    def test_nut_bam_co_du_hai_nut_dung_ma_nhom(self):
+    def test_nut_bam_co_du_hai_lua_chon_tat(self):
+        """HAI lua chon tat (Dai chot 02/10/2026) + nut bo qua.
+
+        Hang 1: "Tat nhom" (giu ngan sach) | "Tat + ha ngan sach"
+        Hang 2: "Bo qua"
+        """
         import json as _json
         d = _json.loads(agent_xin_phep.nut_bam(ID))
-        nut = d["inline_keyboard"][0]
-        self.assertEqual(len(nut), 2)
-        self.assertEqual(nut[0]["callback_data"], f"tat:{ID}")
-        self.assertEqual(nut[1]["callback_data"], f"boqua:{ID}")
+        hang = d["inline_keyboard"]
+        self.assertEqual(len(hang), 2)
+        self.assertEqual(len(hang[0]), 2)
+        self.assertEqual(hang[0][0]["callback_data"], f"tat:{ID}")
+        self.assertEqual(hang[0][1]["callback_data"], f"tathns:{ID}")
+        self.assertEqual(hang[1][0]["callback_data"], f"boqua:{ID}")
+
+    def test_tat_thuong_va_tat_ha_ngan_sach_la_HAI_ket_qua_khac_nhau(self):
+        """Bam 2 nut khac nhau phai ra 2 ket qua khac nhau.
+
+        Neu ca hai cung ra "dong_y" thi agent khong biet co ha ngan sach hay
+        khong — nut "chi tat" se vo tinh ha ngan sach.
+        """
+        self.assertEqual(lenh_telegram.doc_tra_loi(f"tat:{ID}", [ID]),
+                         ("dong_y", ID))
+        self.assertEqual(lenh_telegram.doc_tra_loi(f"tathns:{ID}", [ID]),
+                         ("dong_y_ha_ngan_sach", ID))
+
+    def test_tathns_KHONG_bi_doc_nham_thanh_tat(self):
+        """`tathns` khong duoc lot vao `tat` — neu lot thi mat lua chon ha ngan sach."""
+        kq, ma = lenh_telegram.doc_tra_loi(f"tathns:{ID}", [ID])
+        self.assertNotEqual(kq, "dong_y")
+        self.assertEqual(kq, "dong_y_ha_ngan_sach")
+        self.assertEqual(ma, ID)
+
+    def test_tathns_voi_ma_la_thi_khong_khop(self):
+        self.assertEqual(lenh_telegram.doc_tra_loi(f"tathns:{ID}", ["999"]),
+                         ("khong_khop", ID))
+
+    def test_tathns_duoc_coi_la_lenh(self):
+        """Phai nhan ra la lenh, khong thi bi dua cho AI tra loi nhu cau hoi."""
+        self.assertTrue(lenh_telegram.la_lenh(f"tathns {ID}"))
 
     def test_du_lieu_nut_bam_doc_duoc_nhu_lenh_go_tay(self):
         self.assertEqual(lenh_telegram.doc_tra_loi(f"tat:{ID}", [ID]), ("dong_y", ID))
@@ -1453,6 +1503,25 @@ class TestDocMoi(unittest.TestCase):
         self._viet(AGENT_TAP_SU="false")
         env2, ch2 = agent.doc_moi(self.tmp.name)
         self.assertFalse(ch2["AGENT_TAP_SU"])
+
+
+class C2_IDChienDich(unittest.TestCase):
+    """Dai chot 02/10/2026: tin nhan hien ID CHIEN DICH thay cho ID nhom."""
+
+    def test_xet_truyen_campaign_id_vao_doi_tuong(self):
+        a = {"id": ID, "name": TEN, "effective_status": "ACTIVE",
+             "daily_budget": "400000", "campaign_id": "120250370603560509"}
+        r = agent_muc_tieu.xet([a], {ID: dong(100000, 0, 0)}, {})
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["campaign_id"], "120250370603560509")
+
+    def test_thieu_campaign_id_thi_None_chu_khong_nem_loi(self):
+        """Nhom cu doc tu Meta co the khong tra campaign_id — khong duoc vo."""
+        a = {"id": ID, "name": TEN, "effective_status": "ACTIVE",
+             "daily_budget": "400000"}
+        r = agent_muc_tieu.xet([a], {ID: dong(100000, 0, 0)}, {})
+        self.assertEqual(len(r), 1)
+        self.assertIsNone(r[0]["doi_tuong"]["campaign_id"])
 
 
 if __name__ == "__main__":
