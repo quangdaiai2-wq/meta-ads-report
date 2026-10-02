@@ -13,8 +13,8 @@ REM  Neu bi bao loi quyen: chuot phai vao file nay, chon
 REM  "Run as administrator", roi bam lai.
 REM
 REM  File nay goi lai hai file co san:
-REM    1. go-nguoi-truc.bat      — tat nguoi truc
-REM    2. cai-dat-nguoi-truc.bat — bat lai nguoi truc
+REM    1. go-nguoi-truc.bat      - tat nguoi truc
+REM    2. cai-dat-nguoi-truc.bat - bat lai nguoi truc
 REM ============================================
 
 setlocal

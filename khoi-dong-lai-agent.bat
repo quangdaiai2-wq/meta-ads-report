@@ -8,13 +8,13 @@ REM
 REM  KHI NAO CAN BAM FILE NAY:
 REM  Agent chi nap code MOT LAN luc khoi dong.
 REM  Nen sau khi co BAN CODE MOI, phai khoi dong lai thi ban moi moi co tac dung.
-REM  (Cac thay doi trong .env cung CAN bam file nay — TU 01/10/2026 agent da
+REM  (Cac thay doi trong .env cung CAN bam file nay - TU 01/10/2026 agent da
 REM   doc lai toan bo .env moi 15 giay, nen doi khoa AI / TELEGRAM / META
 REM   cung co tac dung ngay ma khong can khoi dong lai. Truoc do thi khong.)
 REM
 REM  File nay goi lai hai file co san, khong tu lam gi khac:
-REM    1. go-agent.bat       — tat agent
-REM    2. cai-dat-agent.bat  — bat lai agent
+REM    1. go-agent.bat       - tat agent
+REM    2. cai-dat-agent.bat  - bat lai agent
 REM ============================================
 
 setlocal

@@ -7,9 +7,9 @@ REM  File nay lam MOT viec: cai lai lich cho ca hai tien trinh, lan nay
 REM  chay bang pythonw.exe nen KHONG hien cua so console nao nua.
 REM
 REM  Sau khi bam xong:
-REM    · Khong con hai cua so den chiem cho tren thanh tac vu
-REM    · Ca hai van chay binh thuong, chi la khong hien cua so
-REM    · Muon xem chung dang lam gi: mo file logs\baocao.log
+REM    - Khong con hai cua so den chiem cho tren thanh tac vu
+REM    - Ca hai van chay binh thuong, chi la khong hien cua so
+REM    - Muon xem chung dang lam gi: mo file logs\baocao.log
 REM
 REM  Neu bi bao loi quyen: chuot phai vao file nay, chon
 REM  "Run as administrator", roi bam lai.
