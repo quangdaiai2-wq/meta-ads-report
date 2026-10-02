@@ -390,15 +390,35 @@ tương đối dứt khoát.
 ⇒ Chữ **`new`** ở đầu = content mới, chạy lần đầu. Về sau tên bị thay bằng mã số (ID quảng cáo, ngày,
 hoặc mã content) đứng trước, `dainq` đứng sau.
 
-**Mã content** là các cụm viết hoa có số, ví dụ `TTHC22TTHM22`, `THC295THM295`. Đã thấy **6 thao tác**
-trên một đối tượng tên `THC295THM295 0/500 X9-26 TN` — **không có chữ `dainq`** nhưng theo Đại giải
-thích thì đây là một nhóm chạy content mới, đặt tên theo mã content.
+**Mã content** là các cụm viết hoa có số, ví dụ `TTHC22TTHM22`, `THC295THM295`.
+
+> 🔴 **CẬP NHẬT 02/10/2026 — Đại siết lại phạm vi:** Đã thấy **6 thao tác** trên một đối tượng tên
+> `THC295THM295 0/500 X9-26 TN`, **không có chữ `dainq`**. Trước đây rào an toàn **nhận luôn** kiểu
+> tên bắt đầu bằng mã content viết hoa. **Nay ĐÃ BỎ nhánh đó.**
+>
+> Đại giải thích nguyên văn 15:27: *"những quảng cáo này đều có định dạng là `new - dainq - THC....`
+> mà. Cái THC là mã content lần đầu tôi lên quảng cáo"* ⇒ tên thật **luôn có `dainq`**.
+>
+> **Đo thật trên `act_` (đọc hết 4.200 nhóm):** rào cũ cho **4.005 nhóm**, rào mới
+> (chỉ `dainq`) cho **4.005 nhóm** ⇒ **chênh lệch 0 nhóm**. Bỏ nhánh mã content **không làm mất nhóm nào
+> của Đại**, nhưng bịt được cửa mở cho tài sản người khác.
+>
+> ⚠️ **Rủi ro thật đã đo được:** tài khoản có **101 nhóm KHÔNG chứa `dainq`** — **90 của Truong +
+> 11 của Thao** — trong đó **40 nhóm đang ACTIVE**.
 
 ### 5.1. Hậu tố `X9` và `X9-26` — ✅ ĐÃ RÕ (Đại trả lời 30/09/2026)
 
 - **`X9`** = nhóm quảng cáo **đã bị tắt trong tháng 9**. Đại tự thêm vào tên để biết nhóm nào mình
   đã tắt rồi — vì Facebook không hiện lịch sử đó ở chỗ dễ nhìn.
-- **`X9-26`** = đã tắt trong **tháng 9 năm 2026**. Ký hiệu này **chỉ dùng cho những nhóm có từ 1 trở
+- **`X9-26`** = đã tắt trong **tháng 9 năm 2026**.
+  > 🔴 **CẬP NHẬT 02/10/2026 — Đại chốt lại, luật cũ ở dòng dưới ĐÃ BỎ:**
+  > **MỌI trường hợp đều ghi năm**, không còn ngoại lệ "nhóm không có tin nhắn thì chỉ ghi `X9`".
+  > ⇒ `0/140 X9-26` · `0/350 X9-26 TN` · `1/450 X9-26`.
+  > Và **`X<n>` = THÁNG ĐẶT TÊN**, không phải "lần thứ n" — Đại giải mã: *"`X9-26` nghĩa là tắt vào
+  > tháng 9 năm 2026"*. Kiểm chứng **14/14 ca khớp** bằng `/activities`.
+  > **GẠCH NỐI, không khoảng trắng:** đo thật **396 tên dùng `X9-26`, 0 tên dùng `X9 26`**.
+
+- *(Luật CŨ — chỉ để đọc tên nhóm cũ)* Ký hiệu năm **chỉ dùng cho những nhóm có từ 1 trở
   lên** ở hạng mục *"Người liên hệ nhắn tin mới"* **hoặc** *"Lượt bắt đầu cuộc trò chuyện qua tin
   nhắn"*. Nhóm không có tương tác tin nhắn nào thì chỉ ghi `X9`, không ghi năm.
 
@@ -579,13 +599,17 @@ chiến dịch, nhóm quảng cáo có chứa 'dainq' thôi."*
 GIỮ  nếu:
   A) Người thao tác = ""
      VÀ đối tượng thuộc phạm vi của Đại, nghĩa là tên:
-        • chứa "dainq", HOẶC
-        • bắt đầu bằng mã content viết hoa (kiểu THC295THM295), HOẶC
-        • có "new - dainq"
+        • CHỨA "dainq"    ← 🔴 TỪ 02/10/2026 CHỈ CÒN ĐIỀU KIỆN NÀY
 
   B) Người thao tác = "Meta"  → giữ ở NGĂN RIÊNG "Meta tự làm"
      (276 thao tác, toàn bộ là Meta tự tắt/bật quảng cáo — để tham khảo vận hành,
       KHÔNG tính là hành vi của Đại)
+```
+
+> 🔴 **CẬP NHẬT 02/10/2026** — hai gạch đầu dòng `• bắt đầu bằng mã content viết hoa` và
+> `• có "new - dainq"` **ĐÃ BỎ**. `"new - dainq"` vốn đã nằm trong `"dainq"` (thừa); nhánh mã content
+> đo thật cho **0 nhóm thêm** (4.005 → 4.005) nhưng lại là cửa mở cho nhóm của Truong/Thao.
+> Xem mục 5.0 phía trên để có đầy đủ số đo.
 
 LOẠI:
   • Mọi thao tác của "Vũ Quang Trường" (10 thao tác)
@@ -734,7 +758,7 @@ Sáu điều chỉnh so với kế hoạch ban đầu:
    giữ ngân sách**, không phải Đại đặt.
 
 6. **Bộ lọc phạm vi (Đại chốt 30/09/2026, 12h40): người thao tác `` + đối tượng thuộc
-   phạm vi Đại** (`dainq` / mã content viết hoa / `new - dainq`). Meta tự làm giữ ở **ngăn riêng**.
+   phạm vi Đại** (**chỉ `dainq`** từ 02/10/2026). Meta tự làm giữ ở **ngăn riêng**.
    Lọc ở cấp **chiến dịch / nhóm quảng cáo**, không lọc theo tên quảng cáo. Vũ Quang Trường dùng chung
    tài khoản nhưng làm việc ngoài `dainq` (10/10 thao tác ngoài) — hệ thống **không được đề xuất gì
    vào phần đó**. Quy tắc đầy đủ + con số ở **mục 6**.

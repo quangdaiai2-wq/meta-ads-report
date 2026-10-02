@@ -68,8 +68,23 @@ class A_RaoAnToan(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("phạm vi", ly)
 
-    def test_ten_ma_content_thi_cho_phep(self):
-        self.assertTrue(kiem(dx(ten="THC295THM295 0/500 X9-26 TN"))[0])
+    def test_ten_ma_content_KHONG_con_duoc_cho_phep(self):
+        """🔴 Dai chot 15:23-15:27 02/10/2026: chi con 'dainq' la thuoc pham vi.
+
+        Truoc day rao nhan them ten bat dau bang MA CONTENT VIET HOA
+        (vd THC295THM295). Dai giai thich: quang cao kieu do LUON co dang
+        'new - dainq - THC...' nen DA chua 'dainq'.
+        Do that 4200 nhom: bo nhanh nay KHONG lam mat nhom nao cua Dai
+        (4005 -> 4005), nhung bit duoc cua mo cho tai san nguoi khac.
+        """
+        ok, ly = kiem(dx(ten="THC295THM295 0/500 X9-26 TN"))
+        self.assertFalse(ok)
+        self.assertIn("phạm vi", ly)
+
+    def test_ten_ma_content_CO_dainq_thi_cho_phep(self):
+        """Dang that cua quang cao content: 'new - dainq - THC...'"""
+        self.assertTrue(kiem(dx(ten="new - dainq - THC295THM295 0/500 X9-26 TN"))[0])
+        self.assertTrue(kiem(dx(ten="THC295THM295 - dainq 0/500 X9-26 TN"))[0])
 
     def test_ten_new_dainq_thi_cho_phep(self):
         self.assertTrue(kiem(dx(ten="new - dainq - TTHC22TTHM22 0/120 X9"))[0])
@@ -159,12 +174,79 @@ class A_RaoAnToan(unittest.TestCase):
         self.assertIn("đọc không ra", ly)
 
     def test_thuoc_pham_vi(self):
+        """LUAT DUY NHAT (Dai chot 15:23 02/10/2026): ten PHAI chua 'dainq'."""
         self.assertTrue(thuoc_pham_vi("2026 - 09 - 30 - dainq - Scale"))
         self.assertTrue(thuoc_pham_vi("new - dainq - X"))
-        self.assertTrue(thuoc_pham_vi("THC295THM295 0/500"))
+        self.assertTrue(thuoc_pham_vi("new - dainq - THC295THM295 0/500"))
+        self.assertTrue(thuoc_pham_vi("THC295THM295 - dainq"))
+        self.assertTrue(thuoc_pham_vi("2026 - 09 - 30 - DAINQ - Scale"))  # khong phan biet hoa thuong
         self.assertFalse(thuoc_pham_vi("2026 - 5 - 28 - Truong - Online"))
+        self.assertFalse(thuoc_pham_vi("2026 - 8 - 27 - Truong - Online - Target sinh viên - Bản sao 2"))
+        self.assertFalse(thuoc_pham_vi("Quảng cáo Lượt tương tác mới"))   # ten ad: LUON ngoai pham vi
+        self.assertFalse(thuoc_pham_vi("THC295THM295 0/500"))             # nhanh ma content DA BO
         self.assertFalse(thuoc_pham_vi(""))
         self.assertFalse(thuoc_pham_vi(None))
+
+
+class A2_PhamViChiDainq(unittest.TestCase):
+    """🔴 KHOA CHAT PHAM VI — Dai chot 15:23-15:27 ngay 02/10/2026.
+
+    Nguyen van Dai:
+      "phai nho chi lam voi nhung chien dich, nhom va quang cao co chua 'dainq'"
+      "nhung quang cao nay deu co dinh dang la new - dainq - THC.... ma.
+       Cai THC la ma content lan dau toi len quang cao"
+
+    Bai nay la LUOI AN TOAN: khong thi neu ai do lo noi long rao,
+    agent se dong vao tai san cua nguoi khac tren cung tai khoan Meta.
+
+    DO THAT tren act_ (doc het 4.200 nhom):
+      101 nhom KHONG chua 'dainq' = 90 cua Truong + 11 cua Thao,
+      trong do 40 nhom dang ACTIVE.
+    """
+
+    def test_chi_dainq_moi_qua(self):
+        qua = ["2026 - 10 - 02 - dainq - Scale - Online A4 0/140 X10-26",
+               "2026 - 09 - 29 - dainq - Scale - Online 0/350 X10-26 TN",
+               "2026 - 09 - 29 - dainq - Scale - Online 1/450 X10-26",
+               "new - dainq - TTHC23TTHM23 0/160 X10",
+               "new - dainq - THC295THM295",
+               "THC295THM295 - dainq",
+               "DAINQ - Scale"]
+        for t in qua:
+            with self.subTest(ten=t):
+                self.assertTrue(thuoc_pham_vi(t), f"🔴 CHAN QUA TAY: {t!r}")
+
+    def test_hau_to_dai_KHONG_bien_nhom_nguoi_khac_thanh_cua_minh(self):
+        """Bay that: nhom Truong bi gap hau to cua Dai => van phai bi chan."""
+        for t in ["2026 - 8 - 27 - Truong - Online - Target sinh viên - Bản sao 2",
+                  "2026 - 5 - 28 - Truong - Online - Chạy tệp mới - Bản sao 2",
+                  "2025 - 12 - 29 - Thao - Online - Test - GV - CP2"]:
+            with self.subTest(ten=t):
+                self.assertFalse(thuoc_pham_vi(t))
+                self.assertFalse(thuoc_pham_vi(f"{t} 0/350 X10-26 TN"))
+
+    def test_ten_quang_cao_LUON_ngoai_pham_vi(self):
+        """Meta tu sinh ten ad, KHONG bao gio co 'dainq'.
+
+        => Pham vi LUON kiem theo TEN NHOM. Neu kiem theo ten ad thi
+           ad cua chinh Dai cung bi loai => agent thanh vo dung.
+        """
+        for t in ["Quảng cáo Lượt tương tác mới",
+                  "Quảng cáo Mức độ nhận biết mới",
+                  "Quảng cáo chuyển đổi mới", "Ad 1"]:
+            with self.subTest(ten=t):
+                self.assertFalse(thuoc_pham_vi(t))
+                self.assertFalse(thuoc_pham_vi(f"{t} 0/350 X10-26 TN"))
+
+    def test_kiem_chan_truoc_khi_lam_bat_ky_viec_gi(self):
+        """kiem() phai tra False NGAY, va ghi ro ly do co chu 'phạm vi'."""
+        for t in ["2026 - 8 - 27 - Truong - Online - Target sinh viên - Bản sao 2",
+                  "THC295THM295 0/500 X9-26 TN",
+                  "Quảng cáo Lượt tương tác mới"]:
+            with self.subTest(ten=t):
+                ok, ly = kiem(dx(ten=t))
+                self.assertFalse(ok)
+                self.assertIn("phạm vi", ly)
 
 
 class B_DocTraLoi(unittest.TestCase):

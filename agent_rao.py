@@ -17,9 +17,31 @@ from datetime import datetime, timedelta, timezone
 
 GIO_VN = timezone(timedelta(hours=7))
 
-# Ten doi tuong thuoc pham vi Dai: chua "dainq", hoac bat dau bang ma content
-# viet hoa (THC295THM295), hoac co "new - dainq".
-RE_MA_CONTENT = re.compile(r"^[A-Z]{2,}\d")
+# ==========================================================================
+# PHAM VI DUY NHAT: ten doi tuong PHAI chua "dainq".
+# ==========================================================================
+#
+# Dai chot lai 15:23-15:27 ngay 02/10/2026, nguyen van:
+#   "phai nho chi lam voi nhung chien dich, nhom va quang cao co chua 'dainq'"
+#   "nhung quang cao nay deu co dinh dang la new - dainq - THC....ma.
+#    Cai THC la ma content lan dau toi len quang cao"
+#
+# Truoc day rao con nhan them 2 kieu: "new - dainq" (da nam trong 'dainq')
+# va "ten bat dau bang MA CONTENT VIET HOA" (RE_MA_CONTENT).
+#
+# DO THAT tren act_ (doc het 4200 nhom):
+#   - Rao CU  (dainq | new-dainq | ma content) : 4005 nhom
+#   - Rao MOI (chi 'dainq')                    : 4005 nhom
+#   - Chenh lech                               : 0 nhom
+#   - So nhom bat dau bang ma content KHONG chua 'dainq': 0
+# => Nhanh ma content la THUA, BO DI KHONG MAT NHOM NAO CUA DAI.
+#    Va bo di thi khong con cua mo cho nguoi khac.
+#
+# ⚠️ RUI RO THAT SU da do duoc: tai khoan co 101 nhom KHONG chua 'dainq'
+#    (90 cua Truong + 11 cua Thao), trong do 40 nhom dang ACTIVE.
+#    Neu rao rong qua thi agent dong vao TAI SAN CUA NGUOI KHAC.
+RE_MA_CONTENT = re.compile(r"^[A-Z]{2,}\d")   # giu lai chi de tuong thich nguoc
+                                              # — KHONG dung trong thuoc_pham_vi
 
 MOC_CPR = 390000          # nguong gia moi luot mua cua TH3 (Dai chot 01/10/2026)
 NGAN_SACH_HA = 27000      # ngan sach ha ve khi tat
@@ -54,21 +76,33 @@ def tien(v):
 def thuoc_pham_vi(ten):
     """Ten doi tuong co thuoc pham vi Dai khong.
 
-    Dai chot 30/09/2026: chi quan tam doi tuong co chua "dainq". Nhung co nhom
-    chay content moi duoc dat ten bang MA CONTENT (vd THC295THM295) nen khong co
-    chu "dainq" - da kiem chung 6 thao tac that. Phai nhan ca truong hop do.
+    ==========================================================================
+    LUAT DUY NHAT: ten PHAI chua "dainq". Khong co ngoai le nao khac.
+    ==========================================================================
+
+    Dai chot lai 15:23 ngay 02/10/2026:
+        "phai nho chi lam voi nhung chien dich, nhom va quang cao co chua
+         'dainq' la duoc"
+
+    Truoc day ham nay con nhan 2 kieu nua (nay BO):
+      - "new - dainq": da nam trong 'dainq', viet rieng la thua.
+      - "ten bat dau bang MA CONTENT VIET HOA" (vd THC295THM295):
+        Dai giai thich 15:27 — quang cao kieu do LUON co dang
+        "new - dainq - THC..." nen DA chua 'dainq'.
+        Do that: 0/4200 nhom bat dau bang ma content ma thieu 'dainq';
+        siet lai KHONG lam mat nhom nao cua Dai (4005 -> 4005).
+
+    ⚠️ VI SAO KHONG DUOC NOI LONG RAO NAY:
+       Do that tren act_ — co 101 nhom KHONG chua 'dainq'
+       (90 cua Truong + 11 cua Thao), trong do 40 nhom dang ACTIVE.
+       Ten quang cao ben trong do META TU SINH ('Quảng cáo Lượt tương tác mới')
+       nen KHONG BAO GIO co 'dainq'.
+       => Pham vi LUON kiem theo TEN NHOM. Tuyet doi KHONG kiem theo ten
+          quang cao: lam vay thi ad cua chinh Dai cung bi loai.
     """
     if not isinstance(ten, str) or not ten.strip():
         return False
-    t = ten.strip()
-    tl = t.lower()
-    if "dainq" in tl:
-        return True
-    if "new - dainq" in tl:
-        return True
-    if RE_MA_CONTENT.match(t):
-        return True
-    return False
+    return "dainq" in ten.strip().lower()
 
 
 def _so(v):
