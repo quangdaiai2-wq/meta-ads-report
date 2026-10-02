@@ -46,9 +46,13 @@ git pull
 ```
 git log --oneline -1
 ```
-Phải in ra **`19f05ce`** (hoặc mới hơn). Nếu chưa tới `19f05ce` thì **DỪNG LẠI**:
+Phải in ra **`d22fd3f`** (hoặc mới hơn). Nếu chưa tới mốc đó thì **DỪNG LẠI**:
 kiểm tra nhánh (`git branch`), thử `git fetch && git pull origin main`.
 **Không làm tiếp khi chưa có mốc này** — code cũ ghi tên nhóm thiếu năm.
+
+> Vì sao là `d22fd3f` mà không phải mốc khác: đây là bản có **đầy đủ** luật tắt nhóm mới
+> (tên kèm năm + xét theo từng quảng cáo). Mốc `16aa0ff` cũ hơn cũng đã có luật mới,
+> nhưng `d22fd3f` là bản mới nhất máy công ty đã kiểm chứng.
 
 ### Bước 2 → 4 — Sửa `.env` (BẮT BUỘC, `git pull` KHÔNG mang theo)
 
@@ -268,7 +272,7 @@ kèm 2 nút `quét lại` / `bỏ qua 24h`. Không bấm gì ⇒ 15 phút sau h�
 # TÓM TẮT CHO AI — chạy tuần tự, kiểm chứng từng bước
 
 ```
-BƯỚC 1  git pull                       → git log --oneline -1 phải ra 19f05ce
+BƯỚC 1  git pull                       → git log --oneline -1 phải ra d22fd3f
 BƯỚC 2  sửa .env: REPORT_SLOTS=8,17    → kiểm: python -c "... doc_moc_tu_env ..."  ra [8, 17]
 BƯỚC 3  sửa .env: AGENT_NHIP_PHUT=15   → kiểm: e.get('AGENT_NHIP_PHUT')  ra 15
 BƯỚC 4  sửa .env: FILTER_INCLUDE=dainq → kiểm: e.get('FILTER_INCLUDE')  ra dainq
