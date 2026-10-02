@@ -1,6 +1,6 @@
 # Kế hoạch — Tên kèm năm + Xét ngưỡng theo TỪNG QUẢNG CÁO
 
-**Ngày:** 02/10/2026 · **Người chốt:** Đại · **Trạng thái:** ✅ **DỰNG THỬ XONG — chờ Đại duyệt**
+**Ngày:** 02/10/2026 · **Người chốt:** Đại · **Trạng thái:** ✅ **Việc A ĐÃ VÀO REPO** (commit `0147c3d`) — ⏳ Việc B đang dựng thử
 
 > 📌 **File này là BẢN DUY NHẤT.** Bản `2026-10-02-hau-to-kem-thang-nam-va-tat-theo-tung-quang-cao.md`
 > là bản viết trước đó trong ngày, **nay đã gộp vào đây** (đổi đuôi thành
@@ -176,16 +176,121 @@ Xét theo thứ tự **TH3 → TH2 → TH1**, y hệt cấp nhóm.
 
 **Hạ ngân sách chỉ dành cho cả nhóm**, và chỉ khi Đại bấm nút `💰 TẮT NHÓM + HẠ NGÂN SÁCH`.
 
-### 2.4. Tổng chi tiêu cả nhóm chạm ngưỡng ⇒ tắt CẢ NHÓM
+### 2.4. Luật ưu tiên — 🔴 ĐẠI CHỐT LẦN CUỐI 15:5x 02/10/2026
 
-Ví dụ **Đại đưa nguyên văn**:
+Mục này đã **sửa hai lần** trong ngày 02/10/2026. Ghi lại cả hai để không lặp lại sai lầm.
+
+#### Lần 1 (16:0x) — Đại phát hiện mâu thuẫn
 
 ```
-qc1 chi 200.000đ, có 1 tin nhắn
-qc2 chi  90.000đ, có 1 tin nhắn
-                    ─────────────
-tổng nhóm         = 290.000đ   ≥ 290.000đ  ⇒  TẮT CẢ NHÓM (không tắt lẻ)
+nhóm chi 100.000đ, 0 tin nhắn   →  TỔNG NHÓM đã chạm 70.000đ
+  ad1 chi  80.000đ  → chạm 70.000đ
+  ad2 chi  20.000đ  → chưa chạm
 ```
+
+| Cách đọc | Kết quả |
+|---|---|
+| *"quảng cáo chưa có kết quả ⇒ xét QUẢNG CÁO trước"* | tắt lẻ **ad1** |
+| *"tổng nhóm chạm ngưỡng ⇒ tắt cả nhóm"* | tắt **cả nhóm** |
+
+⚠️ **Hai luật cho HAI kết quả khác nhau.** Đại phân xử: *"Chỉ tắt lẻ quảng cáo"* — để giữ
+lại **ad2** đang còn cơ hội.
+
+#### 🔴 Lần 2 (15:5x) — dựng thử ĐO THẬT và phát hiện luật lần 1 bị VỠ
+
+Tôi cài luật lần 1 vào bản dựng thử, rồi **đo tài khoản thật**:
+
+```
+82 nhóm ACTIVE thuộc phạm vi Đại
+├── 66 nhóm  không có quảng cáo nào
+├── 16 nhóm  có ĐÚNG 1 quảng cáo      ← 19,5%
+└──  0 nhóm  có từ 2 quảng cáo trở lên
+```
+
+**Cả 16 nhóm một-quảng-cáo đều có: chi tiêu quảng cáo = chi tiêu nhóm, đúng 100,0%.**
+
+| Nhóm | Chi tiêu nhóm | Chi tiêu ad | ad/nhóm |
+|---|---|---|---|
+| `120250213748540509` | 779.615đ | 779.615đ | 100,0% |
+| `120250080111780509` | 648.122đ | 648.122đ | 100,0% |
+| `120249911752740509` | 575.700đ | 575.700đ | 100,0% |
+| `120250263934130509` | 560.416đ | 560.416đ | 100,0% |
+| … 12 nhóm còn lại | | | 100,0% |
+
+**Vì sao luật lần 1 vỡ ở nhóm một quảng cáo:** "tắt lẻ, lần sau tắt nhóm" **không bao giờ
+thoát ra**, vì giữa hai lần quét **không có gì thay đổi**:
+
+```
+Quét lần 1  →  tắt lẻ ad1
+Quét lần 2  →  tắt lẻ ad1     (số KHÔNG đổi)
+Quét lần 3  →  tắt lẻ ad1     (số KHÔNG đổi)
+```
+
+Số không đổi vì **hai lý do cộng lại**:
+1. Quảng cáo chiếm 100% chi tiêu nhóm ⇒ tắt ad thì nhóm ngừng chi tiêu ⇒ số dừng luôn.
+2. Insights **THÁNG** vẫn giữ dòng lịch sử của quảng cáo **đã tắt** ⇒ ad vẫn nằm trong
+   `ds_ad` và vẫn bị đề xuất tắt lại.
+
+Hậu quả thật: nhóm giữ **ACTIVE** mãi, ngân sách vẫn 400.000đ mãi, **không bao giờ hạ
+27.000đ**, và cứ **15 phút agent nhắc lại một lần — nhắc mãi mãi**.
+
+Đã **mô phỏng ba lần quét liên tiếp**, cả ba ra y hệt nhau — xác nhận lặp vô tận.
+
+#### ✅ LUẬT CHỐT CUỐI CÙNG — Đại nguyên văn 15:5x 02/10/2026
+
+> *"Bao giờ có từ 02 quảng cáo trở lên trong nhóm thì tự động chuyển sang xét duyệt như vậy."*
+
+| Nhóm có | Hành động |
+|---|---|
+| **Từ 2 quảng cáo**, có quảng cáo chạm ngưỡng | **Tắt LẺ** quảng cáo đó, **giữ nhóm** chạy tiếp |
+| **Chỉ 1 quảng cáo**, nó chạm ngưỡng | **TẮT CẢ NHÓM** + hạ ngân sách 27.000đ + đổi tên |
+| **0 quảng cáo**, nhóm chạm ngưỡng | **TẮT CẢ NHÓM** + hạ ngân sách 27.000đ + đổi tên |
+
+**Vì sao "tắt lẻ" phải phụ thuộc số quảng cáo:** tắt lẻ chỉ có nghĩa khi **có thứ để bảo
+vệ** — một quảng cáo khác đang còn cơ hội. Nhóm một quảng cáo thì không có gì để bảo vệ:
+tắt lẻ cũng làm nhóm ngừng chi tiêu y như tắt nhóm, chỉ khác là nhóm vẫn mang tiếng
+ACTIVE và ngân sách không được hạ.
+
+⚠️ **Tắt lẻ quảng cáo KHÔNG hạ ngân sách** (`ngan_sach_ha = None`). Hạ ngân sách là việc
+của cả nhóm.
+
+⚠️ **Số quảng cáo tính theo `ds_ad`** — tức theo dòng `level=ad` insights **tháng**. Nhóm
+có 0 dòng ⇒ tắt nhóm; 1 dòng ⇒ tắt nhóm; ≥2 dòng ⇒ xét lẻ.
+
+#### Ví dụ số áp luật chốt
+
+```
+VÍ DỤ A — nhóm 0 quảng cáo (66/82 nhóm của Đại)
+  nhóm chi 100.000đ, 0 tin nhắn  →  chạm TH1
+  → TẮT CẢ NHÓM, hạ ngân sách, đổi tên: "<gốc> 0/200 X10-26"
+
+VÍ DỤ B — nhóm 1 quảng cáo (16/82 nhóm của Đại)
+  nhóm chi 100.000đ  →  chạm TH1
+  ad1  chi 100.000đ  →  chạm TH1     (ad = 100% nhóm, luôn bằng nhau)
+  → TẮT CẢ NHÓM (KHÔNG tắt lẻ), hạ ngân sách, đổi tên
+
+VÍ DỤ C — nhóm 2 quảng cáo (0/82 nhóm hiện có, nhưng luật phải sẵn)
+  nhóm chi 100.000đ  →  chạm TH1
+  ad1  chi  80.000đ  →  chạm TH1
+  ad2  chi  20.000đ  →  chưa chạm, còn cơ hội
+  → TẮT LẺ ad1 (giữ ad2), KHÔNG hạ ngân sách, KHÔNG đổi tên nhóm
+
+VÍ DỤ D — nhóm 2 quảng cáo, KHÔNG ad nào chạm riêng
+  qc1 200.000đ/1 tin  →  chạm TH2 (290k)? KHÔNG
+  qc2  90.000đ/1 tin  →  chạm TH2?        KHÔNG
+  tổng nhóm 290.000đ/2 tin  →  chạm TH2
+  → KHÔNG có quảng cáo nào để tắt lẻ ⇒ TẮT CẢ NHÓM
+  ⚠️ Bản kế hoạch 16:0x từng ghi ca này "KHÔNG đề xuất gì" — SAI. Nếu vậy thì nhóm
+     chạm ngưỡng mà KHÔNG BAO GIỜ bị tắt. Đã sửa.
+```
+
+#### ⚠️ CẢNH BÁO cho lần sau — "lần quét sau" chỉ đúng khi có gì đó ĐỔI
+
+Cả **hai** lỗi thật của mục này đều cùng một loại: **hoãn sang lần quét sau trong khi
+không có gì thay đổi giữa hai lần quét.**
+
+⇒ Khi thiết kế bất kỳ luật nào có chữ **"lần sau"**, phải hỏi ngay:
+**"cái gì sẽ khác đi để lần sau khác lần này?"** Không trả lời được ⇒ luật đó sẽ lặp vô tận.
 
 ---
 
@@ -193,13 +298,23 @@ tổng nhóm         = 290.000đ   ≥ 290.000đ  ⇒  TẮT CẢ NHÓM (không 
 
 | | Đang chạy | Luật mới |
 |---|---|---|
-| Tên nhóm | `0/140 X10` | **`0/140 X10 26`** |
+| Tên nhóm | `0/140 X10` | **`0/140 X10-26`** |
 | Cấp xét | chỉ **adset** | **adset + ad** |
-| Thứ tự xét | luôn nhóm trước | **tuỳ: có ad chưa ra kết quả ⇒ ad trước** |
-| Tắt quảng cáo | **tắt HẾT** ad trong nhóm (khi tắt nhóm) | **tắt CHỌN LỌC** ad chạm ngưỡng |
+| Thứ tự xét | luôn nhóm trước | **tuỳ số quảng cáo:** ≥2 ⇒ xét ad trước; <2 ⇒ xét nhóm |
+| Tắt quảng cáo | **tắt HẾT** ad trong nhóm (khi tắt nhóm) | **tắt CHỌN LỌC** ad chạm ngưỡng (chỉ khi nhóm ≥2 ad) |
 | Đổi tên quảng cáo | không | **có** (dùng hậu tố của nhóm) |
 | Hạ ngân sách quảng cáo | không | **không** (giữ nguyên) |
 | Đọc `level=ad` | **không có** | **phải thêm** |
+
+### 🔴 Ranh giới quyết định — SỐ QUẢNG CÁO TRONG NHÓM
+
+| Nhóm có | Nhóm chạm ngưỡng | Hành động |
+|---|---|---|
+| **0 quảng cáo** | có | TẮT CẢ NHÓM + hạ 27.000đ + đổi tên |
+| **1 quảng cáo** | có | TẮT CẢ NHÓM + hạ 27.000đ + đổi tên |
+| **≥2 quảng cáo**, có ad chạm | có | **TẮT LẺ ad đó** — KHÔNG hạ ngân sách, KHÔNG đổi tên nhóm |
+| **≥2 quảng cáo**, không ad nào chạm | có | TẮT CẢ NHÓM + hạ 27.000đ + đổi tên |
+| bất kỳ | không | không làm gì (trừ ad lẻ chạm khi nhóm ≥2 ad) |
 
 ---
 
@@ -554,23 +669,83 @@ và hiện **tên nhóm chứa nó** để Đại biết nó nằm đâu.
    - B3: ghi Meta (`tat_mot_quang_cao`) + nút Telegram.
 3. **Dựng thử toàn bộ ngoài repo trước khi sửa code thật** — theo quy trình đã chốt.
 
-### 7.1. Tiến độ thực tế (cập nhật 02/10/2026)
+### 7.1. Tiến độ thực tế (cập nhật 02/10/2026, 15:5x)
 
 | Bước | Trạng thái |
 |---|---|
 | Đọc bản thiết kế + code thật | ✅ xong |
 | Viết kế hoạch riêng (file này) | ✅ xong |
-| **Dựng thử ở `.workbuddy-ai/dung-thu/hau-to-thang-nam/`** | ✅ **xong — 60/60 đạt** |
+| **Dựng thử Việc A ở `.workbuddy-ai/dung-thu/hau-to-thang-nam/`** | ✅ **xong — 63/63 đạt** |
 | **Tấn công tìm lỗi** | ✅ **xong — bắt 3 lỗi thật, đã sửa** |
-| **Kiểm điều kiện tiên quyết** (`truong_hop`, `RE_HAU_TO` trên tên thật) | ✅ **xong — ĐẠT cả hai** |
-| **Kiểm rào PHẠM VI trên 1800 nhóm thật (phát hiện của Đại)** | ✅ **xong — 64 nhóm Truong bị chặn, POST = 0** |
-| **Đại duyệt** | ⬜ **đang chờ** |
-| Chép Việc A vào repo thật | ⬜ |
-| Chạy toàn bộ kiểm thử repo | ⬜ |
-| `git commit` | ⬜ |
+| **Kiểm điều kiện tiên quyết** (`truong_hop`, `RE_HAU_TO` trên tên thật) | ✅ **xong — 237/237 tên cắt đúng** |
+| **Kiểm rào PHẠM VI trên 4200 nhóm thật (phát hiện của Đại)** | ✅ **xong — siết về đúng `dainq`** |
+| **Đại duyệt** | ✅ **duyệt 15:3x 02/10/2026** |
+| **Chép Việc A vào repo thật** | ✅ **xong — commit `0147c3d`** |
+| **Chạy toàn bộ kiểm thử repo** | ✅ **xong — 726/726 đạt** |
+| **`git commit` Việc A** | ✅ **xong** |
+| **Dựng thử Việc B (B1+B2+B3)** | ✅ **xong 46/46 đạt — bắt 2 lỗi thật** |
+| **Đại duyệt luật chốt cuối (15:5x)** | ✅ **duyệt: ≥2 quảng cáo mới tắt lẻ** |
+| Chép Việc B vào repo thật | ⬜ |
 | Chạy tập sự ≥3 ngày rồi mới bật thật | ⬜ |
 
-**Bằng chứng dựng thử:** `.workbuddy-ai/dung-thu/hau-to-thang-nam/LOI-DA-BAT-DUOC.md`
+**Bằng chứng dựng thử Việc A:** `.workbuddy-ai/dung-thu/hau-to-thang-nam/LOI-DA-BAT-DUOC.md`
+**Bằng chứng dựng thử Việc B:** `.workbuddy-ai/dung-thu/xet-tung-quang-cao/LOI-DA-BAT-DUOC.md`
+
+### 7.2. 🔴 ĐO LẠI CẤU TRÚC QUẢNG CÁO THẬT — 15:5x 02/10/2026
+
+Đo để biết **có ca thật nào để kiểm chứng Việc B không** — và phát hiện luật bị vỡ:
+
+| | |
+|---|---|
+| Nhóm đang ACTIVE | **93** |
+| Trong phạm vi của Đại (có `dainq`) | **82** |
+| — có **0** quảng cáo | **66** |
+| — có **1** quảng cáo | **16** |
+| — có **≥2** quảng cáo | **0** |
+
+⚠️ **Cả 16 nhóm một-quảng-cáo đều có: chi tiêu ad = chi tiêu nhóm, ĐÚNG 100,0%.**
+
+| Nhóm | Chi nhóm | Chi ad | ad/nhóm | Lượt mua | Tin nhắn |
+|---|---|---|---|---|---|
+| `120250213748540509` | 779.615đ | 779.615đ | 100,0% | 5 | 19 |
+| `120250080111780509` | 648.122đ | 648.122đ | 100,0% | 3 | 14 |
+| `120249911752740509` | 575.700đ | 575.700đ | 100,0% | 3 | 14 |
+| `120250263934130509` | 560.416đ | 560.416đ | 100,0% | 2 | 17 |
+| `120250574692000509` | 442.375đ | 442.375đ | 100,0% | 2 | 8 |
+| … 11 nhóm còn lại | | | 100,0% | | |
+
+Số này **buộc phải đúng**: nhóm có một quảng cáo thì tổng của nó bằng chính nó.
+⇒ Đây là **bằng chứng** cho thấy luật "tắt lẻ rồi lần sau tắt nhóm" **không hoạt động được**
+ở nhóm một quảng cáo (xem mục 2.4).
+
+⚠️ **HỆ QUẢ — phải nói rõ:** Việc B **hôm nay chưa có ca thật nào của Đại để kiểm chứng**
+nhánh "tắt lẻ". Luật được viết để **sẵn sàng**, không phải để sửa ca đang cháy.
+Đại chốt vẫn làm luôn: *"Cứ làm luôn như đã thống nhất để còn theo dõi trong những ngày tới"*.
+
+⇒ Vì không có ca thật, **kiểm thử phải dựng bằng số liệu GIẢ**, và **2 nhóm Truong ở trên dùng làm
+mẫu cấu trúc** (đúng 2 ad, 1 ad có kết quả + 1 ad chưa) — **chỉ dùng để kiểm rằng hệ thống CHẶN,
+tuyệt đối không dùng làm ca hợp lệ**.
+
+### 7.3. ✅ KIỂM CHỨNG THÊM QUY TẮC SẮT — bằng số thật
+
+| Câu hỏi | Kết quả đo |
+|---|---|
+| Tên **quảng cáo** có `dainq` không? | **44/55 có** — 11 cái KHÔNG (vd `Quảng cáo Mức độ nhận biết mới`) |
+| Ad thuộc nhóm **của Đại** mà tên **không** có `dainq` | **0** |
+
+⇒ Chứng minh **tên quảng cáo KHÔNG đáng tin** (11/55 sai) ⇒ **bắt buộc** kiểm theo tên nhóm.
+Và may là trong nhóm của Đại hiện tên ad đều có `dainq` — nhưng **không được dựa vào đó**, vì Truong
+đổi tên lúc nào không biết.
+
+### 7.4. Đo `level=ad` — bổ sung 15:4x 02/10/2026
+
+| | |
+|---|---|
+| Trường trả về | `ad_id`, `ad_name`, `adset_id`, `adset_name`, `campaign_id`, `spend`, `actions` ✅ |
+| Một lệnh cho **cả tài khoản** | ✅ — 46 dòng `today`, 55 dòng `this_month`, **không phân trang** |
+| `spend` kiểu dữ liệu | **CHUỖI** (`'29260'`) — đúng như bẫy đã ghi |
+| Tổng tiền cấp ad vs cấp adset | **53/53 nhóm KHỚP, lệch 0đ** ✅ |
+| Nhóm có >1 ad | 2 — **đều của Truong, đều ngoài phạm vi** |
 
 ---
 

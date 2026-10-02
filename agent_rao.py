@@ -170,14 +170,22 @@ def kiem(de_xuat, lich_su=None, bay_gio=None):
             return False, "Đề xuất thiếu thông tin nhóm quảng cáo"
 
         # --- Rao 1: danh sach trang ---
+        #
+        # ⚠️ CAP "ad" KHONG kiem ten QUANG CAO o day — xem giai thich o nhanh
+        # cap == "ad" ben duoi. Ten o day la ten QUANG CAO (Meta tu sinh), va
+        # no CO THE khong chua 'dainq'. Pham vi that su duoc kiem theo TEN NHOM
+        # trong nhanh cap == "ad" (va kiem lai lan nua khi ghi len Meta).
+        cap = doi_tuong.get("cap") or "ad_set"
         ten = doi_tuong.get("ten")
-        if not thuoc_pham_vi(ten):
-            return False, (f"Tên nhóm không thuộc phạm vi của Đại "
-                           f"(phải có 'dainq'): {str(ten)[:60]}")
+        if cap != "ad":
+            if not thuoc_pham_vi(ten):
+                return False, (f"Tên nhóm không thuộc phạm vi của Đại "
+                               f"(phải có 'dainq'): {str(ten)[:60]}")
 
         ma = doi_tuong.get("id")
         if not ma:
-            return False, "Đề xuất thiếu mã nhóm quảng cáo"
+            return False, ("Đề xuất thiếu mã quảng cáo" if cap == "ad"
+                           else "Đề xuất thiếu mã nhóm quảng cáo")
         ma = str(ma)
 
         ls = lich_su if isinstance(lich_su, dict) else {}
@@ -211,14 +219,38 @@ def kiem(de_xuat, lich_su=None, bay_gio=None):
             # trong 24 gio ke tu luc tat.
             return True, "cho phép"
 
-        # ================= TAT NHOM =================
-        # --- Rao 4: ngan sach ha ve dung 27.000 ---
-        ha = _so(de_xuat.get("ngan_sach_ha"))
-        if ha is None:
-            return False, "Đề xuất thiếu ngân sách hạ về"
-        if int(ha) != NGAN_SACH_HA:
-            return False, (f"Ngân sách hạ về phải đúng {tien(NGAN_SACH_HA)}, "
-                           f"đang là {tien(ha)}")
+        # ================= TAT LE QUANG CAO (Viec B) =================
+        if cap == "ad":
+            # Dai chot 02/10/2026: tat le quang cao CHI TAT + DOI TEN.
+            # KHONG ha ngan sach — ha ngan sach la viec cua CA NHOM.
+            # Vi vay rao 4 (ngan sach ha ve dung 27.000) KHONG ap o day;
+            # thay vao do bat buoc PHẢI None de khong ai vo tinh gui tien len.
+            if de_xuat.get("ngan_sach_ha") is not None:
+                return False, ("Tắt lẻ quảng cáo KHÔNG được hạ ngân sách "
+                               "(hạ ngân sách là việc của cả nhóm)")
+            # Phai biet ten nhom de kiem pham vi — xem agent_cong_cu_ghi.
+            # tat_mot_quang_cao (do lai ten nhom that truoc khi ghi).
+            if not (doi_tuong.get("ten_nhom") or "").strip():
+                return False, "Đề xuất thiếu tên nhóm chứa quảng cáo"
+            if not (doi_tuong.get("adset_id") or "").strip():
+                return False, "Đề xuất thiếu mã nhóm chứa quảng cáo"
+            # Kiem luon ten nhom chua no (quy tac sat: pham vi theo TEN NHOM).
+            if not thuoc_pham_vi(doi_tuong.get("ten_nhom")):
+                return False, (f"Tên nhóm không thuộc phạm vi của Đại "
+                               f"(phải có 'dainq'): "
+                               f"{str(doi_tuong.get('ten_nhom'))[:60]}")
+            # Cac rao con lai (hieu qua / 24 gio / da tra loi / bo qua /
+            # han muc) VAN ap dung nhu tắt nhóm — chay tiep xuong duoi.
+            # `ma` o day la ma QUANG CAO, va so tay ghi theo ma quang cao.
+        else:
+            # ================= TAT NHOM =================
+            # --- Rao 4: ngan sach ha ve dung 27.000 ---
+            ha = _so(de_xuat.get("ngan_sach_ha"))
+            if ha is None:
+                return False, "Đề xuất thiếu ngân sách hạ về"
+            if int(ha) != NGAN_SACH_HA:
+                return False, (f"Ngân sách hạ về phải đúng {tien(NGAN_SACH_HA)}, "
+                               f"đang là {tien(ha)}")
 
         # --- Rao 3: cam tat nhom dang hieu qua ---
         # Phan biet "KHONG CO luot mua" (hop le - nhom moi chay) voi

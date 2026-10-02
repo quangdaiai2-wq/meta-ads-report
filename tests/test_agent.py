@@ -37,6 +37,9 @@ class _KhongGhiLog:
         report.log = self._log_cu
 
 ID = "120250506886650509"
+# Ma QUANG CAO that cua Meta cung la 17 chu so (do that 02/10/2026). Dung ma
+# gia ngan se khong di qua duoc `lenh_telegram._tim_ma` (doi >= 6 chu so).
+MA_AD = "120250213748540509"
 TEN = "2026 - 09 - 30 - dainq - Scale - Online 0/160 X9"
 
 
@@ -1752,6 +1755,389 @@ class L_ThuTuTatVaNhanhLoi(_KhongGhiLog, unittest.TestCase):
     def test_nut_tat_ha_ngan_sach_thi_bao_DA_HA(self):
         self._chay(True, nut="dong_y_ha_ngan_sach")
         self.assertTrue(any("đã hạ về 27.000đ" in t for t in self.bao))
+
+
+class B2_XetTheoQuangCao(unittest.TestCase):
+    """VIEC B — Dai chot 15:5x 02/10/2026.
+
+    Nguyen van: "Bao gio co tu 02 quang cao tro len trong nhom thi tu dong
+    chuyen sang xet duyet nhu vay."
+
+    LUAT:
+      nhom >= 2 quang cao + co ad cham  -> TAT LE ad do (KHONG ha ngan sach)
+      nhom >= 2 quang cao + khong ad nao cham -> TAT CA NHOM
+      nhom 0/1 quang cao + nhom cham    -> TAT CA NHOM
+      moi ad tu chon moc cua chinh no (70k / 290k / CPR thang >= 390k)
+    """
+
+    def _nhom(self, ma=ID, ten=TEN):
+        return {"id": ma, "name": ten, "effective_status": "ACTIVE",
+                "daily_budget": "400000", "campaign_id": "camp-1"}
+
+    def _ad(self, ma_ad, ma_nhom=ID, spend_thang=100000, spend_hom=100000,
+            mua=0, tin=0, ten_ad="Quang cao Meta tu sinh"):
+        acts = []
+        if mua:
+            acts.append({"action_type": agent_muc_tieu.TEN_LUOT_MUA,
+                         "value": str(mua)})
+        if tin:
+            acts.append({"action_type": agent_muc_tieu.TEN_TIN_NHAN,
+                         "value": str(tin)})
+        return {"ad_id": ma_ad, "ad_name": ten_ad, "adset_id": ma_nhom,
+                "campaign_id": "camp-1", "spend": str(spend_thang),
+                "actions": acts}
+
+    # ---------- Nhom 1 quang cao: TAT CA NHOM (dung ranh gioi so 2) ----------
+
+    def test_nhom_MOT_quang_cao_cham_thi_tat_CA_NHOM_chu_khong_tat_le(self):
+        """🔴 Day la ranh gioi cot loi — va la loi vong lap vo tan da do that."""
+        ad = self._ad("ad-1", spend_thang=90000, spend_hom=90000)
+        r = agent_muc_tieu.xet([self._nhom()], {ID: dong(90000, 0, 0)},
+                               {ID: dong(90000, 0, 0)}, ad_hom_nay={"ad-1": ad},
+                               ad_thang={"ad-1": ad},
+                               bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad_set")
+        self.assertEqual(r[0]["ngan_sach_ha"], 27000)
+
+    def test_nhom_KHONG_co_quang_cao_cham_thi_tat_CA_NHOM(self):
+        r = agent_muc_tieu.xet([self._nhom()], {ID: dong(90000, 0, 0)},
+                               {ID: dong(90000, 0, 0)}, ad_hom_nay={},
+                               ad_thang={},
+                               bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad_set")
+
+    # ---------- Nhom >= 2 quang cao: TAT LE ----------
+
+    def test_nhom_HAI_quang_cao_mot_ad_cham_thi_tat_LE_dung_ad_do(self):
+        ad_xau = self._ad("ad-xau", spend_thang=90000, spend_hom=90000)
+        ad_khoe = self._ad("ad-khoe", spend_thang=50000, spend_hom=50000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()],
+            {ID: dong(140000, 0, 0)},
+            {ID: dong(140000, 0, 0)},
+            ad_hom_nay={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            ad_thang={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertEqual(len(r), 1, "chi duoc de xuat TAT LE mot quang cao")
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad")
+        self.assertEqual(r[0]["doi_tuong"]["id"], "ad-xau")
+        self.assertIsNone(r[0]["ngan_sach_ha"],
+                          "TAT LE KHONG duoc ha ngan sach")
+
+    def test_tat_le_giu_nguyen_ngan_sach_va_co_ten_nhom(self):
+        """Rao pham vi o cap ad kiem theo TEN NHOM — phai co ten_nhom."""
+        ad_xau = self._ad("ad-xau", spend_thang=90000, spend_hom=90000)
+        ad_khoe = self._ad("ad-khoe", spend_thang=50000, spend_hom=50000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(140000, 0, 0)}, {ID: dong(140000, 0, 0)},
+            ad_hom_nay={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            ad_thang={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        dt = r[0]["doi_tuong"]
+        self.assertIsNone(r[0]["ngan_sach_ha"])
+        self.assertEqual(dt["ten_nhom"], TEN)
+        self.assertEqual(dt["adset_id"], ID)
+        self.assertTrue(thuoc_pham_vi(dt["ten_nhom"]),
+                        "ten nhom phai thuoc pham vi — day la rao that su")
+
+    def test_nhom_HAI_quang_cao_KHONG_ad_nao_cham_thi_tat_CA_NHOM(self):
+        """test_C2 — truong hop toi da viet sai trong ke hoach dau tien.
+
+        Toi da tuong "nhom cham + khong ad nao cham => khong de xuat gi".
+        SAI: nhu vay nhom KHONG BAO GIO bi tat. Phai TAT CA NHOM.
+        """
+        ad1 = self._ad("ad-1", spend_thang=40000, spend_hom=40000)
+        ad2 = self._ad("ad-2", spend_thang=50000, spend_hom=50000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(90000, 0, 0)}, {ID: dong(90000, 0, 0)},
+            ad_hom_nay={"ad-1": ad1, "ad-2": ad2},
+            ad_thang={"ad-1": ad1, "ad-2": ad2},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad_set")
+        self.assertEqual(r[0]["ngan_sach_ha"], 27000)
+
+    def test_tong_nhom_cham_thi_tat_CA_NHOM_du_tung_ad_chua_cham(self):
+        """Dai chot: qc1 200k/1 tin + qc2 90k/1 tin = 290k => tat CA NHOM.
+
+        TH2 moc la 290.000d. Tung ad: 200k < 290k (chua), 90k < 290k (chua).
+        Nhung TONG nhom = 290k => nhom cham => va khong ad nao cham => tat nhom.
+        """
+        ad1 = self._ad("ad-1", spend_thang=200000, spend_hom=200000, tin=1)
+        ad2 = self._ad("ad-2", spend_thang=90000, spend_hom=90000, tin=1)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(290000, 0, 0)}, {ID: dong(290000, 0, 0)},
+            ad_hom_nay={"ad-1": ad1, "ad-2": ad2},
+            ad_thang={"ad-1": ad1, "ad-2": ad2},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad_set")
+        self.assertIn("290.000đ", r[0]["ly_do"])
+
+    def test_moi_ad_tu_chon_moc_cua_chinh_no_khong_muon_moc_nhom(self):
+        """Dai chot "chon a": ad co tin nhan dung moc 290k, KHONG muon moc nhom."""
+        # Nhom chi 100k (chua cham TH1 70k? co — nhom cham TH1 vi >=70k).
+        # ad-1 co tin nhan: 100k < 290k => CHUA cham moc cua chinh no.
+        # ad-2 khong gi: 100k >= 70k => CHAM moc TH1 cua chinh no => tat le ad-2.
+        ad1 = self._ad("ad-1", spend_thang=100000, spend_hom=100000, tin=1)
+        ad2 = self._ad("ad-2", spend_thang=100000, spend_hom=100000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(200000, 0, 0)}, {ID: dong(200000, 0, 0)},
+            ad_hom_nay={"ad-1": ad1, "ad-2": ad2},
+            ad_thang={"ad-1": ad1, "ad-2": ad2},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        ma_ad = [x["doi_tuong"]["id"] for x in r if x["doi_tuong"]["cap"] == "ad"]
+        self.assertEqual(ma_ad, ["ad-2"],
+                         "ad-1 co tin nhan nen moc la 290k => chua cham")
+
+    def test_th3_cua_ad_dung_CPR_THANG_cua_chinh_ad(self):
+        """ad-1: 800k/2 mua = 400k >= 390k => cham TH3. ad-2: 100k/1 mua = 100k."""
+        ad1 = self._ad("ad-1", spend_thang=800000, spend_hom=0, mua=2)
+        ad2 = self._ad("ad-2", spend_thang=100000, spend_hom=0, mua=1)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(0, 0, 0)}, {ID: dong(900000, 3, 0)},
+            ad_hom_nay={"ad-1": ad1, "ad-2": ad2},
+            ad_thang={"ad-1": ad1, "ad-2": ad2},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        ma_ad = [x["doi_tuong"]["id"] for x in r]
+        self.assertEqual(ma_ad, ["ad-1"])
+        self.assertEqual(r[0]["truong_hop"], 3)
+
+    def test_khong_truyen_ad_thi_chay_nhu_CU(self):
+        """Moi kiem thu cu khong truyen ad_* — ham phai chap nhan (mac dinh None)."""
+        r = agent_muc_tieu.xet([self._nhom()], {ID: dong(90000, 0, 0)},
+                               {ID: dong(90000, 0, 0)})
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0]["doi_tuong"]["cap"], "ad_set")
+
+    def test_dong_ad_thieu_adset_id_bi_bo_qua(self):
+        """Khong biet ad thuoc nhom nao thi khong kiem duoc pham vi => bo qua."""
+        ad_la = {"ad_id": "ad-la", "ad_name": "x", "spend": "90000",
+                 "actions": []}
+        ad2 = self._ad("ad-2", spend_thang=10000, spend_hom=10000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(50000, 0, 0)}, {ID: dong(50000, 0, 0)},
+            ad_hom_nay={"ad-la": ad_la, "ad-2": ad2},
+            ad_thang={"ad-la": ad_la, "ad-2": ad2},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertTrue(all(x["doi_tuong"]["id"] != "ad-la" for x in r))
+
+    def test_ten_moi_cua_ad_dung_CHUNG_hau_to_voi_nhom(self):
+        """Dai chot 02/10/2026: quang cao dung chung hau to voi NHOM chua no."""
+        ad_xau = self._ad("ad-xau", spend_thang=90000, spend_hom=90000)
+        ad_khoe = self._ad("ad-khoe", spend_thang=50000, spend_hom=50000)
+        r = agent_muc_tieu.xet(
+            [self._nhom()], {ID: dong(140000, 0, 0)}, {ID: dong(140000, 0, 0)},
+            ad_hom_nay={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            ad_thang={"ad-xau": ad_xau, "ad-khoe": ad_khoe},
+            bay_gio=datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertTrue(r[0]["ten_moi"].endswith(" 0/180 X10-26"),
+                        f"hau to phai la X10-26, dang la {r[0]['ten_moi']!r}")
+
+
+class B3_RaoChoCapQuangCao(unittest.TestCase):
+    """Rao an toan phai PHAN BIET cap nhom va cap quang cao."""
+
+    def _ad_dx(self, **kw):
+        d = {"hanh_dong": "tam_dung",
+             "doi_tuong": {"cap": "ad", "id": "ad-1", "ten": "Quang cao Meta sinh",
+                           "adset_id": ID, "ten_nhom": TEN},
+             "ngan_sach_ha": None,
+             "luot_mua": 0, "chi_phi_moi_luot": None,
+             "tao_luc": "2026-10-02T12:00:00+07:00"}
+        d.update(kw)
+        return d
+
+    def test_tat_le_KHONG_duoc_ha_ngan_sach(self):
+        """Bat buoc None — nguoc lai la vo tinh gui tien len Meta."""
+        d = self._ad_dx(ngan_sach_ha=27000)
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertFalse(ok)
+        self.assertIn("KHÔNG được hạ ngân sách", ly)
+
+    def test_tat_le_thieu_ten_nhom_thi_CHAN(self):
+        d = self._ad_dx()
+        d["doi_tuong"]["ten_nhom"] = ""
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertFalse(ok)
+        self.assertIn("thiếu tên nhóm", ly)
+
+    def test_tat_le_thieu_adset_id_thi_CHAN(self):
+        d = self._ad_dx()
+        d["doi_tuong"]["adset_id"] = ""
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertFalse(ok)
+        self.assertIn("thiếu mã nhóm", ly)
+
+    def test_tat_le_ten_nhom_ngoai_pham_vi_thi_CHAN(self):
+        """QUY TAC SAT: pham vi kiem theo TEN NHOM, khong theo ten quang cao."""
+        d = self._ad_dx()
+        d["doi_tuong"]["ten_nhom"] = "2026 - 09 - 01 - Truong - Scale"
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertFalse(ok)
+        self.assertIn("không thuộc phạm vi", ly)
+
+    def test_tat_le_TEN_QUANG_CAO_khong_chua_dainq_VAN_cho_phep(self):
+        """🔴 Ten ad do Meta tu sinh, KHONG bao gio co 'dainq'.
+
+        Neu kiem pham vi theo ten ad thi chinh ad cua Dai cung bi chan.
+        """
+        d = self._ad_dx()
+        d["doi_tuong"]["ten"] = "Quảng cáo Lượt tương tác mới"
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertTrue(ok, f"phai cho phep, nhung bi chan: {ly}")
+
+    def test_cap_ad_khong_bi_doi_hoi_ngan_sach_ha(self):
+        """Thong bao loi phai noi dung cap — khong noi 'thieu ngan sach ha'."""
+        d = self._ad_dx()
+        d["doi_tuong"]["id"] = ""
+        ok, ly = kiem(d, {}, datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN))
+        self.assertFalse(ok)
+        self.assertIn("mã quảng cáo", ly)
+        self.assertNotIn("ngân sách hạ về", ly)
+
+
+class B4_TinNhanCapQuangCao(unittest.TestCase):
+    """Tin Telegram cap quang cao + nut bam."""
+
+    def _dx_ad(self):
+        return {"hanh_dong": "tam_dung", "truong_hop": 1,
+                "doi_tuong": {"cap": "ad", "id": "ad-1",
+                              "ten": "Quảng cáo Lượt tương tác mới",
+                              "adset_id": ID,
+                              "ten_nhom": "2026 - 09 - 30 - dainq - Scale - Online",
+                              "campaign_id": "camp-1"},
+                "ten_moi": "Quảng cáo Lượt tương tác mới 0/180 X10-26",
+                "ly_do": "Hôm nay chi 90.000đ, không có tin nhắn nào"}
+
+    def test_tin_cap_ad_ghi_ro_QUANG_CAO_va_NHOM_chua_no(self):
+        t = agent_xin_phep.soan_tin(self._dx_ad())
+        self.assertIn("XIN PHÉP TẮT QUẢNG CÁO", t)
+        self.assertIn("Quảng cáo: Quảng cáo Lượt tương tác mới", t)
+        self.assertIn("Nhóm chứa nó: 2026 - 09 - 30 - dainq - Scale - Online", t)
+        self.assertIn("Chiến dịch: camp-1", t)
+
+    def test_tin_cap_ad_KHONG_hua_ha_ngan_sach(self):
+        t = agent_xin_phep.soan_tin(self._dx_ad())
+        self.assertNotIn("Hạ ngân sách = hạ về 27.000đ", t)
+        self.assertIn("Giữ nguyên ngân sách nhóm", t)
+
+    def test_nut_cap_ad_chi_co_2_nut_va_KHONG_co_nut_ha_ngan_sach(self):
+        hang = json.loads(agent_xin_phep.nut_bam("ad-1", cap="ad"))["inline_keyboard"]
+        self.assertEqual(len(hang), 2)
+        for h in hang:
+            self.assertEqual(len(h), 1, "moi nut mot hang")
+        self.assertEqual(hang[0][0]["callback_data"], "tat:ad-1")
+        self.assertEqual(hang[1][0]["callback_data"], "boqua:ad-1")
+        self.assertNotIn("tathns", json.dumps(hang))
+
+    def test_nut_cap_nhom_van_co_3_nut_nhu_cu(self):
+        hang = json.loads(agent_xin_phep.nut_bam(ID, cap="ad_set"))["inline_keyboard"]
+        self.assertEqual(len(hang), 3)
+        self.assertEqual(hang[1][0]["callback_data"], f"tathns:{ID}")
+
+    def test_doc_duoc_nut_tat_cua_quang_cao(self):
+        """⚠️ Ma quang cao THAT cua Meta la 17 CHU SO, giong ma nhom.
+
+        `lenh_telegram._tim_ma` doi cum so >= 6 chu so. Ma gia ngan nhu 'ad-1'
+        se bi doc thanh "khong_hieu" — day la BAY khi viet kiem thu: dung ma
+        gia nho roi tuong code hong.
+        """
+        kq, ma = agent_xin_phep.doc_tra_loi(f"tat:{MA_AD}", [MA_AD])
+        self.assertEqual((kq, ma), ("dong_y", MA_AD))
+
+    def test_nut_tat_cua_quang_cao_that_su_dung_duoc(self):
+        """Nut bam that gui lenh co dang 'tat:<17 chu so>' — phai doc ra."""
+        nut = json.loads(agent_xin_phep.nut_bam(MA_AD, cap="ad"))
+        cbd = nut["inline_keyboard"][0][0]["callback_data"]
+        self.assertEqual(agent_xin_phep.doc_tra_loi(cbd, [MA_AD]),
+                         ("dong_y", MA_AD))
+
+    def test_tin_loi_cap_ad_noi_dung_cap(self):
+        bg = {"doi_tuong": {"cap": "ad", "id": "ad-1", "ten": "Quang cao X",
+                            "ten_nhom": TEN, "campaign_id": "camp-1"}}
+        t = agent_xin_phep.soan_tin_loi(bg, "Meta từ chối: Invalid parameter")
+        self.assertIn("KHÔNG TẮT ĐƯỢC QUẢNG CÁO", t)
+        self.assertIn("Nhóm chứa nó:", t)
+        self.assertIn(QH_KHONG_TAT_GI, t)
+
+
+QH_KHONG_TAT_GI = "KHÔNG tắt gì cả"
+
+
+class B5_ThucThiCapQuangCao(_KhongGhiLog, unittest.TestCase):
+    """`_lam_theo_dong_y` phai RE NHANH theo `doi_tuong.cap`."""
+
+    def setUp(self):
+        super().setUp()
+        import agent
+        import agent_cong_cu_ghi as ghi
+        self.agent = agent
+        self.ghi = ghi
+        self.goi = []
+        self.that = (agent_rao.kiem, agent_ky_uc.dem_hanh_dong,
+                     agent_ky_uc.ghi, agent_ky_uc.cap_nhat_phan_hoi,
+                     ghi.tam_dung_va_ha_ngan_sach, ghi.tat_quang_cao,
+                     ghi.tat_mot_quang_cao, agent._bao_ket_qua)
+        agent_rao.kiem = lambda dx, ls, gio: (True, "ok")
+        agent_ky_uc.dem_hanh_dong = lambda gio: {}
+        agent_ky_uc.ghi = lambda rec, **k: True
+        agent_ky_uc.cap_nhat_phan_hoi = lambda *a, **k: None
+        self.bao = []
+        self.agent._bao_ket_qua = lambda env, bg, tb, text, nut=None: self.bao.append(text)
+
+    def tearDown(self):
+        (agent_rao.kiem, agent_ky_uc.dem_hanh_dong, agent_ky_uc.ghi,
+         agent_ky_uc.cap_nhat_phan_hoi, self.ghi.tam_dung_va_ha_ngan_sach,
+         self.ghi.tat_quang_cao, self.ghi.tat_mot_quang_cao,
+         self.agent._bao_ket_qua) = self.that
+        super().tearDown()
+
+    def _chay_ad(self, thanh_cong=True):
+        self.ghi.tam_dung_va_ha_ngan_sach = (
+            lambda *a, **k: self.goi.append("tat_nhom") or (False, "khong duoc goi", {}))
+        self.ghi.tat_quang_cao = (
+            lambda *a, **k: self.goi.append("tat_het_ad") or (True, "x", {}))
+        self.ghi.tat_mot_quang_cao = (
+            lambda env, ma, ten_nhom=None, ten_moi=None, ngu_fn=None:
+            (self.goi.append(("tat_mot_ad", ma, ten_nhom, ten_moi))
+             or (thanh_cong, "thanh cong", {})))
+        bg = {"hanh_dong": "tam_dung",
+              "doi_tuong": {"cap": "ad", "id": "ad-1",
+                            "ten": "Quảng cáo Lượt tương tác mới",
+                            "adset_id": ID, "ten_nhom": TEN},
+              "ten_moi": "Quảng cáo Lượt tương tác mới 0/180 X10-26",
+              "luc": "2026-10-02T12:00:00+07:00"}
+        return self.agent._lam_theo_dong_y(
+            {"META_ADS_ACCESS_TOKEN": "x"}, {"AGENT_TAP_SU": False}, bg,
+            {"noi_dung": "tat ad-1", "ket_qua": "dong_y"},
+            datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN), lambda t: None)
+
+    def test_cap_ad_thi_KHONG_dung_ham_tat_nhom(self):
+        self._chay_ad()
+        self.assertNotIn("tat_nhom", self.goi)
+        self.assertNotIn("tat_het_ad", self.goi,
+                         "tat le KHONG duoc tat het quang cao trong nhom")
+
+    def test_cap_ad_thi_truyen_dung_ma_ten_nhom_ten_moi(self):
+        self._chay_ad()
+        self.assertEqual(self.goi, [("tat_mot_ad", "ad-1", TEN,
+                                     "Quảng cáo Lượt tương tác mới 0/180 X10-26")])
+
+    def test_cap_ad_bao_ket_qua_dung_chu(self):
+        self._chay_ad()
+        self.assertTrue(any("ĐÃ TẮT QUẢNG CÁO" in t for t in self.bao))
+        self.assertTrue(any("Ngân sách nhóm: giữ nguyên" in t for t in self.bao))
+        self.assertFalse(any("ĐÃ TẮT NHÓM" in t for t in self.bao))
+
+    def test_cap_ad_that_bai_thi_bao_loi(self):
+        self.ghi.tat_mot_quang_cao = (
+            lambda *a, **k: (False, "Meta tu choi: Invalid parameter",
+                             {"nguyen_nhan": "Meta khong nhan tham so"}))
+        self._chay_ad(thanh_cong=False)
+        self.assertFalse(any("ĐÃ TẮT QUẢNG CÁO" in t for t in self.bao))
 
 
 class M_NutBaoLoi(unittest.TestCase):

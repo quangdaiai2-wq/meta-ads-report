@@ -100,9 +100,58 @@ def doc_chi_tieu(env, date_preset):
     return {str(r.get("adset_id")): r for r in rows if r.get("adset_id")}
 
 
+def doc_chi_tieu_quang_cao(env, date_preset):
+    """Chi tieu cap QUANG CAO theo mot moc thoi gian.
+
+    VIEC B (Dai chot 02/10/2026) — xet nguong theo TUNG quang cao.
+
+    DO THAT 02/10/2026 tren act_ — truoc khi viet ham nay:
+      - `level=ad` tra ve: ad_id, ad_name, adset_id, adset_name, campaign_id,
+        spend, actions  => DU de xet tung quang cao.
+      - MOT lenh goi cho CA tai khoan: 46 dong 'today', 55 dong 'this_month',
+        KHONG phan trang.
+      - `spend` tra dang CHUOI ('29260') — dung bay da ghi trong so.
+      - Doi chieu tong: cap ad vs cap adset = 53/53 nhom KHOP, lech 0d
+        => xet tung quang cao KHONG lam sai so tien.
+
+    ⚠️ VI SAO KHONG goi /{adset_id}/ads cho tung nhom: tai khoan co >90 nhom dang
+    chay => 90 lenh goi. Meta gioi han so lenh goi moi GIAY/PHUT theo tai khoan
+    (da bi chan that bang code=17 · subcode 2446079). MOT lenh cho ca tai khoan
+    re hon nhieu.
+
+    ⚠️ KHONG co truong trang thai (status/effective_status) o day — insights chi
+    tra ve quang cao CO PHA TAT trong ky. Muon biet da tat hay chua phai doc
+    rieng tu /{ad_id}.
+
+    ⚠️ Dong THIEU `ad_id` bi bo qua — khong the tat mot quang cao khong co ma.
+    ⚠️ Dong thieu `adset_id` VAN GIU (co ad_id la du), nhung se khong gom duoc
+    vao nhom nao => `gom_theo_nhom()` ben agent_muc_tieu se bo qua, va do la
+    DUNG: khong biet quang cao thuoc nhom nao thi khong kiem duoc pham vi.
+
+    Tra ve {ad_id: dong}.
+    """
+    acc = _acc(env)
+    if not acc:
+        return {}
+    rows = _doc_het(env, f"{acc}/insights", {
+        "date_preset": date_preset,
+        "level": "ad",
+        "fields": "ad_id,ad_name,adset_id,adset_name,campaign_id,spend,actions",
+        "limit": 200,
+    })
+    return {str(r.get("ad_id")): r for r in rows if r.get("ad_id")}
+
+
 def doc_so(env):
-    """Tra ve (nhom_dang_chay, chi_tieu_hom_nay, chi_tieu_thang)."""
+    """Tra ve (nhom_dang_chay, chi_tieu_hom_nay, chi_tieu_thang,
+                chi_tieu_ad_hom_nay, chi_tieu_ad_thang).
+
+    ⚠️ CHU KY DOI 02/10/2026 (Viec B): 3 phan tu -> 5 phan tu.
+    Chi co MOT cho goi: `agent.py` trong `_quet_va_de_xuat()`.
+    """
     nhom = doc_nhom_dang_chay(env)
     hom_nay = doc_chi_tieu(env, "today")
     thang = doc_chi_tieu(env, "this_month")
-    return nhom, hom_nay, thang
+    ad_hom_nay = doc_chi_tieu_quang_cao(env, "today")
+    ad_thang = doc_chi_tieu_quang_cao(env, "this_month")
+    return nhom, hom_nay, thang, ad_hom_nay, ad_thang

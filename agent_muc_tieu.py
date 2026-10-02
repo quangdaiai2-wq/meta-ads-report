@@ -43,6 +43,22 @@ TEN_LIEN_HE = "onsite_conversion.messaging_first_reply"
 TEN_MAC_DINH = ("quảng cáo lượt tương tác mới", "nhóm quảng cáo lượt tương tác mới",
                 "chiến dịch lượt tương tác mới")
 
+# 🔴 RANH GIOI TAT LE QUANG CAO — Dai chot 15:5x 02/10/2026, nguyen van:
+#     "Bao gio co tu 02 quang cao tro len trong nhom thi tu dong chuyen sang
+#      xet duyet nhu vay."
+#
+# TAT LE chi co nghia khi CO THU DE BAO VE — mot quang cao khac dang con co hoi.
+# Nhom chi co 1 quang cao thi tat le cung lam nhom ngung chi tieu y nhu tat
+# nhom, NHUNG so lai KHONG DOI o lan quet sau (vi ad = 100% chi tieu nhom, VA
+# insights THANG con giu dong lich su cua ad da tat) => de xuat LAP VO TAN,
+# nhom khong bao gio bi tat, ngan sach khong bao gio ha.
+#
+# DO THAT 02/10/2026 tren 82 nhom thuoc pham vi Dai:
+#     66 nhom 0 quang cao | 16 nhom DUNG 1 quang cao | 0 nhom >= 2
+#   Ca 16 nhom mot-quang-cao deu co chi tieu ad = 100,0% chi tieu nhom
+#   (vd nhom 120250213748540509: nhom 779.615d, ad 779.615d).
+SO_AD_TOI_THIEU_DE_TAT_LE = 2
+
 # Phan hau to cu trong ten nhom: " 0/160 X9", " 0/300 X8-26 TN", " 11/450 X10-26",
 # " 0/500 X11 => Lỗi".
 #
@@ -143,8 +159,121 @@ def ten_moi(ten_goc, truong_hop, chi_hom_nay, mua_thang, bay_gio=None):
     raise ValueError(f"truong_hop khong hop le: {truong_hop!r} (chi nhan 1/2/3)")
 
 
+def _goc_khong():
+    """Bo so 0 dung chung — de khong lap lai dict o nhieu noi."""
+    return {"spend": 0, "luot_mua": 0, "tin_nhan": 0, "lien_he": 0}
+
+
+def _so_khong(dong):
+    """Mot dong insights -> dict gon, thieu thi coi nhu 0."""
+    return rut_so_mot_dong(dong) or _goc_khong()
+
+
+def gom_theo_nhom(ds_dong_ad):
+    """{adset_id: [dong ad, ...]} — sap xep chi tieu GIAM DAN trong moi nhom.
+
+    Sap giam dan de quang cao chi nhieu nhat duoc xet truoc => de xuat dang chu
+    y nhat len dau danh sach.
+
+    ⚠️ Dong thieu `adset_id` bi BO QUA — khong biet no thuoc nhom nao thi khong
+    the kiem pham vi (quy tac sat: pham vi kiem theo TEN NHOM). Bo qua la DUNG,
+    khong phai thieu sot.
+    """
+    gom = {}
+    if not isinstance(ds_dong_ad, (list, tuple)):
+        return gom
+    for d in ds_dong_ad:
+        if not isinstance(d, dict):
+            continue
+        k = str(d.get("adset_id") or "")
+        if not k:
+            continue
+        gom.setdefault(k, []).append(d)
+    for k in gom:
+        gom[k].sort(key=lambda z: -(_so(z.get("spend")) or 0))
+    return gom
+
+
+def _xet_nguong(chi_hom_nay, chi_thang, mua_thang, co_tin_nhan, la_gi=None):
+    """Ap BA truong hop TH3 -> TH2 -> TH1. Tra ve (th, ly_do, uu_tien, cpr)
+    hoac None neu chua cham nguong.
+
+    VIEC B — Dai chot 02/10/2026
+    ==========================================================================
+    Dai chot: moi quang cao TU CHON MOC CUA CHINH NO, khong muon moc cua nhom.
+    Nhung BO QUY TAC thi GIONG HET nhau.
+
+    => Neu viet hai doan code rieng cho nhom va cho quang cao thi som muon cung
+    LECH NHAU. Mot ham dung chung bao dam khong the lech.
+
+    `la_gi` chi de chen vao cau ly do cho de doc ('nhóm' / 'quảng cáo').
+    """
+    ai = f" {la_gi}" if la_gi else ""
+    if mua_thang >= 1:
+        # ---- TH3: da co luot mua. Xet gia moi luot mua TINH THEO THANG ----
+        cpr = chi_thang / mua_thang
+        if cpr < MOC_CPR:
+            return None
+        return (3,
+                f"Đã có {mua_thang} lượt mua tháng này, chi {tien(chi_thang)} "
+                f"=> {tien(cpr)}/lượt, chạm mốc {tien(MOC_CPR)}",
+                cpr, cpr)
+    if co_tin_nhan:
+        # ---- TH2: co tin nhan nhung chua ra luot mua ----
+        if chi_hom_nay < NGUONG_TH2:
+            return None
+        return (2,
+                f"{ai.strip().capitalize() or 'Hôm nay'} chi {tien(chi_hom_nay)}, "
+                f"có tin nhắn nhưng 0 lượt mua (ngưỡng {tien(NGUONG_TH2)})",
+                NGUONG_TH2 + chi_hom_nay, None)
+    # ---- TH1: khong co tin nhan nao ----
+    if chi_hom_nay < NGUONG_TH1:
+        return None
+    return (1,
+            f"{ai.strip().capitalize() or 'Hôm nay'} chi {tien(chi_hom_nay)}, "
+            f"không có tin nhắn nào (ngưỡng {tien(NGUONG_TH1)})",
+            NGUONG_TH1 + chi_hom_nay, None)
+
+
+def _de_xuat_ad(dong_ad, ten_nhom, truong_hop, chi_hom_nay, mua_thang,
+                ly_do, uu_tien, cpr, bay_gio):
+    """Dung mot de xuat cap QUANG CAO.
+
+    ⚠️ `ten_nhom` la TEN NHOM chua quang cao — dung de:
+       (a) kiem pham vi (KHONG dung ten quang cao, xem quy tac sat)
+       (b) lay hau to cho ten quang cao moi (quang cao dung chung hau to voi nhom)
+    """
+    ma_ad = str(dong_ad.get("ad_id") or "")
+    ten_ad = dong_ad.get("ad_name") or ""
+    return {
+        "hanh_dong": "tam_dung",
+        "truong_hop": truong_hop,
+        "doi_tuong": {
+            "cap": "ad",
+            "id": ma_ad,
+            "ten": ten_ad,
+            # 🔴 Truong nay la BAT BUOC: noi goi phai doc lai TEN NHOM nay
+            #    roi kiem thuoc_pham_vi TRUOC khi ghi len Meta.
+            "adset_id": str(dong_ad.get("adset_id") or ""),
+            "ten_nhom": ten_nhom,
+            "campaign_id": dong_ad.get("campaign_id"),
+        },
+        # Quang cao dung CHUNG hau to voi NHOM chua no (Dai chot 02/10/2026).
+        "ten_moi": ten_moi(ten_ad, truong_hop, chi_hom_nay, mua_thang, bay_gio),
+        "chi_tieu_thang": _so(dong_ad.get("spend")) or 0,
+        "chi_tieu_hom_nay": chi_hom_nay,
+        "luot_mua": mua_thang,
+        "tin_nhan": 0,
+        "chi_phi_moi_luot": cpr,
+        # 🔴 Tat le quang cao KHONG ha ngan sach. None = khong dung toi.
+        "ngan_sach_ha": None,
+        "ly_do": ly_do,
+        "_uu_tien": uu_tien,
+    }
+
+
 def xet(nhom, chi_tieu_hom_nay=None, chi_tieu_thang=None, loai_ten=None,
-        bay_gio=None):
+        bay_gio=None, ad_hom_nay=None, ad_thang=None):
     """Tra ve danh sach de xuat, da sap xep dang chu y nhat truoc.
 
     nhom              : danh sach tu /act_X/adsets (co id, name, effective_status,
@@ -153,11 +282,19 @@ def xet(nhom, chi_tieu_hom_nay=None, chi_tieu_thang=None, loai_ten=None,
     chi_tieu_thang    : {adset_id: dong insights thang nay}
     loai_ten          : danh sach tu khoa loai (tu FILTER_EXCLUDE)
     bay_gio           : thoi diem chay — dung de ghi so thang vao ten moi
+    ad_hom_nay        : {ad_id: dong insights hom nay}    <-- MOI (Viec B)
+    ad_thang          : {ad_id: dong insights thang nay}  <-- MOI (Viec B)
     """
     if not isinstance(nhom, (list, tuple)):
         return []
     hom_nay = chi_tieu_hom_nay if isinstance(chi_tieu_hom_nay, dict) else {}
     thang = chi_tieu_thang if isinstance(chi_tieu_thang, dict) else {}
+    ad_h = ad_hom_nay if isinstance(ad_hom_nay, dict) else {}
+    ad_t = ad_thang if isinstance(ad_thang, dict) else {}
+
+    # Gom quang cao ve theo nhom MOT LAN cho ca tai khoan (re hon goi tung nhom).
+    theo_nhom = gom_theo_nhom([d for d in ad_t.values() if isinstance(d, dict)])
+    theo_nhom_hom = gom_theo_nhom([d for d in ad_h.values() if isinstance(d, dict)])
 
     ra = []
     for a in nhom:
@@ -172,60 +309,76 @@ def xet(nhom, chi_tieu_hom_nay=None, chi_tieu_thang=None, loai_ten=None,
         if _la_ten_mac_dinh(ten):
             continue
 
-        t = rut_so_mot_dong(thang.get(ma)) or {"spend": 0, "luot_mua": 0,
-                                               "tin_nhan": 0, "lien_he": 0}
-        h = rut_so_mot_dong(hom_nay.get(ma)) or {"spend": 0, "luot_mua": 0,
-                                                 "tin_nhan": 0, "lien_he": 0}
+        t = _so_khong(thang.get(ma))
+        h = _so_khong(hom_nay.get(ma))
         mua_thang, chi_thang = t["luot_mua"], t["spend"]
         chi_hom_nay = h["spend"]
         co_tin_nhan = (h["tin_nhan"] + h["lien_he"]) > 0
 
-        if mua_thang >= 1:
-            # ---- TH3: da co luot mua. Xet gia moi luot mua TINH THEO THANG ----
-            cpr = chi_thang / mua_thang
-            if cpr < MOC_CPR:
-                continue
-            truong_hop = 3
-            ly_do = (f"Đã có {mua_thang} lượt mua tháng này, chi {tien(chi_thang)} "
-                     f"=> {tien(cpr)}/lượt, chạm mốc {tien(MOC_CPR)}")
-            uu_tien = cpr
-        elif co_tin_nhan:
-            # ---- TH2: co tin nhan nhung chua ra luot mua ----
-            if chi_hom_nay < NGUONG_TH2:
-                continue
-            truong_hop = 2
-            ly_do = (f"Hôm nay chi {tien(chi_hom_nay)}, có tin nhắn nhưng 0 lượt mua "
-                     f"(ngưỡng {tien(NGUONG_TH2)})")
-            uu_tien = NGUONG_TH2 + chi_hom_nay
-        else:
-            # ---- TH1: khong co tin nhan nao ----
-            if chi_hom_nay < NGUONG_TH1:
-                continue
-            truong_hop = 1
-            ly_do = (f"Hôm nay chi {tien(chi_hom_nay)}, không có tin nhắn nào "
-                     f"(ngưỡng {tien(NGUONG_TH1)})")
-            uu_tien = NGUONG_TH1 + chi_hom_nay
+        # ---- 1. Danh sach quang cao cua nhom nay (Viec B) ----
+        ds_ad = []
+        for d in theo_nhom.get(ma, []):
+            ma_ad = str(d.get("ad_id") or "")
+            ha = _so_khong(ad_h.get(ma_ad))
+            ds_ad.append({
+                "dong": d,
+                "chi_hom_nay": ha["spend"],
+                "chi_thang": _so(d.get("spend")) or 0,
+                "mua_thang": dem_mot_loai(d.get("actions"), TEN_LUOT_MUA),
+                "co_tin_nhan": (ha["tin_nhan"] + ha["lien_he"]) > 0,
+            })
 
-        ra.append({
-            "hanh_dong": "tam_dung",
-            "truong_hop": truong_hop,
-            "doi_tuong": {
-                "cap": "ad_set",
-                "id": ma,
-                "ten": ten,
-                "campaign_id": a.get("campaign_id"),
-                "ngan_sach_ngay_vnd": _so(a.get("daily_budget")),
-            },
-            "ten_moi": ten_moi(ten, truong_hop, chi_hom_nay, mua_thang, bay_gio),
-            "chi_tieu_thang": chi_thang,
-            "chi_tieu_hom_nay": chi_hom_nay,
-            "luot_mua": mua_thang,
-            "tin_nhan": h["tin_nhan"] + h["lien_he"],
-            "chi_phi_moi_luot": (chi_thang / mua_thang) if mua_thang else None,
-            "ngan_sach_ha": NGAN_SACH_HA,
-            "ly_do": ly_do,
-            "_uu_tien": uu_tien,
-        })
+        # ---- 2. Xet NHOM ----
+        kq_nhom = _xet_nguong(chi_hom_nay, chi_thang, mua_thang, co_tin_nhan,
+                              la_gi="nhóm")
+
+        # ---- 3. Xet tung QUANG CAO (neu nhom du quang cao de tat le) ----
+        de_xuat_ad = []
+        if len(ds_ad) >= SO_AD_TOI_THIEU_DE_TAT_LE:
+            for x in ds_ad:
+                kq = _xet_nguong(x["chi_hom_nay"], x["chi_thang"],
+                                 x["mua_thang"], x["co_tin_nhan"],
+                                 la_gi="quảng cáo")
+                if kq is None:
+                    continue
+                th, ly, uu, cpr = kq
+                de = _de_xuat_ad(x["dong"], ten, th, x["chi_hom_nay"],
+                                 x["mua_thang"], ly, uu, cpr, bay_gio)
+                if de["doi_tuong"]["id"]:
+                    de_xuat_ad.append(de)
+
+        if kq_nhom is not None:
+            th, ly, uu, cpr = kq_nhom
+            if de_xuat_ad:
+                # Nhom >=2 quang cao VA co quang cao cham => TAT LE, giu nhom.
+                ra.extend(de_xuat_ad)
+                continue
+            # Con lai (nhom 0/1 quang cao, hoac >=2 ma khong ad nao cham) =>
+            # TAT CA NHOM — ngan sach ha, ten doi.
+            ra.append({
+                "hanh_dong": "tam_dung",
+                "truong_hop": th,
+                "doi_tuong": {
+                    "cap": "ad_set",
+                    "id": ma,
+                    "ten": ten,
+                    "campaign_id": a.get("campaign_id"),
+                    "ngan_sach_ngay_vnd": _so(a.get("daily_budget")),
+                },
+                "ten_moi": ten_moi(ten, th, chi_hom_nay, mua_thang, bay_gio),
+                "chi_tieu_thang": chi_thang,
+                "chi_tieu_hom_nay": chi_hom_nay,
+                "luot_mua": mua_thang,
+                "tin_nhan": h["tin_nhan"] + h["lien_he"],
+                "chi_phi_moi_luot": cpr,
+                "ngan_sach_ha": NGAN_SACH_HA,
+                "ly_do": ly,
+                "_uu_tien": uu,
+            })
+            continue
+
+        # Nhom CHUA cham: van co the tat le quang cao cham (neu nhom >=2 ad).
+        ra.extend(de_xuat_ad)
 
     ra.sort(key=lambda z: -z["_uu_tien"])
     return ra

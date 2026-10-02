@@ -1,14 +1,18 @@
 """Cong cu GHI len Meta. Day la cho duy nhat agent cham duoc vao tien that.
 
-Dong tac tat nhom cua Dai gom BON viec (do tu so thao tac that):
+Dong tac tat NHOM cua Dai gom BON viec (do tu so thao tac that):
   1. Tat nhom quang cao (adset)
   2. Tat luon QUANG CAO (ad) ben trong
   3. Ha ngan sach ve 27.000d
-  4. Doi ten nhom thanh '<ten cu> x/y X<thang>'
+  4. Doi ten nhom thanh '<ten cu> x/y X<thang>-<nam>'
 
 Ba viec dau nam tren CUNG mot doi tuong adset nen GOP DUOC vao MOT lan goi
 (da kiem chung that 01/10/2026). Viec tat quang cao nam tren doi tuong khac
 nen phai goi rieng.
+
+RIENG VIEC B (Dai chot 02/10/2026): khi nhom co TU 2 QUANG CAO TRO LEN thi
+tat LE mot quang cao cham nguong — xem `tat_mot_quang_cao()`. Tat le CHI TAT
++ DOI TEN, KHONG dung toi ngan sach (ha ngan sach la viec cua CA NHOM).
 
 GIOI HAN GHI CUA META — da gap that 01/10/2026:
   '(#613) Calls to this API have exceeded the concurrent request rate limit of
@@ -321,3 +325,127 @@ def tat_quang_cao(env, ma_nhom, ten_nhom=None, ngu_fn=None):
         return True, f"da tat het {len(ads)} quang cao", chi_tiet
     except Exception as e:
         return False, f"loi khi tat quang cao: {type(e).__name__}: {e}", chi_tiet
+
+
+def doc_mot_quang_cao(env, ma_ad):
+    """Doc MOT quang cao. Tra ve (du_lieu, loi). `du_lieu` None neu khong doc duoc."""
+    tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
+    if not tok:
+        return None, {"message": "thieu META_ADS_ACCESS_TOKEN trong .env"}
+    d, loi = report.api_get(str(ma_ad), {
+        "access_token": tok, "fields": "id,name,status,adset_id"})
+    if loi:
+        return None, loi
+    return d, None
+
+
+def tat_mot_quang_cao(env, ma_ad, ten_nhom=None, ten_moi=None, ngu_fn=None,
+                      _doc_ad=None, _doc_nhom=None, _post=None):
+    """Tat MOT quang cao + (tuy chon) doi ten. KHONG dung toi ngan sach.
+
+    ==========================================================================
+    VIEC B — Dai chot 02/10/2026
+    ==========================================================================
+    Dai: "chi tat quang cao dang chay va chi tieu den nguong thoi"
+    => Tat le quang cao CHI TAT + DOI TEN. KHONG ha ngan sach.
+       (Ha ngan sach la viec cua CA NHOM, do nut `TAT NHOM + HA NGAN SACH`.)
+
+    🔴🔴 RAO PHAM VI — QUY TAC SAT (Dai chot 15:3x 02/10/2026):
+       "chi duoc phep dong den chien dich, nhom quang cao, quang cao co chua
+        'dainq' ngoai ra thi khong duoc phep dong den"
+
+       Pham vi LUON kiem theo TEN NHOM chua quang cao — TUYET DOI KHONG kiem
+       theo ten quang cao. Vi sao (do that 02/10/2026):
+         - Ten quang cao do Meta tu sinh: 11/55 ten KHONG chua 'dainq'
+           (vd 'Quang cao Muc do nhan biet moi').
+         - Toan tai khoan co 101 nhom KHONG chua 'dainq' (90 Truong + 11 Thao),
+           40 nhom dang ACTIVE.
+       => Kiem theo ten quang cao thi (a) ad cua chinh Dai cung bi loai, hoac
+          (b) dong vao tai san cua Truong. CA HAI CHIEU DEU SAI.
+
+    Vi vay tham so `ten_nhom` la BAT BUOC tren thuc te: neu khong truyen, ham
+    TU DOC LAI nhom chua quang cao de lay ten.
+
+    ⚠️ GOP `status` + `name` vao MOT lan goi — da kiem chung Meta nhan ca hai.
+    ⚠️ Khong bao gio gui `daily_budget`.
+    ⚠️ Cho `CHO_GIUA_HAI_LAN_GHI` (20 giay) truoc khi ghi, giong moi cho khac.
+
+    Tra ve (thanh_cong: bool, ket_qua: str, chi_tiet: dict).
+    KHONG BAO GIO nem loi.
+    """
+    ngu = ngu_fn or time.sleep
+    doc_ad = _doc_ad or doc_mot_quang_cao
+    doc_nhom = _doc_nhom or doc_lai_nhom
+    post = _post or api_post
+    chi_tiet = {"id": str(ma_ad), "da_tat": False, "da_doi_ten": False,
+                "ngan_sach_dung_toi": False}
+    try:
+        tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
+        if not tok:
+            return False, "thieu META_ADS_ACCESS_TOKEN trong .env", chi_tiet
+        if not str(ma_ad).strip():
+            return False, "thieu ma quang cao", chi_tiet
+
+        # ---- Doc quang cao de biet no nam trong nhom nao ----
+        ad, loi0 = doc_ad(env, ma_ad)
+        if ad is None:
+            return False, f"khong doc duoc quang cao: {(loi0 or {}).get('message')}", chi_tiet
+        ma_nhom = str(ad.get("adset_id") or "")
+        chi_tiet["adset_id"] = ma_nhom
+        chi_tiet["ten_truoc"] = ad.get("name")
+        chi_tiet["trang_thai_truoc"] = ad.get("status")
+        if not ma_nhom:
+            return False, ("quang cao khong co adset_id — khong the kiem pham vi, "
+                           "KHONG dung vao"), chi_tiet
+
+        # ---- RAO PHAM VI: doc lai TEN NHOM, KHONG dung ten quang cao ----
+        tt_nhom = ten_nhom
+        if not tt_nhom:
+            nhom, loi1 = doc_nhom(env, ma_nhom)
+            if nhom is None:
+                return False, (f"khong doc duoc nhom chua quang cao: "
+                               f"{(loi1 or {}).get('message')}"), chi_tiet
+            tt_nhom = nhom.get("name")
+        chi_tiet["ten_nhom"] = tt_nhom
+        if not thuoc_pham_vi(tt_nhom):
+            return False, (f"Ten nhom khong thuoc pham vi cua Dai, KHONG dung vao "
+                           f"quang cao ben trong: {str(tt_nhom)[:60]}"), chi_tiet
+
+        # ---- Da PAUSED san thi khong POST lai ----
+        if str(ad.get("status") or "").upper() == "PAUSED":
+            chi_tiet["da_tat"] = True
+            return True, "quang cao da tat san", chi_tiet
+
+        # ---- GOP status + name vao MOT lan goi. KHONG co daily_budget. ----
+        goi = {"access_token": tok, "status": "PAUSED"}
+        if ten_moi:
+            goi["name"] = str(ten_moi)
+            chi_tiet["ten_dat"] = str(ten_moi)
+        assert "daily_budget" not in goi, "tat le quang cao KHONG duoc dung ngan sach"
+
+        ngu(CHO_GIUA_HAI_LAN_GHI)
+        _, loi2 = post(str(ma_ad), goi, ngu)
+        if loi2:
+            chi_tiet["loi"] = mo_ta_loi(loi2)
+            chi_tiet["nguyen_nhan"] = doan_nguyen_nhan(loi2)
+            return False, f"Meta tu choi: {mo_ta_loi(loi2)}", chi_tiet
+
+        # ---- Doc lai kiem that su ----
+        sau, loi3 = doc_ad(env, ma_ad)
+        if sau is None:
+            return True, ("da gui lenh, nhung doc lai khong duoc: "
+                          f"{(loi3 or {}).get('message')}"), chi_tiet
+        chi_tiet["trang_thai_sau"] = sau.get("status")
+        chi_tiet["ten_sau"] = sau.get("name")
+        dung_tt = str(sau.get("status") or "").upper() == "PAUSED"
+        dung_ten = (not ten_moi) or (sau.get("name") == ten_moi)
+        chi_tiet["da_tat"] = dung_tt
+        chi_tiet["da_doi_ten"] = bool(ten_moi) and dung_ten
+        if dung_tt and dung_ten:
+            return True, "thanh cong (doc lai thay dung trang thai)", chi_tiet
+        if dung_tt and not dung_ten:
+            return True, ("da tat duoc quang cao, nhung ten doc lai CHUA khop "
+                          "(khong phai that bai)"), chi_tiet
+        return False, "doc lai thay quang cao VAN CHUA tat", chi_tiet
+    except Exception as e:
+        return False, f"loi khi tat mot quang cao: {type(e).__name__}: {e}", chi_tiet

@@ -151,10 +151,15 @@ def _dem_nhom_da_hoi_hom_nay(ban_ghi, bay_gio):
     })
 
 
-def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio):
+def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio,
+                 ad_hom_nay=None, ad_thang=None):
     """Tra ve danh sach de xuat QUA DUOC rao an toan.
 
     MOI TRAN DAT 0 = KHONG GIOI HAN.
+
+    VIEC B (Dai chot 02/10/2026): `ad_hom_nay` / `ad_thang` la chi tieu cap
+    QUANG CAO. Truyen xuong `agent_muc_tieu.xet` de xet tung quang cao. De mac
+    dinh None => ham van chay duoc nhu cu (cac kiem thu cu khong phai sua).
 
     LOI THAT 01/10/2026 — vi sao ham nay phai GHI LOG moi nhanh:
     Ban cu co ba cho `break` thoat IM LANG (het tran vong / het tran cho / het
@@ -175,7 +180,11 @@ def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio):
     tran_cho = cau_hinh["AGENT_TOI_DA_CHO"]
     tran_ngay = cau_hinh["AGENT_TOI_DA_NGAY"]
 
-    tat_ca = agent_muc_tieu.xet(nhom, hom_nay, thang, loai_ten)
+    # 🔴 `bay_gio` BAT BUOC phai truyen — thieu no thi ten moi ghi nham thang
+    # (va nam) vao ten nhom/quang cao. Truoc 02/10/2026 cho nay bi thieu.
+    tat_ca = agent_muc_tieu.xet(nhom, hom_nay, thang, loai_ten,
+                                bay_gio=bay_gio,
+                                ad_hom_nay=ad_hom_nay, ad_thang=ad_thang)
     bo_qua_dang_cho = 0
     bi_rao_chan = 0
     dung_som = None
@@ -352,14 +361,26 @@ def _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, tin_nhan_id):
     ban_ghi = dang_cho[ma]
     if ket_qua == "tu_choi":
         agent_ky_uc.cap_nhat_phan_hoi(ma, noi_dung, "Đại nói bỏ qua")
-        _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join([
-            "\u23ed ĐÃ BỎ QUA — không làm gì",
-            "",
-            f"Nhóm: {(ban_ghi.get('doi_tuong') or {}).get('ten')}",
-            "",
-            "Agent sẽ không đề xuất lại nhóm này trong 24 giờ.",
-        ]))
-        report.log(f"AGENT: Dai bo qua nhom {ma}")
+        dt_bo = ban_ghi.get("doi_tuong") or {}
+        if dt_bo.get("cap") == "ad":
+            dong_bo = [
+                "\u23ed ĐÃ BỎ QUA — không làm gì",
+                "",
+                f"Quảng cáo: {dt_bo.get('ten')}",
+                f"Thuộc nhóm: {dt_bo.get('ten_nhom')}",
+                "",
+                "Agent sẽ không đề xuất lại quảng cáo này trong 24 giờ.",
+            ]
+        else:
+            dong_bo = [
+                "\u23ed ĐÃ BỎ QUA — không làm gì",
+                "",
+                f"Nhóm: {dt_bo.get('ten')}",
+                "",
+                "Agent sẽ không đề xuất lại nhóm này trong 24 giờ.",
+            ]
+        _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join(dong_bo))
+        report.log(f"AGENT: Dai bo qua {ma} (cap={dt_bo.get('cap') or 'ad_set'})")
         return 0
     # ⚠️ PHAI truyen `ket_qua` xuong: `_lam_theo_dong_y` dua vao do de biet Dai
     # chon "tat nhom" hay "tat + ha ngan sach". Thieu no thi nut "tat + ha ngan
@@ -631,23 +652,30 @@ def _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin):
 
 def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
     """Dai da dong y. Kiem lai rao, ghi so TRUOC, roi moi gui len Meta."""
+    doi_tuong = ban_ghi.get("doi_tuong") or {}
+    # 🔴 VIEC B (Dai chot 02/10/2026): doi tuong co the la NHOM (cap="ad_set")
+    # hoac QUANG CAO (cap="ad"). Rao an toan phan biet hai cap va ap bo rao
+    # khac nhau — tat le quang cao KHONG duoc ha ngan sach.
+    la_cap_ad = (doi_tuong.get("cap") == "ad")
     de_xuat = {
         "hanh_dong": ban_ghi.get("hanh_dong"),
-        "doi_tuong": ban_ghi.get("doi_tuong") or {},
-        "ngan_sach_ha": agent_rao.NGAN_SACH_HA,
+        "doi_tuong": doi_tuong,
+        "ngan_sach_ha": None if la_cap_ad else agent_rao.NGAN_SACH_HA,
         "luot_mua": ban_ghi.get("luot_mua"),
         "chi_phi_moi_luot": ban_ghi.get("chi_phi_moi_luot"),
         "tao_luc": ban_ghi.get("luc"),
     }
     lich_su = agent_ky_uc.dem_hanh_dong(bay_gio)
     ok, ly = agent_rao.kiem(de_xuat, lich_su, bay_gio)
-    ma = str((ban_ghi.get("doi_tuong") or {}).get("id"))
+    ma = str(doi_tuong.get("id"))
 
     if not ok:
         agent_ky_uc.cap_nhat_phan_hoi(ma, kq["noi_dung"], f"chan khi lam lai: {ly}")
         _bao_ket_qua(env, ban_ghi, thong_bao,
-                     f"⚠️ Không tắt được nhóm {ma}\nLý do: {ly}")
-        report.log(f"AGENT: chan khi lam lai nhom {ma}: {ly}")
+                     f"⚠️ Không tắt được {('quảng cáo' if la_cap_ad else 'nhóm')} "
+                     f"{ma}\nLý do: {ly}")
+        report.log(f"AGENT: chan khi lam lai {ma} (cap="
+                   f"{'ad' if la_cap_ad else 'ad_set'}): {ly}")
         return 0
 
     if cau_hinh["AGENT_TAP_SU"]:
@@ -656,11 +684,12 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
         _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join([
             "\U0001f9ea CHẾ ĐỘ TẬP SỰ — ĐÃ GHI NHẬN",
             "",
-            f"Đại đã đồng ý tắt nhóm {ma}.",
+            (f"Đại đã đồng ý tắt quảng cáo {ma}." if la_cap_ad
+             else f"Đại đã đồng ý tắt nhóm {ma}."),
             "Nhưng agent đang ở chế độ tập sự nên CHƯA gửi lệnh lên Meta.",
             "Muốn agent làm thật: đổi AGENT_TAP_SU=false trong .env.",
         ]))
-        report.log(f"AGENT: tap su, khong gui lenh cho nhom {ma}")
+        report.log(f"AGENT: tap su, khong gui lenh cho {ma}")
         return 0
 
     # GHI SO TRUOC khi gui len Meta — bat buoc, khong tat duoc.
@@ -674,20 +703,29 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
 
     import agent_cong_cu_ghi
 
-    # DAI CHON KIEU TAT NAO (chot 02/10/2026):
-    #   "dong_y"              -> CHI tat nhom, GIU nguyen ngan sach
-    #   "dong_y_ha_ngan_sach" -> tat nhom + ha ngan sach ve 27.000d
-    ha_ngan_sach = (kq.get("ket_qua") == "dong_y_ha_ngan_sach")
-    ngan_sach_dat = agent_rao.NGAN_SACH_HA if ha_ngan_sach else None
+    if la_cap_ad:
+        # ══════════ VIEC B: TAT LE MOT QUANG CAO ══════════
+        # Dai chot 02/10/2026: "chi tat quang cao dang chay va chi tieu den
+        # nguong thoi". Tat le CHI TAT + DOI TEN — KHONG ha ngan sach.
+        # Ham tu doc lai TEN NHOM chua quang cao roi kiem pham vi truoc khi ghi.
+        thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tat_mot_quang_cao(
+            env, ma, ten_nhom=doi_tuong.get("ten_nhom"),
+            ten_moi=ban_ghi.get("ten_moi"))
+    else:
+        # DAI CHON KIEU TAT NAO (chot 02/10/2026):
+        #   "dong_y"              -> CHI tat nhom, GIU nguyen ngan sach
+        #   "dong_y_ha_ngan_sach" -> tat nhom + ha ngan sach ve 27.000d
+        ha_ngan_sach = (kq.get("ket_qua") == "dong_y_ha_ngan_sach")
+        ngan_sach_dat = agent_rao.NGAN_SACH_HA if ha_ngan_sach else None
 
-    # THU TU (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
-    # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
-    # thi quang cao da tat mat roi — nhom con chay ma khong con quang cao, roi
-    # vao TRANG THAI NUA VOI. Nay tat nhom xong moi dung toi quang cao.
-    # Moi lan ghi len Meta phai cach nhau CHO_GIUA_HAI_LAN_GHI giay — Meta chan
-    # "(#613) rate limit" neu ghi qua nhanh (da gap that 01/10/2026).
-    thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tam_dung_va_ha_ngan_sach(
-        env, ma, ngan_sach_dat, ten_moi=ban_ghi.get("ten_moi"))
+        # THU TU (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
+        # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
+        # thi quang cao da tat mat roi — nhom con chay ma khong con quang cao, roi
+        # vao TRANG THAI NUA VOI. Nay tat nhom xong moi dung toi quang cao.
+        # Moi lan ghi len Meta phai cach nhau CHO_GIUA_HAI_LAN_GHI giay — Meta chan
+        # "(#613) rate limit" neu ghi qua nhanh (da gap that 01/10/2026).
+        thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tam_dung_va_ha_ngan_sach(
+            env, ma, ngan_sach_dat, ten_moi=ban_ghi.get("ten_moi"))
 
     # ---------- THAT BAI: KHONG TAT GI CA, bao loi + 2 nut ----------
     if not thanh_cong:
@@ -704,15 +742,34 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
                    f"| nguyen nhan: {nguyen_nhan or 'chua ro'}")
         return 0
 
+    if la_cap_ad:
+        # ---------- TAT LE QUANG CAO: xong, khong dung toi nhom ----------
+        agent_ky_uc.cap_nhat_phan_hoi(ma, kq["noi_dung"], ket_qua)
+        dong = ["✅ ĐÃ TẮT QUẢNG CÁO"]
+        dong += agent_xin_phep.dong_doi_tuong(ban_ghi)
+        dong += [
+            f"Nhóm chứa nó: {doi_tuong.get('ten_nhom')}",
+            f"Quảng cáo: {doi_tuong.get('ten')}",
+            f"Kết quả: {ket_qua}",
+        ]
+        if ban_ghi.get("ten_moi"):
+            dong.append(f"Tên mới: {ban_ghi.get('ten_moi')}")
+        dong.append("Ngân sách nhóm: giữ nguyên (tắt lẻ không đụng ngân sách)")
+        dong += ["", "Nhóm vẫn đang chạy với các quảng cáo còn lại."]
+        _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join(dong))
+        report.log(f"AGENT: tat le quang cao {ma} trong nhom "
+                   f"{doi_tuong.get('ten_nhom')!r} — {ket_qua}")
+        return 1
+
     # ---------- THANH CONG: gio moi tat quang cao ben trong ----------
     tat_qc_ok, tat_qc_ly, ct_qc = agent_cong_cu_ghi.tat_quang_cao(
-        env, ma, ten_nhom=(ban_ghi.get("doi_tuong") or {}).get("ten"))
+        env, ma, ten_nhom=doi_tuong.get("ten"))
     agent_ky_uc.cap_nhat_phan_hoi(ma, kq["noi_dung"], ket_qua)
 
     dong = ["✅ ĐÃ TẮT NHÓM"]
     dong += agent_xin_phep.dong_doi_tuong(ban_ghi)
     dong += [
-        f"Nhóm: {(ban_ghi.get('doi_tuong') or {}).get('ten')}",
+        f"Nhóm: {doi_tuong.get('ten')}",
         f"Kết quả: {ket_qua}",
     ]
     if ban_ghi.get("ten_moi"):
@@ -741,12 +798,16 @@ def _tao_thong_bao(env, che_do_thu):
 def _quet_va_de_xuat(env, cau_hinh, bay_gio, thong_bao, che_do_thu=False):
     """Phan CHAM: doc so tu Meta roi de xuat. Chay moi AGENT_NHIP_PHUT phut."""
     import agent_doc_meta
-    nhom, hom_nay, thang = agent_doc_meta.doc_so(env)
+    # 🔴 CHU KY DOI 02/10/2026 (Viec B): 3 phan tu -> 5 phan tu.
+    #    Them `ad_hom_nay` / `ad_thang` = chi tieu cap QUANG CAO (level=ad).
+    nhom, hom_nay, thang, ad_hom_nay, ad_thang = agent_doc_meta.doc_so(env)
     report.log(f"AGENT: {len(nhom)} nhom, {len(hom_nay)} co chi tieu hom nay, "
-               f"{len(thang)} co chi tieu thang")
+               f"{len(thang)} co chi tieu thang, {len(ad_hom_nay)} dong quang cao "
+               f"hom nay, {len(ad_thang)} dong quang cao thang")
 
     loai_ten = [x.strip() for x in (env.get("FILTER_EXCLUDE") or "").split(",") if x.strip()]
-    duyet = _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio)
+    duyet = _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio,
+                         ad_hom_nay=ad_hom_nay, ad_thang=ad_thang)
     ghi_chu = ("(Đang ở CHẾ ĐỘ TẬP SỰ — agent chỉ nói, chưa gửi lệnh nào lên Meta. "
                "Muốn agent làm thật: đổi AGENT_TAP_SU=false trong .env.)"
                if cau_hinh["AGENT_TAP_SU"] else None)

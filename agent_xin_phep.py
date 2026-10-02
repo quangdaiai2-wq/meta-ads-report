@@ -19,12 +19,17 @@ __all__ = ["bo_dau", "doc_tra_loi", "la_lenh", "soan_tin", "nut_bam",
            "nut_loi", "soan_tin_loi", "gui_tin_loi"]
 
 
-def nut_bam(ma):
+def nut_bam(ma, cap="ad_set"):
     """Ban phim cho tin xin phep. Tra ve chuoi JSON.
 
     HAI lua chon tat (Dai chot 02/10/2026):
       - "Tat nhom"              : tat adset + tat quang cao + doi ten, GIU nguyen sach
       - "Tat + ha ngan sach"    : nhu tren, VA ha ngan sach ve 27.000d
+
+    ── VIEC B (Dai chot 02/10/2026): cap = "ad" chi co MOT cach tat ──
+      Tat le quang cao KHONG ha ngan sach (ha ngan sach la viec cua ca nhom),
+      nen tin xin phep tat quang cao CHI hien 2 nut: "TAT QUANG CAO" + "Bo qua".
+      Hien nut ha ngan sach o day la HUA mot viec he thong khong lam.
 
     ⚠️ MOI NUT MOT HANG (Dai yeu cau 02/10/2026: "hieu ung nut ro rang hon").
     Dat hai nut chung mot hang thi moi nut chi rong bang nua tin nhan, chu bi thu
@@ -39,6 +44,13 @@ def nut_bam(ma):
     (`lenh_telegram.doc_tra_loi`) da biet doi dau ":" thanh dau cach, nen mot
     ham doc duoc ca lenh go tay lan nut bam.
     """
+    if cap == "ad":
+        return json.dumps({"inline_keyboard": [
+            [{"text": "\u23f8 TẮT QUẢNG CÁO NÀY",
+              "callback_data": f"tat:{ma}"}],
+            [{"text": "\u23ed Bỏ qua",
+              "callback_data": f"boqua:{ma}"}],
+        ]}, ensure_ascii=False)
     return json.dumps({"inline_keyboard": [
         [{"text": "\u23f8 TẮT NHÓM (giữ ngân sách)",
           "callback_data": f"tat:{ma}"}],
@@ -55,23 +67,45 @@ def soan_tin(de_xuat, ghi_chu=None):
     ⚠️ KHONG con dong "Hoac go tay: tat <ma> / bo qua <ma>" (Dai bo 02/10/2026 —
     "khong can thiet"). Nut bam da lam duoc het, va ten nut ghi ro tung lua chon.
 
+    ── VIEC B (Dai chot 02/10/2026): hai cap doi tuong, hai kieu tin ──
+      cap = "ad"     -> "XIN PHÉP TẮT QUẢNG CÁO". Phai ghi ro quảng cáo nằm
+                        trong NHÓM NÀO, vi Dai tra tren Meta bang ten nhom.
+                        KHONG co lua chon ha ngan sach (tat le giu nguyen).
+      cap = "ad_set" -> "XIN PHÉP TẮT NHÓM", nhu cu.
+
     `ghi_chu`: them mot dong cuoi. Dung de noi ro dang o CHE DO TAP SU — neu
     khong, Dai tra loi "tat ..." roi khong thay gi xay ra se tuong he thong hong.
     """
     try:
-        ten = de_xuat["doi_tuong"]["ten"]
+        dt = de_xuat["doi_tuong"]
+        ten = dt["ten"]
         ly_do = de_xuat.get("ly_do", "")
     except (KeyError, TypeError):
         return ""
-    dong = [
-        "\u26a0\ufe0f XIN PHÉP TẮT NHÓM",
-        "",
-        *dong_doi_tuong(de_xuat),
-        f"Nhóm: {ten}",
-        ly_do,
-        "",
-        "Chọn bên dưới. Hạ ngân sách = hạ về 27.000đ.",
-    ]
+    cap = dt.get("cap") or "ad_set"
+
+    if cap == "ad":
+        dong = [
+            "\u26a0\ufe0f XIN PHÉP TẮT QUẢNG CÁO",
+            "",
+            *dong_doi_tuong(de_xuat),
+            f"Nhóm chứa nó: {dt.get('ten_nhom')}",
+            "",
+            f"Quảng cáo: {ten}",
+            ly_do,
+            "",
+            "Chỉ TẮT đúng quảng cáo này và đổi tên. Giữ nguyên ngân sách nhóm.",
+        ]
+    else:
+        dong = [
+            "\u26a0\ufe0f XIN PHÉP TẮT NHÓM",
+            "",
+            *dong_doi_tuong(de_xuat),
+            f"Nhóm: {ten}",
+            ly_do,
+            "",
+            "Chọn bên dưới. Hạ ngân sách = hạ về 27.000đ.",
+        ]
     if ghi_chu:
         dong += ["", ghi_chu]
     return "\n".join(dong)
@@ -104,13 +138,23 @@ def soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan=None, chi_tiet=None):
       3. Noi ro agent KHONG tat gi ca
     """
     dt = (ban_ghi or {}).get("doi_tuong") or {}
-    dong = [
-        "\u274c KHÔNG TẮT ĐƯỢC NHÓM",
-        "",
-        *dong_doi_tuong(ban_ghi),
-        f"Nhóm: {dt.get('ten')}",
-        f"Lỗi Meta trả về: {ket_qua}",
-    ]
+    if dt.get("cap") == "ad":
+        dong = [
+            "\u274c KHÔNG TẮT ĐƯỢC QUẢNG CÁO",
+            "",
+            *dong_doi_tuong(ban_ghi),
+            f"Nhóm chứa nó: {dt.get('ten_nhom')}",
+            f"Quảng cáo: {dt.get('ten')}",
+            f"Lỗi Meta trả về: {ket_qua}",
+        ]
+    else:
+        dong = [
+            "\u274c KHÔNG TẮT ĐƯỢC NHÓM",
+            "",
+            *dong_doi_tuong(ban_ghi),
+            f"Nhóm: {dt.get('ten')}",
+            f"Lỗi Meta trả về: {ket_qua}",
+        ]
     if nguyen_nhan:
         dong.append(f"Có thể do: {nguyen_nhan}")
     else:
@@ -120,6 +164,12 @@ def soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan=None, chi_tiet=None):
         "Agent KHÔNG tắt gì cả (nhóm và quảng cáo vẫn nguyên).",
     ]
     return "\n".join(dong)
+
+
+def dong_doi_tuong_ad(de_xuat):
+    """Dong mo ta QUANG CAO + nhom chua no. Dung cho tin xin phep cap ad."""
+    dt = (de_xuat or {}).get("doi_tuong") or {}
+    return [f"Quảng cáo: {dt.get('ten')}", f"Thuộc nhóm: {dt.get('ten_nhom')}"]
 
 
 def gui_tin_loi(env, ban_ghi, ket_qua, nguyen_nhan=None):
@@ -163,13 +213,15 @@ def gui_xin_phep(env, de_xuat, ghi_chu=None):
     them tin moi (Dai chon 30/09/2026).
     """
     try:
-        ma = de_xuat["doi_tuong"]["id"]
+        dt = de_xuat["doi_tuong"]
+        ma = dt["id"]
     except (KeyError, TypeError):
         return None
     text = soan_tin(de_xuat, ghi_chu)
     if not text:
         return None
-    ket_qua, _ = nguoi_truc.gui_tin_nhan_day_du(env, text, nut_bam(ma))
+    ket_qua, _ = nguoi_truc.gui_tin_nhan_day_du(
+        env, text, nut_bam(ma, cap=dt.get("cap") or "ad_set"))
     if not isinstance(ket_qua, dict):
         return None
     return ket_qua.get("message_id")
