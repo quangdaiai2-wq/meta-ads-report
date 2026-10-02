@@ -242,83 +242,87 @@ class C_HaiLuaChonTat(Base):
         self.assertTrue(ok, ly)
 
 
-class D_TachLenhKhiGopLoi(Base):
-    """LOI THAT 02/10/2026 — nhom vua tao trong ngay bi Meta tu choi khi GOP.
+class D_KhiMetaTuChoi(Base):
+    """DAI CHOT 02/10/2026: Meta tu choi thi KHONG tat gi ca, bao loi roi quet lai.
 
-    Nhung 38 giay sau Dai TU TAT DUOC nhom do bang tay, va thu lai luc 11:35
-    thi ca ba cach deu thanh cong. => chi MOT truong bi chan, khong phai ca lenh.
+    Truoc day (commit 18f4597) toi lam nguoc lai: tu TACH LENH ra gui lai de van
+    tat duoc nhom. Dai khong muon the — co tat se tao TRANG THAI NUA VOI.
     """
 
-    def _post_gop_loi(self, loi_o_lan, ket_qua_sau):
-        """lan 1 = gop (loi), lan 2 = tach status, lan 3 = ngan sach.
-
-        `doc_lai_nhom` duoc goi 2 lan (truoc khi ghi, va sau khi ghi) nen phai
-        dem rieng — KHONG duoc gan lai no ben trong `post`, vi `post` tra ve loi
-        ngay o lan 1 nen nhanh gan lai se khong bao gio chay.
-        """
-        self.dem_doc = 0
-
-        def doc_lai(env, ma):
-            self.dem_doc += 1
-            if self.dem_doc == 1:
-                return ({"id": ma, "name": NHOM_OK, "status": "ACTIVE",
-                         "daily_budget": "400000"}, None)
-            return ({"id": ma, "name": NHOM_OK + " 0/140 X10", "status": "PAUSED",
-                     "daily_budget": ket_qua_sau}, None)
-
-        ghi.doc_lai_nhom = doc_lai
+    def _post_loi(self):
+        ghi.doc_lai_nhom = lambda env, ma: (
+            {"id": ma, "name": NHOM_OK, "status": "ACTIVE",
+             "daily_budget": "400000"}, None)
 
         def post(path, params, ngu_fn=None):
             self.calls.append((path, dict(params)))
-            if len(self.calls) in loi_o_lan:
-                return None, {"message": "Invalid parameter", "code": 100,
-                              "error_subcode": 1487534}
-            return {"success": True}, None
-
+            return None, {"message": "Invalid parameter", "code": 100,
+                          "error_subcode": 1487534}
         ghi.api_post = post
 
-    def test_gop_loi_thi_van_TAT_DUOC_nhom(self):
-        """Ca quan trong nhat: khong duoc de 'khong ha duoc ngan sach' lam hong viec TAT."""
-        self._post_gop_loi(loi_o_lan={1, 3}, ket_qua_sau="400000")
-        ok, ly, ct = ghi.tam_dung_va_ha_ngan_sach(
+    def test_gop_loi_thi_KHONG_gui_them_lan_nao(self):
+        """Diem cot loi: Meta da tu choi thi DUNG LAI, khong co lan goi thu hai."""
+        self._post_loi()
+        ok, ly, _ = ghi.tam_dung_va_ha_ngan_sach(
             ENV, "123", 27000, ten_moi=NHOM_OK + " 0/140 X10",
             ngu_fn=lambda s: None)
-        self.assertTrue(ok, f"phai coi la THANH CONG (da tat duoc nhom): {ly}")
-        self.assertIn("da tat nhom", ly)
-        self.assertIn("chua ha duoc ngan sach", ly)
-        self.assertTrue(ct["da_tat"])
-        self.assertFalse(ct["da_ha_ngan_sach"])
-        self.assertEqual(self.calls[1][1]["status"], "PAUSED",
-                         "lan 2 phai la lenh TAT")
-        self.assertNotIn("daily_budget", self.calls[1][1])
+        self.assertFalse(ok, "phai bao THAT BAI")
+        self.assertEqual(len(self.calls), 1,
+                         "chi duoc goi Meta DUNG MOT lan roi dung lai")
 
-    def test_gop_loi_nhung_tach_lanh_ca_ngan_sach(self):
-        self._post_gop_loi(loi_o_lan={1}, ket_qua_sau="27000")
-        ok, ly, ct = ghi.tam_dung_va_ha_ngan_sach(
-            ENV, "123", 27000, ten_moi=NHOM_OK + " 0/140 X10",
-            ngu_fn=lambda s: None)
-        self.assertTrue(ok, ly)
-        self.assertTrue(ct["da_tat"])
-        self.assertTrue(ct["da_ha_ngan_sach"])
-        self.assertEqual(len(self.calls), 3, "gop + tach tinh trang + ngan sach")
-
-    def test_tach_cung_loi_thi_moi_la_that_bai(self):
-        self._post_gop_loi(loi_o_lan={1, 2}, ket_qua_sau="400000")
-        ok, ly, ct = ghi.tam_dung_va_ha_ngan_sach(
-            ENV, "123", 27000, ten_moi=NHOM_OK + " 0/140 X10",
-            ngu_fn=lambda s: None)
-        self.assertFalse(ok, "tat cung khong duoc thi phai bao that bai")
-        self.assertIn("thử tách lệnh cũng bị từ chối", ly)
-        self.assertIn("Invalid parameter", ly, "phai ghi ro loi that cua Meta")
+    def test_tra_ve_that_bai_chu_khong_bao_thanh_cong(self):
+        self._post_loi()
+        ok, ly, ct = ghi.tam_dung_va_ha_ngan_sach(ENV, "123", 27000,
+                                                  ngu_fn=lambda s: None)
+        self.assertFalse(ok)
+        self.assertIn("Meta từ chối", ly)
         self.assertFalse(ct["da_tat"])
+        self.assertFalse(ct["da_ha_ngan_sach"])
 
-    def test_loi_that_duoc_ghi_day_du_vao_chi_tiet(self):
-        self._post_gop_loi(loi_o_lan={1, 2}, ket_qua_sau="400000")
-        _, _, ct = ghi.tam_dung_va_ha_ngan_sach(
-            ENV, "123", 27000, ten_moi=NHOM_OK + " 0/140 X10",
-            ngu_fn=lambda s: None)
-        self.assertIn("ma=100", ct["loi_gop"])
-        self.assertIn("ma phu=1487534", ct["loi_gop"])
+    def test_chi_tiet_co_loi_DAY_DU(self):
+        self._post_loi()
+        _, _, ct = ghi.tam_dung_va_ha_ngan_sach(ENV, "123", 27000,
+                                                ngu_fn=lambda s: None)
+        self.assertIn("ma=100", ct["loi"])
+        self.assertIn("ma phu=1487534", ct["loi"])
+
+    def test_chi_tiet_co_NGUYEN_NHAN_bang_tieng_nguoi_thuong(self):
+        """Dai yeu cau: 'phai bao loi nay la loi do dau'."""
+        self._post_loi()
+        _, _, ct = ghi.tam_dung_va_ha_ngan_sach(ENV, "123", 27000,
+                                                ngu_fn=lambda s: None)
+        self.assertTrue(ct.get("nguyen_nhan"), "phai co cau giai thich")
+        self.assertIn("chưa duyệt xong", ct["nguyen_nhan"])
+
+
+class E_DoanNguyenNhan(unittest.TestCase):
+    """Doan nguyen nhan loi Meta — nhung KHONG duoc doan bua."""
+
+    def test_ma_613_la_ghi_qua_nhanh(self):
+        self.assertIn("nhanh", ghi.doan_nguyen_nhan({"code": 613}))
+
+    def test_ma_190_la_token(self):
+        self.assertIn("Token", ghi.doan_nguyen_nhan({"code": 190}))
+
+    def test_ma_200_va_272_la_thieu_quyen(self):
+        self.assertIn("quyền", ghi.doan_nguyen_nhan({"code": 200}))
+        self.assertIn("quyền", ghi.doan_nguyen_nhan({"code": 272}))
+
+    def test_ma_17_la_cham_han_muc(self):
+        self.assertIn("hạn mức", ghi.doan_nguyen_nhan({"code": 17}))
+
+    def test_ma_100_noi_ve_ngan_sach_khi_loi_nhac_budget(self):
+        chu = ghi.doan_nguyen_nhan({"code": 100, "error_user_msg": "Invalid budget"})
+        self.assertIn("Ngân sách", chu)
+
+    def test_ma_100_thuong_la_nhom_moi_tao(self):
+        self.assertIn("chưa duyệt xong", ghi.doan_nguyen_nhan({"code": 100}))
+
+    def test_ma_LA_thi_TRA_VE_RONG_chu_khong_doan_bua(self):
+        """Khong khop bang thi de tin nhan ghi 'chua ro nguyen nhan'."""
+        self.assertEqual(ghi.doan_nguyen_nhan({"code": 999999}), "")
+        self.assertEqual(ghi.doan_nguyen_nhan({}), "")
+        self.assertEqual(ghi.doan_nguyen_nhan("khong phai dict"), "")
 
 
 if __name__ == "__main__":

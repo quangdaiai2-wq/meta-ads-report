@@ -20,11 +20,19 @@ DONG_Y = ("tat", "tat di", "dong y")
 # khop "tat"; nhung cu de truoc cho an toan ve sau.)
 DONG_Y_HA_NGAN_SACH = ("tathns",)
 TU_CHOI = ("bo qua", "boqua", "thoi", "de sau", "khong")
+
+# Hai nut tren TIN BAO LOI (Dai chot 02/10/2026):
+#   quetlai:<ma>  -> xoa lenh bo qua, quay ve mac dinh (quet lai roi hoi lai)
+#   boqua24:<ma>  -> khong xet nhom nay trong 24 gio
+QUET_LAI = ("quetlai", "quet lai")
+BO_QUA_24 = ("boqua24", "bo qua 24")
+
 HOAN_TAC = ("batlai", "bat lai", "hoan tac", "undo")
 
 # Lenh phai co dang: <dong tu> <cum so dai>  — vd "tắt 120250506886650509"
-RE_LENH = re.compile(r"^(tat|tathns|bo qua|boqua|thoi|batlai|bat lai|hoan tac)\s+\d{6,}",
-                     re.IGNORECASE)
+RE_LENH = re.compile(
+    r"^(tat|tathns|quetlai|boqua24|bo qua|boqua|thoi|batlai|bat lai|hoan tac)\s+\d{6,}",
+    re.IGNORECASE)
 
 
 def bo_dau(s):
@@ -82,6 +90,8 @@ def doc_tra_loi(text, dang_cho):
     ket_qua:
       "dong_y"               — Dai dong y TAT nhom (giu nguyen ngan sach)
       "dong_y_ha_ngan_sach"  — Dai dong y TAT nhom + HA NGAN SACH
+      "quet_lai"             — (nut tren tin bao loi) xoa lenh bo qua, quet lai
+      "bo_qua_24h"           — (nut tren tin bao loi) khong xet nhom nay 24 gio
       "tu_choi"              — Dai noi bo qua
       "khong_khop"           — dung cu phap nhung ma nhom khac
       "khong_hieu"           — khong doc duoc
@@ -120,6 +130,21 @@ def doc_tra_loi(text, dang_cho):
             if ma is None:
                 return "khong_hieu", None
             return ("dong_y_ha_ngan_sach", ma) if ma in dang_cho else ("khong_khop", ma)
+
+    # Hai nut tren TIN BAO LOI (Dai chot 02/10/2026).
+    for x in QUET_LAI:
+        bx = bo_dau(x).split()
+        if bx and phan[:len(bx)] == bx:
+            if ma is None:
+                return "khong_hieu", None
+            return ("quet_lai", ma) if ma in dang_cho else ("khong_khop", ma)
+
+    for x in BO_QUA_24:
+        bx = bo_dau(x).split()
+        if bx and phan[:len(bx)] == bx:
+            if ma is None:
+                return "khong_hieu", None
+            return ("bo_qua_24h", ma) if ma in dang_cho else ("khong_khop", ma)
 
     for x in DONG_Y:
         bx = bo_dau(x).split()

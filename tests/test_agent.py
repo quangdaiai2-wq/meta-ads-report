@@ -1524,5 +1524,210 @@ class C2_IDChienDich(unittest.TestCase):
         self.assertIsNone(r[0]["doi_tuong"]["campaign_id"])
 
 
+class L_ThuTuTatVaNhanhLoi(_KhongGhiLog, unittest.TestCase):
+    """Dai chot 02/10/2026:
+      - Tat NHOM truoc, chi khi xong moi tat QUANG CAO.
+      - Meta tu choi thi KHONG tat gi ca, bao loi roi hen quet lai.
+    """
+
+    def setUp(self):
+        super().setUp()
+        import agent
+        import agent_cong_cu_ghi as ghi
+        self.agent = agent
+        self.ghi = ghi
+        self.goi = []
+        self.that = (agent_rao.kiem, agent_ky_uc.dem_hanh_dong,
+                     agent_ky_uc.ghi, agent_ky_uc.cap_nhat_phan_hoi,
+                     ghi.tam_dung_va_ha_ngan_sach, ghi.tat_quang_cao,
+                     agent_xin_phep.gui_tin_loi, agent._bao_ket_qua)
+        agent_rao.kiem = lambda dx, ls, gio: (True, "ok")
+        agent_ky_uc.dem_hanh_dong = lambda gio: {}
+        agent_ky_uc.ghi = lambda rec, **k: True
+        self.cap_nhat = []
+        agent_ky_uc.cap_nhat_phan_hoi = lambda *a, **k: self.cap_nhat.append((a, k))
+        self.tin_loi = []
+        agent_xin_phep.gui_tin_loi = lambda env, bg, kq, nn=None: (
+            self.tin_loi.append((kq, nn)) or 111)
+        self.bao = []
+        self.agent._bao_ket_qua = lambda env, bg, tb, text, nut=None: self.bao.append(text)
+
+    def tearDown(self):
+        (agent_rao.kiem, agent_ky_uc.dem_hanh_dong, agent_ky_uc.ghi,
+         agent_ky_uc.cap_nhat_phan_hoi, self.ghi.tam_dung_va_ha_ngan_sach,
+         self.ghi.tat_quang_cao, agent_xin_phep.gui_tin_loi,
+         self.agent._bao_ket_qua) = self.that
+        super().tearDown()
+
+    def _ban_ghi(self):
+        return {"hanh_dong": "tam_dung",
+                "doi_tuong": {"cap": "ad_set", "id": ID, "ten": TEN,
+                              "campaign_id": "camp-1"},
+                "ten_moi": TEN + " 0/160 X9",
+                "tin_nhan_id": 55, "luc": "2026-10-02T12:00:00+07:00"}
+
+    def _chay(self, thanh_cong, ket_qua="thanh cong", nguyen_nhan=None,
+              nut="dong_y"):
+        self.ghi.tam_dung_va_ha_ngan_sach = (
+            lambda env, ma, ns, ten_moi=None, ngu_fn=None:
+            (thanh_cong, ket_qua, {"da_tat": thanh_cong,
+                                   "nguyen_nhan": nguyen_nhan}))
+        self.ghi.tat_quang_cao = (
+            lambda env, ma, ten_nhom=None, ngu_fn=None:
+            (self.goi.append("tat_quang_cao") or (True, "da tat het 1 quang cao", {})))
+        return self.agent._lam_theo_dong_y(
+            {"META_ADS_ACCESS_TOKEN": "x"}, {"AGENT_TAP_SU": False},
+            self._ban_ghi(), {"noi_dung": "tat " + ID, "ket_qua": nut},
+            datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN), lambda t: None)
+
+    def test_thanh_cong_thi_MOI_tat_quang_cao(self):
+        self._chay(True)
+        self.assertEqual(self.goi, ["tat_quang_cao"])
+        self.assertTrue(any("ĐÃ TẮT NHÓM" in t for t in self.bao))
+
+    def test_that_bai_thi_KHONG_tat_quang_cao(self):
+        """Diem cot loi cua lan doi nay: khong de trang thai nua voi."""
+        self._chay(False, "Meta từ chối: Invalid parameter")
+        self.assertEqual(self.goi, [], "KHONG duoc dung toi quang cao")
+
+    def test_that_bai_thi_gui_tin_LOI_kem_nguyen_nhan(self):
+        self._chay(False, "Meta từ chối: Invalid parameter",
+                   nguyen_nhan="Meta không nhận tham số gửi lên")
+        self.assertEqual(len(self.tin_loi), 1)
+        kq, nn = self.tin_loi[0]
+        self.assertIn("Meta từ chối", kq)
+        self.assertEqual(nn, "Meta không nhận tham số gửi lên")
+
+    def test_that_bai_thi_danh_dau_ghi_meta_that_bai(self):
+        """De nha'c khoi khoa nhom 24 gio — Dai muon 'lan quet sau thu lai'."""
+        self._chay(False, "Meta từ chối")
+        self.assertTrue(self.cap_nhat, "phai cap nhat so")
+        self.assertTrue(self.cap_nhat[-1][1].get("ghi_meta_that_bai"))
+
+    def test_that_bai_thi_KHONG_bao_thanh_cong(self):
+        self._chay(False, "Meta từ chối")
+        self.assertFalse(any("ĐÃ TẮT NHÓM" in t for t in self.bao))
+
+    def test_nut_chi_tat_thi_bao_GIU_NGUYEN_ngan_sach(self):
+        self._chay(True, nut="dong_y")
+        self.assertTrue(any("giữ nguyên" in t for t in self.bao))
+
+    def test_nut_tat_ha_ngan_sach_thi_bao_DA_HA(self):
+        self._chay(True, nut="dong_y_ha_ngan_sach")
+        self.assertTrue(any("đã hạ về 27.000đ" in t for t in self.bao))
+
+
+class M_NutBaoLoi(unittest.TestCase):
+    """Hai nut tren TIN BAO LOI (Dai chot 02/10/2026)."""
+
+    def test_co_dung_hai_nut(self):
+        import json as _json
+        hang = _json.loads(agent_xin_phep.nut_loi(ID))["inline_keyboard"][0]
+        self.assertEqual(len(hang), 2)
+        self.assertEqual(hang[0]["callback_data"], f"quetlai:{ID}")
+        self.assertEqual(hang[1]["callback_data"], f"boqua24:{ID}")
+
+    def test_doc_duoc_hai_lenh_moi(self):
+        self.assertEqual(lenh_telegram.doc_tra_loi(f"quetlai:{ID}", [ID]),
+                         ("quet_lai", ID))
+        self.assertEqual(lenh_telegram.doc_tra_loi(f"boqua24:{ID}", [ID]),
+                         ("bo_qua_24h", ID))
+
+    def test_boqua24_KHONG_bi_doc_nham_thanh_bo_qua(self):
+        """`boqua` la 'tu choi'; `boqua24` la 'bo qua 24h' — hai viec khac han."""
+        kq, _ = lenh_telegram.doc_tra_loi(f"boqua24:{ID}", [ID])
+        self.assertEqual(kq, "bo_qua_24h")
+        self.assertNotEqual(kq, "tu_choi")
+
+    def test_hai_lenh_moi_duoc_coi_la_lenh(self):
+        self.assertTrue(lenh_telegram.la_lenh(f"quetlai {ID}"))
+        self.assertTrue(lenh_telegram.la_lenh(f"boqua24 {ID}"))
+
+    def test_soan_tin_loi_noi_ro_KHONG_tat_gi(self):
+        bg = {"doi_tuong": {"id": ID, "ten": TEN, "campaign_id": "camp-1"}}
+        t = agent_xin_phep.soan_tin_loi(bg, "Meta từ chối: Invalid parameter")
+        self.assertIn("KHÔNG TẮT ĐƯỢC NHÓM", t)
+        self.assertIn("KHÔNG tắt gì cả", t)
+        self.assertIn("Chiến dịch: camp-1", t)
+
+    def test_soan_tin_loi_khong_doan_bua_khi_khong_biet(self):
+        bg = {"doi_tuong": {"id": ID, "ten": TEN}}
+        t = agent_xin_phep.soan_tin_loi(bg, "loi la")
+        self.assertIn("Chưa rõ nguyên nhân", t)
+
+
+class N_BoQua24h(unittest.TestCase):
+    """Co che 'Bo qua 24h' — Dai chot 02/10/2026."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        self.tmp.close()
+        os.unlink(self.tmp.name)
+
+    def tearDown(self):
+        if os.path.exists(self.tmp.name):
+            os.unlink(self.tmp.name)
+
+    def test_chua_ghi_gi_thi_khong_co_nhom_nao_bo_qua(self):
+        self.assertEqual(agent_ky_uc.nhom_dang_bo_qua(duong_dan=self.tmp.name), {})
+
+    def test_ghi_roi_thi_nhom_dang_trong_han(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        agent_ky_uc.bo_qua_nhom(ID, gio + timedelta(hours=24),
+                                duong_dan=self.tmp.name)
+        ra = agent_ky_uc.nhom_dang_bo_qua(gio, duong_dan=self.tmp.name)
+        self.assertIn(ID, ra)
+
+    def test_qua_24h_thi_KHONG_con_trong_han(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        agent_ky_uc.bo_qua_nhom(ID, gio + timedelta(hours=24),
+                                duong_dan=self.tmp.name)
+        sau = gio + timedelta(hours=25)
+        self.assertEqual(agent_ky_uc.nhom_dang_bo_qua(sau, duong_dan=self.tmp.name), {})
+
+    def test_xoa_bo_qua_thi_het_chan(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        agent_ky_uc.bo_qua_nhom(ID, gio + timedelta(hours=24),
+                                duong_dan=self.tmp.name)
+        agent_ky_uc.xoa_bo_qua(ID, duong_dan=self.tmp.name)
+        self.assertEqual(agent_ky_uc.nhom_dang_bo_qua(gio, duong_dan=self.tmp.name), {})
+
+    def test_rao_an_toan_CHAN_nhom_dang_bo_qua(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        dx = {"hanh_dong": "tam_dung",
+              "doi_tuong": {"id": ID, "ten": TEN}, "ngan_sach_ha": 27000}
+        ls = {"nhom_dang_bo_qua": {ID: gio + timedelta(hours=24)}}
+        ok, ly = agent_rao.kiem(dx, ls, gio)
+        self.assertFalse(ok)
+        self.assertIn("BỎ QUA", ly)
+
+    def test_rao_an_toan_khong_chan_khi_HET_han_bo_qua(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        dx = {"hanh_dong": "tam_dung",
+              "doi_tuong": {"id": ID, "ten": TEN}, "ngan_sach_ha": 27000}
+        ls = {"nhom_dang_bo_qua": {ID: gio - timedelta(minutes=1)}}
+        ok, _ = agent_rao.kiem(dx, ls, gio)
+        self.assertTrue(ok)
+
+    def test_ban_ghi_LOI_khong_khoa_nhom_24h(self):
+        """Dai da bam nut nhung viec chua xong -> KHONG duoc coi la 'da tra loi'."""
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        agent_ky_uc.ghi({"luc": gio.isoformat(timespec="seconds"),
+                         "che_do": "xin_phep", "hanh_dong": "tam_dung",
+                         "doi_tuong": {"id": ID, "ten": TEN},
+                         "dai_phan_hoi": f"tat {ID}",
+                         "ghi_meta_that_bai": True}, duong_dan=self.tmp.name)
+        self.assertEqual(agent_ky_uc.nhom_da_tra_loi(gio, duong_dan=self.tmp.name), {})
+
+    def test_ban_ghi_THANH_CONG_van_khoa_nhom_24h(self):
+        gio = datetime(2026, 10, 2, 12, 0, tzinfo=GIO_VN)
+        agent_ky_uc.ghi({"luc": gio.isoformat(timespec="seconds"),
+                         "che_do": "xin_phep", "hanh_dong": "tam_dung",
+                         "doi_tuong": {"id": ID, "ten": TEN},
+                         "dai_phan_hoi": f"tat {ID}",
+                         "ket_qua": "thanh cong"}, duong_dan=self.tmp.name)
+        self.assertIn(ID, agent_ky_uc.nhom_da_tra_loi(gio, duong_dan=self.tmp.name))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

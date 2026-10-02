@@ -16,7 +16,13 @@ GIO_VN = timezone(timedelta(hours=7))
 GOC = Path(__file__).parent
 DUONG_DAN = GOC / "logs" / "nhat-ky-agent.json"
 
+# So rieng cho viec "BO QUA 24h" (Dai chot 02/10/2026).
+# Vi sao tach file rieng: day la y DINH CUA DAI, khong phai lich su viec da lam.
+# Nhet vao nhat-ky-agent.json se lam ban so do.
+BO_QUA_PATH = GOC / "logs" / "agent-bo-qua.json"
+
 HAN_CHO_PHUT = 24 * 60
+HAN_QUET_LAI_PHUT = 15   # mac dinh sau khi Meta tu choi: cho 1 nhip roi hoi lai
 
 
 def _gio(t):
@@ -120,10 +126,18 @@ def nhom_da_tra_loi(bay_gio=None, duong_dan=None):
     """{id_nhom: thoi_diem_tra_loi} — de khong hoi lai nhom vua hoi.
 
     Tinh ca hai truong hop: Dai da dong y, va Dai da noi bo qua.
+
+    ⚠️ BO QUA cac ban ghi ma buoc GHI LEN META THAT BAI (`ghi_meta_that_bai`).
+    Ly do (Dai chot 02/10/2026): khi Meta tu choi, Dai DA bam nut nhung viec
+    chua xong. Neu van tinh la "da tra loi" thi nhom bi khoa 24 gio — trong khi
+    Dai muon "lan quet sau thu lai". Viec bo qua 24h nay do co che RIENG lo
+    (`bo_qua_nhom`), do chinh Dai bam.
     """
     ra = {}
     for rec in doc(duong_dan):
         if not isinstance(rec, dict) or not rec.get("dai_phan_hoi"):
+            continue
+        if rec.get("ghi_meta_that_bai"):
             continue
         ma = str((rec.get("doi_tuong") or {}).get("id") or "")
         t = _gio(rec.get("luc"))
@@ -131,6 +145,58 @@ def nhom_da_tra_loi(bay_gio=None, duong_dan=None):
             cu = ra.get(ma)
             if cu is None or t > cu:
                 ra[ma] = t
+    return ra
+
+
+def _doc_dict(p):
+    """Doc file JSON dang DICT. Chua co / hong / la dang khac -> dict rong."""
+    try:
+        d = json.loads(Path(p).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return d if isinstance(d, dict) else {}
+
+
+def _ghi_dict(p, d):
+    """Ghi file JSON dang DICT theo kieu an toan (ghi file tam roi doi ten)."""
+    try:
+        Path(p).parent.mkdir(parents=True, exist_ok=True)
+        tam = Path(p).with_suffix(".json.tmp")
+        tam.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tam, p)
+        return True
+    except OSError:
+        return False
+
+
+def bo_qua_nhom(ma, den_luc, duong_dan=None):
+    """Ghi 'bo qua nhom nay den <den_luc>'. Tra ve True/False.
+
+    Dung khi Dai bam nut "Bo qua 24h" tren tin bao loi.
+    """
+    p = duong_dan or BO_QUA_PATH
+    ds = _doc_dict(p)
+    ds[str(ma)] = (den_luc.isoformat(timespec="seconds")
+                   if hasattr(den_luc, "isoformat") else str(den_luc))
+    return _ghi_dict(p, ds)
+
+
+def xoa_bo_qua(ma, duong_dan=None):
+    """Xoa lenh bo qua cua mot nhom. Dung khi Dai bam 'Tiep tuc quet lai lan sau'."""
+    p = duong_dan or BO_QUA_PATH
+    ds = _doc_dict(p)
+    ds.pop(str(ma), None)
+    return _ghi_dict(p, ds)
+
+
+def nhom_dang_bo_qua(bay_gio=None, duong_dan=None):
+    """{id_nhom: thoi_diem_het_bo_qua} — chi gom nhom CON trong han bo qua."""
+    goc = _gio(bay_gio) or datetime.now(GIO_VN)
+    ra = {}
+    for ma, t in (_doc_dict(duong_dan or BO_QUA_PATH) or {}).items():
+        den = _gio(t)
+        if den is not None and goc < den:
+            ra[str(ma)] = den
     return ra
 
 
@@ -157,8 +223,14 @@ def ma_dang_cho(bay_gio=None, duong_dan=None):
             if (r.get("doi_tuong") or {}).get("id")]
 
 
-def cap_nhat_phan_hoi(ma_nhom, tra_loi, ket_qua=None, duong_dan=None):
-    """Ghi cau tra loi cua Dai vao ban ghi dang cho. Tra ve True/False."""
+def cap_nhat_phan_hoi(ma_nhom, tra_loi, ket_qua=None, duong_dan=None,
+                      ghi_meta_that_bai=False):
+    """Ghi cau tra loi cua Dai vao ban ghi dang cho. Tra ve True/False.
+
+    `ghi_meta_that_bai=True`: buoc GUI LEN META da that bai. Danh dau de
+    `nhom_da_tra_loi` BO QUA ban ghi nay — Dai da bam nut nhung viec chua xong,
+    nen khong duoc khoa nhom 24 gio. Xem chu thich o `nhom_da_tra_loi`.
+    """
     p = Path(duong_dan) if duong_dan else DUONG_DAN
     try:
         ds = doc(p)
@@ -172,6 +244,8 @@ def cap_nhat_phan_hoi(ma_nhom, tra_loi, ket_qua=None, duong_dan=None):
             rec["dai_phan_hoi"] = tra_loi
             if ket_qua is not None:
                 rec["ket_qua"] = ket_qua
+            if ghi_meta_that_bai:
+                rec["ghi_meta_that_bai"] = True
             tam = p.with_suffix(".json.tmp")
             tam.write_text(json.dumps(ds, ensure_ascii=False, indent=2), encoding="utf-8")
             os.replace(tam, p)

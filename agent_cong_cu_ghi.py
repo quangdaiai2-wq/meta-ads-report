@@ -123,28 +123,53 @@ def mo_ta_loi(err):
     return " | ".join(phan)
 
 
+def doan_nguyen_nhan(err):
+    """Doan NGUYEN NHAN loi Meta bang tieng nguoi thuong. Tra ve chuoi.
+
+    Dai yeu cau 02/10/2026: "phai bao loi nay la loi do dau". Nhung KHONG duoc
+    doan bua — khong khop bang thi tra ve chuoi rong, de tin nhan ghi nguyen
+    van loi Meta kem chu "chua ro nguyen nhan".
+    """
+    if not isinstance(err, dict):
+        return ""
+    ma = report._ma_nguyen(err.get("code"))
+    chu = " ".join(str(err.get(k) or "") for k in
+                   ("message", "error_user_msg", "error_data")).lower()
+    if ma == 613:
+        return "Ghi quá nhanh — Meta tạm chặn, chờ vài chục giây là gửi lại được"
+    if ma == 190:
+        return "Token Meta hết hạn hoặc sai — cần lấy token mới"
+    if ma in (200, 272):
+        return "Token Meta thiếu quyền thao tác quảng cáo"
+    if ma == 17:
+        return "Tài khoản quảng cáo đã chạm hạn mức của Meta"
+    if "budget" in chu or "ngan sach" in chu or "ngân sách" in chu:
+        return "Ngân sách đặt vào không hợp lệ cho nhóm này"
+    if ma == 100:
+        return ("Meta không nhận tham số gửi lên. Hay gặp nhất là nhóm VỪA TẠO "
+                "trong ngày — Meta chưa duyệt xong. Chờ lần quét sau thử lại.")
+    return ""
+
+
 def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=None,
                                  ngu_fn=None):
     """Tat/bat nhom + (tuy chon) dat ngan sach + (tuy chon) doi ten, roi DOC LAI kiem.
 
     `ngan_sach=None` nghia la KHONG DUNG TOI NGAN SACH — chi tat nhom va doi ten.
 
-    LAN 1: GOP CA BA vao MOT lan goi — da kiem chung that 01/10/2026 rang Meta
-    nhan `name` + `status` + `daily_budget` cung luc. Tiet kiem 2/3 so lan ghi,
-    rat quan trong vi Meta gioi han ghi rat chat.
+    GOP CA BA vao MOT lan goi — da kiem chung that 01/10/2026 rang Meta nhan
+    `name` + `status` + `daily_budget` cung luc. Tiet kiem 2/3 so lan ghi, rat
+    quan trong vi Meta gioi han ghi rat chat.
 
-    LAN 2 (CHI KHI LAN 1 LOI): TACH LENH. LOI THAT 02/10/2026 — nhom
-    `120250277820620509` vua tao trong ngay, lenh gop bi Meta tu choi
-    "Invalid parameter"; 38 giay sau Dai tu tat duoc nhom do bang tay, va thu
-    lai luc 11:35 thi ca ba cach deu thanh cong. Nghia la CHI MOT TRUONG trong
-    lenh gop bi chan, khong phai ca lenh.
-    Vi vay khi gop loi thi thu lai theo thu tu UU TIEN:
-        (1) `status` (+ `name`)  — viec CHINH, phai xong truoc
-        (2) `daily_budget`       — viec PHU
-    Khong duoc de "khong ha duoc ngan sach" lam hong ca viec TAT NHOM.
+    ⚠️ DA BO CO CHE "TACH LENH" (Dai chot 02/10/2026):
+    Buoi chieu 02/10 toi tung lam: gop loi thi tu tach ra gui `status` rieng de
+    van tat duoc nhom. Dai KHONG muon the. Ly do: Meta da tu choi thi co gi do
+    chua san sang; co tat se tao TRANG THAI NUA VOI (tat duoc nhom nhung khong
+    ha duoc ngan sach), kho kiem tra ve sau.
+    => Nay: Meta tu choi thi tra ve THAT BAI ngay, KHONG tat gi ca.
+    Xem `docs/superpowers/plans/2026-10-02-nhanh-loi-khi-meta-tu-choi.md`.
 
     Tra ve (thanh_cong: bool, ket_qua: str, chi_tiet: dict)
-    `chi_tiet` co `da_tat` va `da_ha_ngan_sach` RIENG, de noi ro da lam duoc gi.
     KHONG BAO GIO nem loi.
     """
     chi_tiet = {"id": str(ma_nhom), "da_tat": False, "da_ha_ngan_sach": False}
@@ -159,8 +184,6 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
         if ngan_sach is not None and not (0 < int(ngan_sach)):
             return False, "ngan sach phai la so duong", chi_tiet
 
-        ngu = ngu_fn or time.sleep
-
         truoc, _ = doc_lai_nhom(env, ma_nhom)
         if truoc:
             # Hang rao PHAM VI: chi duoc dung vao doi tuong cua Dai.
@@ -171,7 +194,6 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
             chi_tiet["trang_thai_truoc"] = truoc.get("status") or truoc.get("effective_status")
             chi_tiet["ngan_sach_truoc"] = truoc.get("daily_budget")
 
-        # ---------- LAN 1: GOP ----------
         goi = {"access_token": tok, "status": trang_thai}
         if ngan_sach is not None:
             goi["daily_budget"] = str(int(ngan_sach))
@@ -179,30 +201,12 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
             goi["name"] = str(ten_moi)
             chi_tiet["ten_dat"] = str(ten_moi)
 
-        _, loi = api_post(str(ma_nhom), goi, ngu)
+        _, loi = api_post(str(ma_nhom), goi, ngu_fn)
         if loi:
-            chi_tiet["loi_gop"] = mo_ta_loi(loi)
-            # ---------- LAN 2: TACH — uu tien TAT NHOM ----------
-            goi_tat = {"access_token": tok, "status": trang_thai}
-            if ten_moi:
-                goi_tat["name"] = str(ten_moi)
-            ngu(CHO_GIUA_HAI_LAN_GHI)
-            _, loi_tat = api_post(str(ma_nhom), goi_tat, ngu)
-            if loi_tat:
-                chi_tiet["loi_tach"] = mo_ta_loi(loi_tat)
-                return (False,
-                        f"Meta từ chối: {mo_ta_loi(loi)} "
-                        f"(thử tách lệnh cũng bị từ chối: {mo_ta_loi(loi_tat)})",
-                        chi_tiet)
-            # Tat da xong. Con ngan sach thi lam RIENG, loi cung khong sao.
-            if ngan_sach is not None:
-                ngu(CHO_GIUA_HAI_LAN_GHI)
-                _, loi_ns = api_post(str(ma_nhom), {
-                    "access_token": tok, "daily_budget": str(int(ngan_sach))}, ngu)
-                if loi_ns:
-                    chi_tiet["loi_ngan_sach"] = mo_ta_loi(loi_ns)
+            chi_tiet["loi"] = mo_ta_loi(loi)
+            chi_tiet["nguyen_nhan"] = doan_nguyen_nhan(loi)
+            return False, f"Meta từ chối: {mo_ta_loi(loi)}", chi_tiet
 
-        # ---------- DOC LAI — nguon su that ----------
         sau, loi2 = doc_lai_nhom(env, ma_nhom)
         if sau is None:
             return True, ("da gui lenh, nhung doc lai khong duoc: "
@@ -227,9 +231,8 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
 
         if dung_trang_thai and dung_ten and not dung_ngan_sach:
             # TAT duoc la xong viec chinh. Noi ro phan con thieu, dung bao that bai.
-            ly = chi_tiet.get("loi_ngan_sach") or "Meta khong nhan"
             return True, (f"da tat nhom, NHUNG chua ha duoc ngan sach "
-                          f"({ly}) — ngan sach dang {chi_tiet['ngan_sach_sau']}"), chi_tiet
+                          f"(ngan sach dang {chi_tiet['ngan_sach_sau']})"), chi_tiet
 
         return False, (f"doc lai KHONG khop: trang thai={chi_tiet['trang_thai_sau']}, "
                        f"ngan sach={chi_tiet['ngan_sach_sau']}, "

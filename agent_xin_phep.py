@@ -15,7 +15,8 @@ import nguoi_truc
 from lenh_telegram import bo_dau, doc_tra_loi, la_lenh   # noqa: F401 (dung lai)
 
 __all__ = ["bo_dau", "doc_tra_loi", "la_lenh", "soan_tin", "nut_bam",
-           "gui_xin_phep", "sua_ket_qua", "quet_tra_loi", "dong_doi_tuong"]
+           "gui_xin_phep", "sua_ket_qua", "quet_tra_loi", "dong_doi_tuong",
+           "nut_loi", "soan_tin_loi", "gui_tin_loi"]
 
 
 def nut_bam(ma):
@@ -73,6 +74,62 @@ def soan_tin(de_xuat, ghi_chu=None):
     if ghi_chu:
         dong += ["", ghi_chu]
     return "\n".join(dong)
+
+
+def nut_loi(ma):
+    """Ban phim cho TIN BAO LOI. Tra ve chuoi JSON.
+
+    Dai chot 02/10/2026: khi Meta tu choi thi KHONG tat gi ca, bao loi roi hoi
+    Dai muon lam gi tiep:
+      - "Tiep tuc quet lai lan sau" : xoa lenh bo qua, de lan quet sau hoi lai
+      - "Bo qua 24h"                : khong xet nhom nay trong 24 gio
+    """
+    return json.dumps({"inline_keyboard": [[
+        {"text": "\U0001f501 Tiếp tục quét lại lần sau", "callback_data": f"quetlai:{ma}"},
+        {"text": "\u23f8 Bỏ qua 24h", "callback_data": f"boqua24:{ma}"},
+    ]]}, ensure_ascii=False)
+
+
+def soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan=None, chi_tiet=None):
+    """Soan tin bao LOI khi Meta tu choi. Tra ve chuoi.
+
+    Dai yeu cau: "phai bao loi nay la loi do dau". Nen tin nay co ba phan:
+      1. Loi Meta tra ve NGUYEN VAN (khong cat bot)
+      2. Doan nguyen nhan bang tieng nguoi thuong — CHI khi doan duoc
+      3. Noi ro agent KHONG tat gi ca
+    """
+    dt = (ban_ghi or {}).get("doi_tuong") or {}
+    dong = [
+        "\u274c KHÔNG TẮT ĐƯỢC NHÓM",
+        "",
+        *dong_doi_tuong(ban_ghi),
+        f"Nhóm: {dt.get('ten')}",
+        f"Lỗi Meta trả về: {ket_qua}",
+    ]
+    if nguyen_nhan:
+        dong.append(f"Có thể do: {nguyen_nhan}")
+    else:
+        dong.append("Chưa rõ nguyên nhân — xem nguyên văn lỗi ở trên.")
+    dong += [
+        "",
+        "Agent KHÔNG tắt gì cả (nhóm và quảng cáo vẫn nguyên).",
+        "Đại chọn bên dưới:",
+        "  \U0001f501 Tiếp tục quét lại lần sau",
+        "  \u23f8 Bỏ qua 24h",
+    ]
+    return "\n".join(dong)
+
+
+def gui_tin_loi(env, ban_ghi, ket_qua, nguyen_nhan=None):
+    """Gui tin bao loi KEM 2 NUT. Tra ve message_id (None neu loi)."""
+    ma = str(((ban_ghi or {}).get("doi_tuong") or {}).get("id") or "")
+    if not ma:
+        return None
+    text = soan_tin_loi(ban_ghi, ket_qua, nguyen_nhan)
+    ket_qua_gui, _ = nguoi_truc.gui_tin_nhan_day_du(env, text, nut_loi(ma))
+    if not isinstance(ket_qua_gui, dict):
+        return None
+    return ket_qua_gui.get("message_id")
 
 
 def dong_doi_tuong(de_xuat):

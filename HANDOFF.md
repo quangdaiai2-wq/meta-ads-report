@@ -1,8 +1,46 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 02/10/2026 (chiều) — **NÚT CHỌN 2 KIỂU TẮT + HIỆN ID CHIẾN DỊCH + SỬA LỖI GHI META
-+ NHỊP QUÉT 15 PHÚT**. Đã đẩy GitHub tới **`d1d42c7`** (sáng) và bản chiều ngay sau đó.
-Bộ kiểm thử: **682/682 đạt** (trước: 662).
+**Cập nhật lần cuối:** 02/10/2026 (chiều muộn) — **NHÁNH LỖI MỚI + ĐỔI THỨ TỰ TẮT + API v26.0**.
+Bộ kiểm thử: **715/715 đạt** (trước 687).
+
+🆕 **1. Meta từ chối thì KHÔNG tắt gì cả** (Đại chốt 02/10/2026).
+Bỏ hẳn cơ chế "tách lệnh" tôi làm buổi chiều cùng ngày. Nay:
+- Meta từ chối ⇒ **không đụng vào nhóm, không đụng vào quảng cáo**
+- Gửi tin báo lỗi gồm: **lỗi Meta nguyên văn** + **đoán nguyên nhân bằng tiếng người thường**
+- Kèm 2 nút:
+```
+[ 🔁 Tiếp tục quét lại lần sau ]   [ ⏸ Bỏ qua 24h ]
+```
+- Không bấm gì ⇒ 15 phút sau quét lại, hỏi lại Đại
+- "Bỏ qua 24h" ⇒ **đúng 24h sau** mới xét lại nhóm đó
+- Hàm mới `doan_nguyen_nhan()`: 613 ghi quá nhanh · 190 token · 200/272 thiếu quyền · 17 hạn mức ·
+  100 + "budget" ngân sách · 100 khác = nhóm vừa tạo chưa duyệt xong. **Mã lạ thì KHÔNG đoán bừa**,
+  ghi "Chưa rõ nguyên nhân".
+⚠️ **Hệ quả Đại cần biết:** ca như sáng nay (nhóm mới tạo) sẽ **không tự tắt được nữa** — agent báo
+lỗi rồi quét lại. Nếu Meta vẫn từ chối thì **vẫn phải tắt tay**. Đổi lại: không bao giờ có trạng
+thái nửa vời.
+
+🆕 **2. ĐỔI THỨ TỰ TẮT** (Đại chốt 02/10/2026): **tắt NHÓM trước, xong mới tắt QUẢNG CÁO**.
+Bản cũ làm ngược — nếu bước tắt nhóm bị từ chối thì quảng cáo đã tắt mất rồi, nhóm còn chạy mà
+không còn quảng cáo (trạng thái nửa vời).
+
+🆕 **3. API v21.0 → v26.0.** Meta khai tử v21.0 và **tự nâng** mọi cuộc gọi lên v26.0.
+Đã gọi CÙNG đường dẫn bằng cả hai phiên bản và **so từng trường: giống nhau từng ký tự** ⇒ đổi
+không ảnh hưởng gì. Gom **9 chỗ khai báo rải rác** về **một nguồn duy nhất** `report.API_VERSION`,
+và thêm **cảnh báo tự động**: mọi cuộc gọi nay đọc header `x-ad-api-version-warning`, Meta báo khai
+tử thì **ghi log ngay** (một lần). Trước đây Meta âm thầm nâng mà không ai biết.
+
+🐛 **4. Hai lỗi tôi tự gây ra và tự bắt được trong lượt này:**
+- `_lam_theo_dong_y` được gọi mà **không truyền `ket_qua`** ⇒ nút "Tắt + hạ ngân sách" sẽ **im lặng
+  không hạ ngân sách**. Đã sửa và có bài kiểm thử.
+- Thêm kiểm header vào `api_get` làm **6 bài cũ vỡ** vì đối tượng giả không có `.headers`.
+  Đã dùng `getattr(resp, "headers", None)`.
+
+📌 **Máy nhà:** `git pull`. **Nhớ tự sửa `AGENT_NHIP_PHUT=15`** trong `.env` máy nhà (`.env` không
+lên GitHub nên `git pull` không đổi giúp).
+
+**Trước đó cùng ngày:** nút chọn 2 kiểu tắt · tin Telegram hiện **ID chiến dịch** · công cụ đổi
+chế độ agent · dọn ký tự lạ trong file `.bat` · nhịp quét 15 phút · sửa lỗi đọc `.env` một lần.
 
 🆕 **1. Nút Telegram nay cho CHỌN 2 kiểu tắt** (Đại yêu cầu):
 ```

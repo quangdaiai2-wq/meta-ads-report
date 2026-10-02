@@ -217,6 +217,14 @@ def kiem(de_xuat, lich_su=None, bay_gio=None):
             if t_cu is not None and (goc - t_cu) < timedelta(minutes=HAN_HOI_LAI_PHUT):
                 return False, "Nhóm này Đại đã trả lời trong 24 giờ qua"
 
+        # --- Rao: Dai da bam "Bo qua 24h" tren tin bao loi (02/10/2026) ---
+        dang_bo_qua = ls.get("nhom_dang_bo_qua")
+        if isinstance(dang_bo_qua, dict):
+            den = _gio(dang_bo_qua.get(ma)) or _gio(dang_bo_qua.get(str(ma)))
+            if den is not None and goc < den:
+                return False, (f"Đại đã chọn BỎ QUA nhóm này đến "
+                               f"{den.strftime('%H:%M ngày %d/%m')}")
+
         # --- Rao 5: han muc hanh dong (0 = khong gioi han) ---
         n_ngay = _so(ls.get("so_hanh_dong_hom_nay")) or 0
         n_gio = _so(ls.get("so_hanh_dong_gio_nay")) or 0
