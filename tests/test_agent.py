@@ -389,20 +389,63 @@ class C_MucTieu(unittest.TestCase):
              "2026 - 08 - 11 - dainq - Scale - Online A3"),
             ("2026 - 02 - 05 - dainq - Scale - Online 221225 12/495 X2",
              "2026 - 02 - 05 - dainq - Scale - Online 221225"),
+            # 🔴 Hau to CO NAM (dang moi tu 02/10/2026)
+            ("2026 - 10 - 01 - dainq - Scale - Online 0/140 X10-26",
+             "2026 - 10 - 01 - dainq - Scale - Online"),
+            ("2026 - 09 - 29 - dainq - Scale - Online 0/350 X10-26 TN",
+             "2026 - 09 - 29 - dainq - Scale - Online"),
+            ("2026 - 09 - 29 - dainq - Scale - Online 1/450 X10-26",
+             "2026 - 09 - 29 - dainq - Scale - Online"),
+            # 🔴 LOI DUNG THU BAT DUOC: hau to '=> Loi' CO THAT tren tai khoan
+            #    (2 nhom ten '... X11 => Lỗi'). Khong cat duoc => tat lan hai chong ten.
+            ("2026 - 09 - 27 - dainq - Scale - Online 0/500 X11 => Lỗi",
+             "2026 - 09 - 27 - dainq - Scale - Online"),
             ("2026 - 09 - 30 - dainq - Scale - Online",
              "2026 - 09 - 30 - dainq - Scale - Online"),
         ]:
             self.assertEqual(agent_muc_tieu.bo_hau_to_cu(vao), ra, vao)
 
     def test_ten_moi_ba_truong_hop(self):
+        """🔴 Dai chot 02/10/2026: CA BA truong hop deu ghi NAM, dang GACH NOI.
+
+        Do that: 396 ten nhom dung 'X9-26', 0 ten dung 'X9 26'.
+        Luat cu 'TH1 khong ghi nam' DA BO.
+        """
         goc = "2026 - 09 - 30 - dainq - Scale - Online"
         t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
-        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 70000, 0, t), goc + " 0/140 X10")
-        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 85000, 0, t), goc + " 0/170 X10",
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 70000, 0, t), goc + " 0/140 X10-26")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 85000, 0, t), goc + " 0/170 X10-26",
                          "TH1 ghi GAP DOI so dang chi, khong phai gap doi nguong")
-        self.assertEqual(agent_muc_tieu.ten_moi(goc, 2, 290000, 0, t), goc + " 0/350 X10 TN")
-        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 390000, 1, t), goc + " 1/450 X10")
-        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 780000, 2, t), goc + " 2/450 X10")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 2, 290000, 0, t), goc + " 0/350 X10-26 TN")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 390000, 1, t), goc + " 1/450 X10-26")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 780000, 2, t), goc + " 2/450 X10-26")
+
+    def test_ten_moi_KHONG_dung_khoang_trang_truoc_nam(self):
+        """Dang SAI da bi Dai bac bo 02/10/2026: 'X10 26' (khoang trang)."""
+        goc = "2026 - 09 - 30 - dainq - Scale - Online"
+        t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
+        for th, chi, mua in [(1, 70000, 0), (2, 290000, 0), (3, 390000, 1)]:
+            with self.subTest(truong_hop=th):
+                ten = agent_muc_tieu.ten_moi(goc, th, chi, mua, t)
+                self.assertIn("X10-26", ten)
+                self.assertNotIn("X10 26", ten)
+
+    def test_ten_moi_sang_nam_2027_ghi_27(self):
+        """Nam doi theo nam that — khong hard-code '26'."""
+        goc = "2026 - 12 - 30 - dainq - Scale - Online"
+        t = datetime(2027, 1, 5, 14, 0, tzinfo=GIO_VN)
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 1, 70000, 0, t), goc + " 0/140 X1-27")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 2, 290000, 0, t), goc + " 0/350 X1-27 TN")
+        self.assertEqual(agent_muc_tieu.ten_moi(goc, 3, 390000, 1, t), goc + " 1/450 X1-27")
+
+    def test_ten_moi_truong_hop_la_thi_NEM_LOI(self):
+        """LOI DUNG THU BAT DUOC: truong_hop=9 truoc day AM THAM ra dang TH3."""
+        goc = "2026 - 09 - 30 - dainq - Scale - Online"
+        t = datetime(2026, 10, 1, 14, 0, tzinfo=GIO_VN)
+        for xau in [0, 4, 9, -1, None, "1"]:
+            with self.subTest(truong_hop=xau):
+                with self.assertRaises(ValueError):
+                    agent_muc_tieu.ten_moi(goc, xau, 70000, 0, t)
 
     def test_ten_moi_tat_lan_hai_khong_chong_ten(self):
         goc = "2026 - 09 - 30 - dainq - Scale - Online"

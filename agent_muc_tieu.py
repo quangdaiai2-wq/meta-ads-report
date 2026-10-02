@@ -43,9 +43,15 @@ TEN_LIEN_HE = "onsite_conversion.messaging_first_reply"
 TEN_MAC_DINH = ("quảng cáo lượt tương tác mới", "nhóm quảng cáo lượt tương tác mới",
                 "chiến dịch lượt tương tác mới")
 
-# Phan hau to cu trong ten nhom: " 0/160 X9", " 0/300 X8-26 TN", " 12/495 X2".
-# Phai CAT DI truoc khi ghep ten moi, khong thi ten chong ten.
-RE_HAU_TO = re.compile(r"\s+\d+\s*/\s*\d+(\s+X\d+(-\d+)?)?(\s+[A-Za-zÀ-ỹ]+)*\s*$")
+# Phan hau to cu trong ten nhom: " 0/160 X9", " 0/300 X8-26 TN", " 11/450 X10-26",
+# " 0/500 X11 => Lỗi".
+#
+# 🔴 SUA 02/10/2026 — Dai chot ten moi PHAI kem NAM, dang GACH NOI (X10-26):
+#   - do that: 396 ten nhom dung "X9-26", 0 ten dung "X9 26"  => gach noi
+#   - rieng nhanh "=> <chu>" la LOI DUNG THU BAT DUOC: ten "... X11 => Lỗi" CO THAT
+#     tren tai khoan (2 nhom). Khong cat duoc thi tat lan hai se CHONG TEN.
+RE_HAU_TO = re.compile(
+    r"\s+\d+\s*/\s*\d+(\s+X\d+(-\d+)?)?(\s+[A-Za-zÀ-ỹ]+)*(\s*=>\s*[^\s]+)?\s*$")
 
 
 def dem_mot_loai(actions, ten):
@@ -101,23 +107,40 @@ def bo_hau_to_cu(ten):
     return RE_HAU_TO.sub("", ten).strip()
 
 
+def _duoi_thoi_gian(bay_gio=None):
+    """Hau to thoi gian: 'X<thang>-<2 chu so nam>'. Vi du 02/10/2026 -> 'X10-26'.
+
+    Dai giai ma 02/10/2026: "X9-26 nghia la tat vao thang 9 nam 2026".
+    => X<n> la THANG DAT TEN, khong phai "lan thu n", khong phai thang tao nhom.
+       Kiem chung 14/14 ca khop bang /activities.
+    """
+    t = bay_gio if isinstance(bay_gio, datetime) else datetime.now(GIO_VN)
+    return f"X{t.month}-{t.year % 100:02d}"
+
+
 def ten_moi(ten_goc, truong_hop, chi_hom_nay, mua_thang, bay_gio=None):
     """Ten nhom sau khi tat, theo dung quy uoc cua Dai.
 
-    TH1: 0/<gap doi chi tieu> X<thang>          vi du  0/140 X10
-    TH2: 0/350 X<thang> TN                      vi du  0/350 X10 TN
-    TH3: <luot mua thang>/450 X<thang>          vi du  1/450 X10
+    TH1: 0/<gap doi chi tieu> X<thang>-<nam>     vi du  0/140 X10-26
+    TH2: 0/350 X<thang>-<nam> TN                 vi du  0/350 X10-26 TN
+    TH3: <luot mua thang>/450 X<thang>-<nam>     vi du  1/450 X10-26
+
+    🔴 CA BA truong hop deu ghi nam (Dai chot 02/10/2026). Luat cu
+    "TH1 khong ghi nam" DA BO.
     """
     goc = bo_hau_to_cu(ten_goc)
-    t = bay_gio if isinstance(bay_gio, datetime) else datetime.now(GIO_VN)
-    thang = t.month
+    duoi = _duoi_thoi_gian(bay_gio)
     if truong_hop == 1:
         # Gap doi so tien DANG chi tieu (khong phai gap doi nguong).
         moc = int(round(float(chi_hom_nay or 0) * 2))
-        return f"{goc} 0/{moc // 1000} X{thang}"
+        return f"{goc} 0/{moc // 1000} {duoi}"
     if truong_hop == 2:
-        return f"{goc} 0/{MOC_CHAN_TH2 // 1000} X{thang} TN"
-    return f"{goc} {int(mua_thang or 0)}/{MOC_CHAN_TH3 // 1000} X{thang}"
+        return f"{goc} 0/{MOC_CHAN_TH2 // 1000} {duoi} TN"
+    if truong_hop == 3:
+        return f"{goc} {int(mua_thang or 0)}/{MOC_CHAN_TH3 // 1000} {duoi}"
+    # LOI DUNG THU BAT DUOC: truong_hop la thi AM THAM roi vao TH3 (0/450).
+    # Nay nem loi ro rang de khong tao ten sai ma khong ai biet.
+    raise ValueError(f"truong_hop khong hop le: {truong_hop!r} (chi nhan 1/2/3)")
 
 
 def xet(nhom, chi_tieu_hom_nay=None, chi_tieu_thang=None, loai_ten=None,
