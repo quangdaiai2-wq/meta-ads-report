@@ -11,15 +11,20 @@ import report
 
 FILE = "HUONG-DAN-MAY-NHA.md"
 CAPTION = (
-    "HƯỚNG DẪN MÁY NHÀ — bản 02/10/2026\n\n"
-    "Máy nhà cần làm 6 bước:\n"
-    "1. git pull (phải thấy mốc 16aa0ff)\n"
-    "2. sửa REPORT_SLOTS=8,17 trong .env\n"
-    "3. sửa AGENT_NHIP_PHUT=15\n"
-    "4. kiểm FILTER_INCLUDE=dainq\n"
-    "5. chọn chế độ: chuyen-sang-lam-that.bat hoặc chuyen-sang-tap-su.bat\n"
-    "6. khởi động lại: khoi-dong-lai-agent.bat\n\n"
-    "Đọc file đính kèm để biết chi tiết."
+    "HƯỚNG DẪN MÁY NHÀ — bản 02/10/2026 (viết cho TRỢ LÝ AI ở nhà)\n\n"
+    "File này viết để WorkBuddy ở nhà ĐỌC VÀ TỰ LÀM giúp, không phải để Đại tự đọc.\n\n"
+    "6 bước:\n"
+    "1. git pull  → phải thấy mốc 19f05ce\n"
+    "2. sửa .env: REPORT_SLOTS=8,17\n"
+    "3. sửa .env: AGENT_NHIP_PHUT=15\n"
+    "4. sửa .env: FILTER_INCLUDE=dainq\n"
+    "5. hỏi Đại chọn chế độ → chuyen-sang-lam-that.bat hoặc tap-su\n"
+    "6. khoi-dong-lai-agent.bat  ← BẮT BUỘC\n\n"
+    "3 điều không được quên:\n"
+    "· .env KHÔNG đi theo git pull — phải sửa tay\n"
+    "· git pull là sửa CODE ⇒ phải khởi động lại agent\n"
+    "· đo giờ khởi động bằng logs/baocao.log, KHÔNG bằng agent-dang-chay.lock\n\n"
+    "Đọc file đính kèm để biết chi tiết và các bẫy đã gặp thật."
 )
 
 
