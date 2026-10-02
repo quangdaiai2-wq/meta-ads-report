@@ -1,27 +1,38 @@
 # HANDOFF — SỔ BÀN GIAO CÔNG VIỆC
 
-**Cập nhật lần cuối:** 01/10/2026 (chiều) — **LUẬT TẮT NHÓM MỚI (3 trường hợp) + TẮT QUẢNG CÁO + ĐỔI TÊN NHÓM
-+ SỬA PHÉP SO SÁNH CỦA BÁO CÁO + BỎ TRẦN ĐỀ XUẤT**. Đã đẩy GitHub tới **`bca174c`**.
-Bộ kiểm thử: **659/659 đạt**.
+**Cập nhật lần cuối:** 02/10/2026 — **CÔNG CỤ ĐỔI CHẾ ĐỘ AGENT + DỌN KÝ TỰ LẠ TRONG FILE `.bat`**.
+Đã đẩy GitHub tới **`d1d42c7`**. Bộ kiểm thử: **662/662 đạt**.
 
-🐛 **4 LỖI THẬT đã bắt và sửa hôm nay:**
-1. **Trần đề xuất bị chạm là IM LẶNG** — hết 3 nhóm/ngày thì agent không nói gì nữa dù vẫn tìm ra
-   nhóm cần tắt. Đại tưởng hỏng. → **Đã bỏ trần** (`0` = không giới hạn), và mọi nhánh nay **đều ghi log**.
-2. **Báo cáo so 1 ngày với 7 ngày** → cột chênh lệch luôn ra −80% bất kể tốt lên hay xấu đi.
-   → Nay so **ngày hôm qua với ngày hôm trước**.
-3. **Bảng so sánh THIẾU dòng "chi phí mỗi đơn"** → mọi dòng khác đều giảm nên AI luôn viết "kém hiệu quả",
-   trong khi chi phí mỗi đơn **giảm 22%**. → Đã thêm dòng đó và ghi rõ chiều `RẺ HƠN / ĐẮT HƠN`.
-   **Đây mới là thủ phạm chính làm nhận định luôn tiêu cực.**
-4. **Meta giới hạn GHI ~1 lần/30 giây** (`#613`) — code cũ chờ 5–15 giây, **không đủ**. → Nay chờ 35 giây.
+🐛 **2 LỖI THẬT đã bắt và sửa hôm nay:**
+1. **Bẫy "agent chỉ đọc `.env` một lần"** (sửa ở `a7ca047`) — đổi khoá AI / `TELEGRAM_*` / `META_*`
+   trong `.env` **không có tác dụng** cho tới khi khởi động lại, mà `khoi-dong-lai-agent.bat` lại
+   ghi *"đổi `.env` không cần bấm file này"* — **câu đó sai**. Nay vòng lặp đọc lại **toàn bộ** `.env`
+   mỗi 15 giây. Thêm 3 bài kiểm thử cho đúng lỗi này.
+2. **4 file `.bat` chứa ký tự nhiều byte** (dấu gạch dài `—`, dấu chấm giữa `·`) — cmd.exe với
+   codepage 65001 đếm vị trí theo **BYTE**, gặp ký tự nhiều byte thì **đọc lệch dòng** và báo
+   *"The syntax of the command is incorrect."* Nay **mọi file `.bat` đều là ASCII thuần**.
+   ⚠️ Quy ước mới: **file `.bat` phải viết không dấu, không ký tự lạ** — kể cả trong dòng `REM`.
 
-📌 **Máy nhà:** `git pull` để nhận tới **`bca174c`**. Sau đó **phải khởi động lại agent** (đổi code,
-không phải chỉ đổi `.env`). Chi tiết từng bước: xem `HUONG-DAN-MAY-NHA.md`.
+🆕 **Công cụ mới cho máy nhà** (Đại yêu cầu, vì phải tự sửa `.env` bằng tay rất dễ nhầm):
+`doi_che_do_agent.py` + `chuyen-sang-lam-that.bat` + `chuyen-sang-tap-su.bat`.
+Sửa **đúng một dòng** `AGENT_TAP_SU`, giữ nguyên mọi thứ khác (token, chìa khoá, chú thích, kiểu
+xuống dòng, cả BOM), **sao lưu** `.env` trước khi sửa. Đã kiểm chứng **29/29** trên **bản sao** `.env`.
 
-⚠️ **CẢNH BÁO QUAN TRỌNG CHO MÁY NHÀ:** luật tắt nhóm **đã đổi hoàn toàn**. Máy nhà nếu chạy code cũ
-sẽ tắt nhóm theo ngưỡng cũ (70.000đ cho nhóm có tin nhắn) — **tắt oan rất nhiều nhóm**. Phải `git pull`
-và khởi động lại trước khi để agent chạy thật.
+📌 **Máy nhà:** `git pull` để nhận tới **`d1d42c7`**. Máy nhà **đã tự cập nhật code một lần**
+(commit `0bd2b59` sửa `kiem-tra-quyen-ghi.py`) — nhưng **`.env` thì không tự đổi được**, phải bấm
+file `.bat` mới.
 
-**Cùng ngày, trước đó:** thêm **nhà cung cấp AI thứ hai (Nous Research)** · **agent sở hữu Telegram**
+⚠️ **ĐIỀU PHẢI HIỂU CHO ĐÚNG:** **GitHub KHÔNG chứa cấu hình.** `.env` bị `.gitignore` chặn (vì chứa
+token), trên GitHub chỉ có `.env.example` là file **mẫu**. ⇒ `git pull` **không bao giờ** làm đổi
+chế độ chạy. Hai máy có thể ở hai chế độ khác nhau — **đúng thiết kế**, không phải lỗi.
+
+⚠️ **TRƯỚC KHI CHO MÁY NHÀ CHẠY THẬT:** cả hai máy cùng trỏ vào **một tài khoản Meta**. Hai agent
+cùng chạy thật thì **có thể cùng tác động vào một nhóm**. Nên chọn **một máy chạy thật, máy kia chỉ nói**.
+
+**Trước đó (01/10/2026):** **luật tắt nhóm 3 trường hợp** + **tắt quảng cáo** + **đổi tên nhóm** +
+**sửa phép so sánh báo cáo** + **bỏ trần đề xuất** (commit `bca174c`, 659/659 đạt).
+
+**Cùng ngày 01/10, trước đó:** thêm **nhà cung cấp AI thứ hai (Nous Research)** · **agent sở hữu Telegram**
 · **chạy ngầm không cửa sổ** · **agent tự ghi lịch sử** · **bỏ mốc 12h** · **báo cáo ngày bất kỳ**
 · **chỉ nhận ngày đủ năm**.
 

@@ -1,12 +1,74 @@
-# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 01/10/2026 (luật tắt nhóm mới)
+# HƯỚNG DẪN MÁY NHÀ — CẬP NHẬT NGÀY 02/10/2026 (công cụ đổi chế độ)
 
 **Dành cho:** Đại (người không cần biết code) **và** trợ lý AI trên máy nhà.
 
-> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy một bản cập nhật **thay đổi luật
-> tắt nhóm hoàn toàn**. Đọc hết trước khi làm. Máy nhà chạy code cũ sẽ **tắt oan rất nhiều nhóm**.
+> **Nếu bạn là trợ lý AI đang đọc file này:** máy công ty vừa đẩy một bản cập nhật. Đọc mục
+> **02/10/2026** ngay dưới đây trước. Hai mục cũ hơn (01/10 và 29/09) nằm phía dưới.
 
 **Ngày máy công ty cài đặt:** 14/09/2026. Kho GitHub: `meta-ads-report`, nhánh `main`.
-**Mốc mới nhất đã đẩy:** **`bca174c`** (01/10/2026).
+**Mốc mới nhất đã đẩy:** **`d1d42c7`** (02/10/2026).
+
+---
+
+## 🆕 CẬP NHẬT NGÀY 02/10/2026 — công cụ đổi chế độ, và một điều phải hiểu cho đúng
+
+### ⚠️ ĐIỀU QUAN TRỌNG NHẤT: GitHub **KHÔNG** chứa cấu hình
+
+Rất dễ hiểu nhầm chỗ này, nên nói thẳng:
+
+> **File `.env` KHÔNG BAO GIỜ lên GitHub.** Nó chứa token Telegram, token Meta, chìa khoá AI —
+> `.gitignore` chặn lại để không lộ bí mật. Trên GitHub chỉ có **`.env.example`** — một file MẪU,
+> không phải công tắc thật.
+
+Nghĩa là:
+
+| | Máy công ty | Máy nhà |
+|---|---|---|
+| Code | `git pull` từ GitHub | `git pull` từ GitHub |
+| `.env` | **riêng của máy này** | **riêng của máy này** |
+
+⇒ **`git pull` không bao giờ làm đổi chế độ chạy.** Hai máy có thể đang ở hai chế độ khác nhau —
+điều đó **đúng thiết kế**, không phải lỗi. Muốn đổi chế độ thì phải sửa `.env` **của chính máy đó**.
+
+### 🔧 Công cụ mới — bấm một lần, không cần mở Notepad
+
+Từ bản này, máy nhà **không cần sửa `.env` bằng tay nữa**. Sau khi `git pull`, trong thư mục sẽ có:
+
+| File | Việc nó làm | Có hỏi lại không |
+|---|---|---|
+| `chuyen-sang-lam-that.bat` | Agent **TẮT NHÓM THẬT** trên Meta | **Có** — phải gõ đúng chữ `co` |
+| `chuyen-sang-tap-su.bat` | Agent **chỉ nói**, không gửi lệnh nào | Không (đây là chiều an toàn) |
+
+Bấm đúp vào file — nó tự làm hết. Nó còn **in ra chế độ đang có** trước khi đổi, và **sao lưu**
+`.env` thành `.env.bak-truoc-doi-che-do`.
+
+Đổi xong **không cần khởi động lại agent** — agent tự đọc lại `.env` trong vòng 15 giây.
+
+> Chi tiết bên trong: nó chỉ sửa **đúng một dòng** `AGENT_TAP_SU` trong file `.env`. Mọi thứ khác
+> — token, chìa khoá AI, các dòng chú thích — **giữ nguyên từng ký tự**.
+
+### Máy nhà cần làm — 3 bước
+
+1. **`git pull`** → nhận tới `d1d42c7`.
+2. Bấm **`chuyen-sang-tap-su.bat`** nếu muốn chắc chắn đang ở chế độ an toàn — hoặc
+   **`chuyen-sang-lam-that.bat`** nếu muốn agent tắt nhóm thật.
+3. Mở `logs\baocao.log`, tìm dòng `AGENT: N nhom cham nguong — ...` để biết agent có làm việc không.
+
+### ⚠️ Trước khi cho máy nhà chạy THẬT — đọc dòng này
+
+Cả hai máy cùng trỏ vào **một tài khoản Meta**. Nếu cả hai cùng chạy THẬT thì cùng lúc có hai agent
+cùng tắt nhóm — **có thể cùng tác động vào một nhóm**. Bot Telegram thì riêng nên không nuốt tin
+của nhau, nhưng Meta thì chung.
+
+Đại nên chọn: **một máy chạy thật, máy kia chỉ nói** — hoặc chấp nhận hai máy cùng chạy.
+
+### Sửa thêm trong bản này
+
+- **4 file `.bat` có ký tự lạ** (dấu gạch dài, dấu chấm giữa) — cmd.exe đọc lệch dòng và báo
+  *"The syntax of the command is incorrect."* Nay **tất cả file `.bat` đều là chữ thuần**, không
+  còn ký tự lạ nào.
+- **Lỗi "agent chỉ đọc `.env` một lần"** đã sửa ở bản `a7ca047`: đổi khoá AI / `TELEGRAM_*` /
+  `META_*` trong `.env` nay **có tác dụng ngay**, không cần khởi động lại agent nữa.
 
 ---
 
