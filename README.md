@@ -577,6 +577,8 @@ File này chứa token. Nó đã được `.gitignore` chặn rồi — nhưng �
 ├── 📄 tests/                    ← Kiểm thử tự động (không gọi mạng, không tốn hạn mức)
 │
 ├── 📄 HUONG-DAN-DIEN-TOKEN.md   ← Hướng dẫn lấy token
+├── 📄 HUONG-DAN-LAY-TOKEN-APP.md ← Hướng dẫn đổi sang TOKEN APP (Meta ghi tên hệ thống, không ghi tên Đại)
+├── 📄 kiem_tra_token_app.py     ← Công cụ kiểm tra token là cá nhân hay App (bấm `kiem-tra-token-app.bat`)
 ├── 📄 HUONG-DAN-LAY-CHIA-KHOA-AI.md ← Hướng dẫn lấy chìa khoá AI (Gemini)
 ├── 📄 HUONG-DAN-MAY-NHA.md      ← Hướng dẫn cập nhật MÁY NHÀ (đọc khi ở nhà)
 ├── 📄 HUONG-DAN-MAY-CONG-TY.md  ← Hướng dẫn cài lên máy thứ hai
