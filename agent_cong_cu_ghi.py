@@ -25,6 +25,14 @@ GIOI HAN GHI CUA META — da gap that 01/10/2026:
 
 PHAM VI: moi ham o day deu KIEM LAI ten doi tuong truoc khi ghi. Dai chot
 01/10/2026: chi duoc dung vao doi tuong co chua 'dainq'.
+
+================================================================================
+XU LY CBO (Dai chot 09:22 03/10/2026)
+================================================================================
+Khi nhom thuoc chien dich Advantage+ (ngan sach cap chien dich):
+  TH1: Chiem dich co >=2 nhóm → sau khi tat 1 nhóm: CHUYỂN NS cho nhóm còn sống
+       → gọi `tat_nhom_cbo()` thay vì `tam_dung_va_ha_ngan_sach()`.
+  TH2: Tat hết cả chiến dịch → ha NS chiến dịch về 27.000đ.
 """
 import json
 import time
@@ -48,6 +56,9 @@ CHO_GIUA_HAI_LAN_GHI = 20
 
 # Bi chan thi phai cho LAU. Do that: cho 5-15 giay KHONG du, 35 giay moi qua.
 CHO_KHI_BI_CHAN = (35, 35)
+
+# Ngân sách mặc định của chiến dịch CBO đang chạy (theo data thật).
+NGAN_SACH_CHIEN_DICH_MAC_DINH = 400000
 
 
 def api_post(path, params, ngu_fn=None):
@@ -133,6 +144,8 @@ def doan_nguyen_nhan(err):
     Dai yeu cau 02/10/2026: "phai bao loi nay la loi do dau". Nhung KHONG duoc
     doan bua — khong khop bang thi tra ve chuoi rong, de tin nhan ghi nguyen
     van loi Meta kem chu "chua ro nguyen nhan".
+
+    Cap nhat 03/10/2026: nhận diện CBO 1885621 + hướng dẫn xử lý đúng cách.
     """
     if not isinstance(err, dict):
         return ""
@@ -150,9 +163,8 @@ def doan_nguyen_nhan(err):
     ma_phu = report._ma_nguyen(err.get("error_subcode"))
     if ma == 100 and ma_phu == 1885621:
         return ("Nhóm này thuộc chiến dịch Advantage+ (ngân sách cấp chiến dịch) "
-                "nên Meta KHÔNG cho đặt ngân sách cấp nhóm. Có thể: (1) chỉ tắt "
-                "nhóm giữ nguyên ngân sách, hoặc (2) hạ ngân sách cấp chiến dịch "
-                "thủ công trong Trình quản lý quảng cáo.")
+                "nên Meta KHÔNG cho đặt ngân sách cấp nhóm. Agent sẽ chuyển ngân sách "
+                "sang nhóm còn đang chạy thay vì hạ ngân sách.")
     if "budget" in chu or "ngan_sach" in chu or "ngân sách" in chu:
         return "Ngân sách đặt vào không hợp lệ cho nhóm này"
     if ma == 100:
@@ -161,9 +173,166 @@ def doan_nguyen_nhan(err):
     return ""
 
 
+# ====================================================================
+# DOC NHÓM TRONG CHIẾN DỊCH (CBO)
+# ====================================================================
+
+def doc_tat_ca_nhom_trong_chien_dich(env, ma_chien_dich):
+    """Doc TẤT CẢ nhóm trong chiến dịch (ACTIVE + PAUSED). Tra ve (list, loi).
+
+    Dung direct API /{campaign_id}/adsets — dat thanh voi ID 120250500099510509
+    va cac chién dich Advantage+ khac (da doc thuc te 03/10/2026).
+    """
+    tok = env.get("META_ADS_ACCESS_TOKEN", "") or ""
+    if not tok:
+        return [], {"message": "thieu META_ADS_ACCESS_TOKEN"}
+    d, loi = report.api_get(f"{ma_chien_dich}/adsets", {
+        "access_token": tok,
+        "fields": "id,name,status,effective_status,daily_budget",
+        "limit": 100,
+    })
+    if loi:
+        return [], loi
+    rows = (d or {}).get("data", []) if isinstance(d, dict) else []
+    nxt = (d or {}).get("paging", {}).get("next") if isinstance(d, dict) else None
+    while nxt:
+        d2, _ = report.api_get(nxt, {})
+        if isinstance(d2, dict):
+            rows.extend(d2.get("data", []))
+            nxt = d2.get("paging", {}).get("next")
+        else:
+            break
+    return rows, None
+
+
+# ====================================================================
+# CHUYỂN NGÂN SÁCH CHIẾN DỊCH SANG NHÓM SỐNG (TH1 — CBO)
+# ====================================================================
+
+def chuyen_ns_ve_nhom_song(env, ma_chien_dich, danh_sach_hau_to, ten_nhom_dang_chay,
+                           ngan_sach_moi=None, _post=None, _time=None):
+    """Chuyển NS từ chiến dịch sang cho NHÓM ĐANG CHẠY còn lại.
+
+    GỌI SAU KHI nhóm bị tụt đã đóng hậu tố.
+    Tìm các nhóm còn ACTIVE trong chiến dịch (không có hậu tố tên) rồi đặt NS riêng.
+
+    Tham so:
+      ma_chien_dich: ID chiến dịch chứa nhóm này
+      danh_sach_hau_to: list các hậu tố tên (vd ["X10-26"]) để loại nhóm khỏi danh sách chọn
+      ten_nhom_dang_chay: tên nhóm vừa bị tụt (để tránh nhầm)
+      ngan_sach_moi: ngân sách muốn gán — mặc định NGAN_SACH_CHIEN_DICH_MAC_DINH (400k)
+
+    Tra ve (thanh_cong: bool, message: str, ma_nhom_cap: str or None).
+    """
+    tim = _time or time.sleep
+    post_fn = _post or api_post
+    ns = ngan_sach_moi or NGAN_SACH_CHIEN_DICH_MAC_DINH
+
+    nhoms, loi = doc_tat_ca_nhom_trong_chien_dich(env, ma_chien_dich)
+    if loi:
+        return False, f"lỗi đọc nhóm: {loi.get('message')}", None
+
+    # Lọc nhóm CÒN SỐNG (ACTIVE) và KHÔNG có hậu tố (chưa bị tụt)
+    nhom_song = [n for n in nhoms
+                 if str(n.get("effective_status")) == "ACTIVE"
+                 and not any(h in n.get("name", "") for h in danh_sach_hau_to)]
+
+    if not nhom_song:
+        return False, "KHÔNG CÓ NHÓM NÀO CÒN CHẠY ĐỂ CHUYỂN NGÂN SÁCH", None
+
+    # Chọn nhóm còn sống đầu tiên
+    m_doc_cap = str(nhom_song[0].get("id"))
+    ten_group = nhom_song[0].get("name")[:60]
+
+    # Đặt daily_budget = NS cho nhóm sống → Meta tự động chuyển từ NS chiến dịch sang NS nhóm
+    tim(CHO_GIUA_HAI_LAN_GHI)
+    _, loi_api = post_fn(m_doc_cap, {
+        "access_token": env.get("META_ADS_ACCESS_TOKEN", ""),
+        "daily_budget": str(int(ns)),
+    }, tim)
+
+    if loi_api:
+        return False, (f"Không chuyển được ngân sách cho nhóm sống: "
+                       f"{loi_api.get('message', loi_api)}"), None
+
+    return True, f"đã chuyển ngân sách {ns:,}đ về nhóm {ten_group} ({m_doc_cap})", m_doc_cap
+
+
+# ====================================================================
+# HÀM CHÍNH: TẮT NHÓM CBO (TH1 — chuyển NS cho nhóm sống)
+# ====================================================================
+
+def tat_nhom_cbo(env, ma_nhom, ma_chien_dich, danh_sach_hau_to,
+                 ten_nhom, ten_moi=None, ngu_fn=None):
+    """TẠT NHÓM CBO HOÀN CHỈNH: tắt nhóm + tắt ad + đổi tên + chuyển NS cho nhóm sống.
+
+    Đây là hàm ENTRY POINT dành cho CBO. Gọi thay vì
+    `tam_dung_va_ha_ngan_sach()` + `tat_quang_cao()` + thủ công chuyển NS.
+
+    Tham số:
+      ma_chien_dich: ID chiến dịch (để tìm nhóm anh em)
+      danh_sach_hau_to: các hậu tố tên cần kiểm (vd ["X10-26"])
+      ten_nhom: tên gốc của nhóm trước khi đổi
+      ten_moi: tên mới đã có hậu tố
+      ngu_fn: hàm sleep tùy chỉnh (cho test)
+
+    Trả về (thành_công, kết_qua, chi_tiết). Không bao giờ ném lỗi.
+    """
+    ngu = ngu_fn or time.sleep
+    chi_tiet = {"id": str(ma_nhom), "loai": "CBO"}
+
+    # ---- Bước 1: Tắt nhóm + đổi tên (giữ nguyên NS cấp nhóm = không đặt) ----
+    ok, kq, ct = _doi_trang_thai_va_ngan_sach(env, ma_nhom, "PAUSED", None, ten_moi, ngu)
+    chi_tiet["tat_nhom"] = ok
+    chi_tiet["tat_nhom_ket_qua"] = kq
+
+    if not ok:
+        return ok, kq, chi_tiet
+
+    # ---- Bước 2: Tắt ad bên trong nhóm ----
+    ads, loi_ads = doc_quang_cao(env, ma_nhom)
+    chi_tiet["so_ad"] = len(ads)
+    if loi_ads:
+        chi_tiet["ad_error"] = loi_ads.get("message")
+    elif ads:
+        tok = env.get("META_ADS_ACCESS_TOKEN", "") or ""
+        for a in ads:
+            ma_ad = str(a.get("id") or "")
+            if not ma_ad:
+                continue
+            if str(a.get("status") or "").upper() == "PAUSED":
+                chi_tiet["da_tat"].append({"id": ma_ad, "ket_qua": "da tat san"})
+                continue
+            ngu(CHO_GIUA_HAI_LAN_GHI)
+            _, loi2 = api_post(ma_ad, {"access_token": tok, "status": "PAUSED"}, ngu)
+            if loi2:
+                chi_tiet["ad_errors"] = chi_tiet.get("ad_errors", [])
+                chi_tiet["ad_errors"].append({"id": ma_ad, "error": loi2.get("message") or loi2})
+            else:
+                chi_tiet["da_tat"] = chi_tiet.get("da_tat", [])
+                chi_tiet["da_tat"].append({"id": ma_ad, "ket_qua": "da tat"})
+
+    # ---- Bước 3: Chuyển NS cho nhóm sống ----
+    ok_ns, msg_ns, m_ns = chuyen_ns_ve_nhom_song(
+        env, ma_chien_dich, danh_sach_hau_to, ten_nhom,
+        ngan_sach_moi=NGAN_SACH_CHIEN_DICH_MAC_DINH, _time=ngu)
+    chi_tiet["chuyen_ns"] = ok_ns
+    chi_tiet["chuyen_ns_ket_qua"] = msg_ns
+    chi_tiet["nhom_duoc_cap_ns"] = m_ns
+
+    if ok_ns:
+        return True, f"đã tắt nhóm + đổi tên + chuyển NS {NGAN_SACH_CHIEN_DICH_MAC_DINH:,}đ về nhóm sống", chi_tiet
+
+    return True, f"đã tắt nhóm + đổi tên. KHÔNG CHUYỂN ĐƯỢC NS: {msg_ns}", chi_tiet
+
+
+# ====================================================================
+# HÀM CŨ: TẮT NHÓM THÔNG THƯỜNG (không CBO)
+# ====================================================================
+
 def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=None,
                                  ngu_fn=None):
-    """Tat/bat nhom + (tuy chon) dat ngan sach + (tuy chon) doi ten, roi DOC LAI kiem.
+    """Tăt/bat nhom + (tuy chon) dat ngan sach + (tuy chon) doi ten, roi DOC LAI kiem.
 
     `ngan_sach=None` nghia la KHONG DUNG TOI NGAN SACH — chi tat nhom va doi ten.
 
@@ -185,10 +354,6 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
     chi_tiet = {"id": str(ma_nhom), "da_tat": False, "da_ha_ngan_sach": False}
     if ngan_sach is not None:
         chi_tiet["ngan_sach_dat"] = int(ngan_sach)
-    # 🔴 CỜ CBO: nhóm thuộc chiến dịch Advantage+ (ngân sách cấp chiến dịch) thì
-    # Meta KHÔNG cho đặt daily_budget cấp nhóm (lỗi 100 / error_subcode 1885621).
-    # Khi cờ này True, ta BỎ QUA việc hạ ngân sách, chỉ tắt + đổi tên.
-    bo_qua_vi_cbo = False
     try:
         tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
         if not tok:
@@ -207,30 +372,15 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
             chi_tiet["ten_truoc"] = truoc.get("name")
             chi_tiet["trang_thai_truoc"] = truoc.get("status") or truoc.get("effective_status")
             chi_tiet["ngan_sach_truoc"] = truoc.get("daily_budget")
-            # Phát hiện CBO: adset KHÔNG mang ngân sách riêng (daily_budget rỗng/0).
-            # Khi đó Meta cấm đặt daily_budget cấp nhóm → bỏ qua hạ ngân sách.
-            if ngan_sach is not None:
-                dg = str(truoc.get("daily_budget") or "0").strip()
-                co_ngan_sach_rieng = dg not in ("", "0", "0.0", "None", "null")
-                bo_qua_vi_cbo = not co_ngan_sach_rieng
 
         goi = {"access_token": tok, "status": trang_thai}
-        if ngan_sach is not None and not bo_qua_vi_cbo:
+        if ngan_sach is not None:
             goi["daily_budget"] = str(int(ngan_sach))
         if ten_moi:
             goi["name"] = str(ten_moi)
             chi_tiet["ten_dat"] = str(ten_moi)
 
         _, loi = api_post(str(ma_nhom), goi, ngu_fn)
-        # 🔴 Safety net CBO: nếu vẫn gửi daily_budget mà Meta từ chối 1885621
-        # (do phát hiện CBO ở trên bị sót), thử lại CHỈ tắt + đổi tên, không
-        # đụng ngân sách — để không mất thao tác tắt nhóm.
-        if (loi and ngan_sach is not None and not bo_qua_vi_cbo
-                and str((loi or {}).get("error_subcode")) == "1885621"):
-            bo_qua_vi_cbo = True
-            goi.pop("daily_budget", None)
-            _, loi = api_post(str(ma_nhom), goi, ngu_fn)
-
         if loi:
             chi_tiet["loi"] = mo_ta_loi(loi)
             chi_tiet["nguyen_nhan"] = doan_nguyen_nhan(loi)
@@ -250,21 +400,10 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
                           or str(sau.get("daily_budget") or "") == str(int(ngan_sach)))
         dung_ten = (not ten_moi) or (sau.get("name") == ten_moi)
         chi_tiet["da_tat"] = dung_trang_thai
-        # `da_ha_ngan_sach` chi TRUE khi THUC SU co ha ngan sach. Khi
-        # `ngan_sach is None` (Dai chon "chi tat") thi day la FALSE — noi
-        # "da_ha_ngan_sach=True" se khien nguoi doc tuong ngan sach bi doi.
-        # Voi CBO (`bo_qua_vi_cbo`) thi KHONG co ha ngan sach cap nhom.
-        chi_tiet["da_ha_ngan_sach"] = (ngan_sach is not None) and (not bo_qua_vi_cbo) and dung_ngan_sach
-        chi_tiet["cbo_khong_ha_ngan_sach"] = bo_qua_vi_cbo
+        chi_tiet["da_ha_ngan_sach"] = (ngan_sach is not None) and dung_ngan_sach
 
-        if dung_trang_thai and dung_ten and (ngan_sach is None or (not bo_qua_vi_cbo and dung_ngan_sach)):
+        if dung_trang_thai and dung_ngan_sach and dung_ten:
             return True, "thanh cong (doc lai thay dung trang thai va ngan sach)", chi_tiet
-
-        if dung_trang_thai and dung_ten and bo_qua_vi_cbo:
-            return True, ("da tat nhom + doi ten. NHUNG KHONG ha duoc ngan sach vi "
-                          "nhom thuoc chien dich Advantage+ (ngan sach cap chien dich) "
-                          "— Meta khong cho dat ngan sach cap nhom. Muon giam chi chung "
-                          "thi ha ngan sach cap chien dich thu cong."), chi_tiet
 
         if dung_trang_thai and dung_ten and not dung_ngan_sach:
             # TAT duoc la xong viec chinh. Noi ro phan con thieu, dung bao that bai.

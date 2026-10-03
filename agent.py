@@ -718,14 +718,34 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
         ha_ngan_sach = (kq.get("ket_qua") == "dong_y_ha_ngan_sach")
         ngan_sach_dat = agent_rao.NGAN_SACH_HA if ha_ngan_sach else None
 
-        # THU TU (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
-        # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
-        # thi quang cao da tat mat roi — nhom con chay ma khong con quang cao, roi
-        # vao TRANG THAI NUA VOI. Nay tat nhom xong moi dung toi quang cao.
-        # Moi lan ghi len Meta phai cach nhau CHO_GIUA_HAI_LAN_GHI giay — Meta chan
-        # "(#613) rate limit" neu ghi qua nhanh (da gap that 01/10/2026).
-        thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tam_dung_va_ha_ngan_sach(
-            env, ma, ngan_sach_dat, ten_moi=ban_ghi.get("ten_moi"))
+        # 🔴 XU LY CBO (Dai chot 09:22 03/10/2026):
+        # Nếu nhóm thuộc chiến dịch Advantage+ (daily_budget=None = NS cấp chiến dịch),
+        # dùng hàm chuyên biệt: tắt nhóm + đổi tên + CHUYỂN NS cho nhóm còn sống.
+        cbo = False
+        try:
+            truoc, _ = agent_cong_cu_ghi.doc_lai_nhom(env, ma)
+            if truoc:
+                dg = str(truoc.get("daily_budget") or "").strip()
+                cbo = dg in ("", "0", "0.0", "None", "null")
+        except Exception:
+            pass
+        if cbo:
+            # Phát hiện CBO → đọc campaign_id từ data đã lưu
+            ma_chien_dich = doi_tuong.get("campaign_id", "")
+            ten_nhom_truoc = truoc.get("name") or doi_tuong.get("ten", "")
+            report.log(f"AGENT: phat hien CBO cho {ma} (camp={ma_chien_dich})")
+            thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tat_nhom_cbo(
+                env, ma, ma_chien_dich, [], ten_nhom_truoc,
+                ten_moi=ban_ghi.get("ten_moi"))
+        else:
+            # Thu tu (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
+            # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
+            # thi quang cao da tat mat roi — nhom con chay ma khong con quang cao, roi
+            # vao TRANG THAI NUA VOI. Nay tat nhom xong moi dung toi quang cao.
+            # Moi lan ghi len Meta phai cach nhau CHO_GIUA_HAI_LAN_GHI giay — Meta chan
+            # "(#613) rate limit" neu ghi qua nhanh (da gap that 01/10/2026).
+            thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tam_dung_va_ha_ngan_sach(
+                env, ma, ngan_sach_dat, ten_moi=ban_ghi.get("ten_moi"))
 
     # ---------- THAT BAI: KHONG TAT GI CA, bao loi + 2 nut ----------
     if not thanh_cong:
@@ -774,7 +794,13 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
     ]
     if ban_ghi.get("ten_moi"):
         dong.append(f"Tên mới: {ban_ghi.get('ten_moi')}")
-    if chi_tiet.get("cbo_khong_ha_ngan_sach"):
+    # Hiển thị thông tin ngân sách khác nhau theo loại
+    if cbo:
+        # CBO: kết quả đã bao gồm thông tin chuyển NS
+        # ket_qua = "đã tắt nhóm + đổi tên + chuyển NS 400,000đ về nhóm sống"
+        # hoặc "đã tắt nhóm + đổi tên. KHÔNG CHUYỂN ĐƯỢC NS: ..."
+        dong.append(chi_tiet.get("chuyen_ns_ket_qua", ""))
+    elif chi_tiet.get("cbo_khong_ha_ngan_sach"):
         dong.append("Ngân sách: KHÔNG hạ được — nhóm thuộc chiến dịch Advantage+ "
                     "(ngân sách cấp chiến dịch), Meta không cho hạ cấp nhóm. "
                     "Đã tắt nhóm + đổi tên. Muốn giảm chi chung, hạ ngân sách "
