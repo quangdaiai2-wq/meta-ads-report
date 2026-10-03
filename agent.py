@@ -774,8 +774,14 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
     ]
     if ban_ghi.get("ten_moi"):
         dong.append(f"Tên mới: {ban_ghi.get('ten_moi')}")
-    dong.append("Ngân sách: "
-                + ("đã hạ về 27.000đ" if ha_ngan_sach else "giữ nguyên (theo ý Đại)"))
+    if chi_tiet.get("cbo_khong_ha_ngan_sach"):
+        dong.append("Ngân sách: KHÔNG hạ được — nhóm thuộc chiến dịch Advantage+ "
+                    "(ngân sách cấp chiến dịch), Meta không cho hạ cấp nhóm. "
+                    "Đã tắt nhóm + đổi tên. Muốn giảm chi chung, hạ ngân sách "
+                    "chiến dịch thủ công trong Trình quản lý quảng cáo.")
+    else:
+        dong.append("Ngân sách: "
+                    + ("đã hạ về 27.000đ" if ha_ngan_sach else "giữ nguyên (theo ý Đại)"))
     dong.append(f"Quảng cáo bên trong: {'đã tắt' if tat_qc_ok else 'LỖI — ' + tat_qc_ly}")
     dong += ["", "Bấm nút bên dưới nếu muốn BẬT LẠI (chỉ trong 24 giờ)."]
     _bao_ket_qua(env, ban_ghi, thong_bao, "\n".join(dong),

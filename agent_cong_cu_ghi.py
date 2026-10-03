@@ -147,7 +147,13 @@ def doan_nguyen_nhan(err):
         return "Token Meta thiếu quyền thao tác quảng cáo"
     if ma == 17:
         return "Tài khoản quảng cáo đã chạm hạn mức của Meta"
-    if "budget" in chu or "ngan sach" in chu or "ngân sách" in chu:
+    ma_phu = report._ma_nguyen(err.get("error_subcode"))
+    if ma == 100 and ma_phu == 1885621:
+        return ("Nhóm này thuộc chiến dịch Advantage+ (ngân sách cấp chiến dịch) "
+                "nên Meta KHÔNG cho đặt ngân sách cấp nhóm. Có thể: (1) chỉ tắt "
+                "nhóm giữ nguyên ngân sách, hoặc (2) hạ ngân sách cấp chiến dịch "
+                "thủ công trong Trình quản lý quảng cáo.")
+    if "budget" in chu or "ngan_sach" in chu or "ngân sách" in chu:
         return "Ngân sách đặt vào không hợp lệ cho nhóm này"
     if ma == 100:
         return ("Meta không nhận tham số gửi lên. Hay gặp nhất là nhóm VỪA TẠO "
@@ -179,6 +185,10 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
     chi_tiet = {"id": str(ma_nhom), "da_tat": False, "da_ha_ngan_sach": False}
     if ngan_sach is not None:
         chi_tiet["ngan_sach_dat"] = int(ngan_sach)
+    # 🔴 CỜ CBO: nhóm thuộc chiến dịch Advantage+ (ngân sách cấp chiến dịch) thì
+    # Meta KHÔNG cho đặt daily_budget cấp nhóm (lỗi 100 / error_subcode 1885621).
+    # Khi cờ này True, ta BỎ QUA việc hạ ngân sách, chỉ tắt + đổi tên.
+    bo_qua_vi_cbo = False
     try:
         tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
         if not tok:
@@ -197,15 +207,30 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
             chi_tiet["ten_truoc"] = truoc.get("name")
             chi_tiet["trang_thai_truoc"] = truoc.get("status") or truoc.get("effective_status")
             chi_tiet["ngan_sach_truoc"] = truoc.get("daily_budget")
+            # Phát hiện CBO: adset KHÔNG mang ngân sách riêng (daily_budget rỗng/0).
+            # Khi đó Meta cấm đặt daily_budget cấp nhóm → bỏ qua hạ ngân sách.
+            if ngan_sach is not None:
+                dg = str(truoc.get("daily_budget") or "0").strip()
+                co_ngan_sach_rieng = dg not in ("", "0", "0.0", "None", "null")
+                bo_qua_vi_cbo = not co_ngan_sach_rieng
 
         goi = {"access_token": tok, "status": trang_thai}
-        if ngan_sach is not None:
+        if ngan_sach is not None and not bo_qua_vi_cbo:
             goi["daily_budget"] = str(int(ngan_sach))
         if ten_moi:
             goi["name"] = str(ten_moi)
             chi_tiet["ten_dat"] = str(ten_moi)
 
         _, loi = api_post(str(ma_nhom), goi, ngu_fn)
+        # 🔴 Safety net CBO: nếu vẫn gửi daily_budget mà Meta từ chối 1885621
+        # (do phát hiện CBO ở trên bị sót), thử lại CHỈ tắt + đổi tên, không
+        # đụng ngân sách — để không mất thao tác tắt nhóm.
+        if (loi and ngan_sach is not None and not bo_qua_vi_cbo
+                and str((loi or {}).get("error_subcode")) == "1885621"):
+            bo_qua_vi_cbo = True
+            goi.pop("daily_budget", None)
+            _, loi = api_post(str(ma_nhom), goi, ngu_fn)
+
         if loi:
             chi_tiet["loi"] = mo_ta_loi(loi)
             chi_tiet["nguyen_nhan"] = doan_nguyen_nhan(loi)
@@ -228,10 +253,18 @@ def _doi_trang_thai_va_ngan_sach(env, ma_nhom, trang_thai, ngan_sach, ten_moi=No
         # `da_ha_ngan_sach` chi TRUE khi THUC SU co ha ngan sach. Khi
         # `ngan_sach is None` (Dai chon "chi tat") thi day la FALSE — noi
         # "da_ha_ngan_sach=True" se khien nguoi doc tuong ngan sach bi doi.
-        chi_tiet["da_ha_ngan_sach"] = (ngan_sach is not None) and dung_ngan_sach
+        # Voi CBO (`bo_qua_vi_cbo`) thi KHONG co ha ngan sach cap nhom.
+        chi_tiet["da_ha_ngan_sach"] = (ngan_sach is not None) and (not bo_qua_vi_cbo) and dung_ngan_sach
+        chi_tiet["cbo_khong_ha_ngan_sach"] = bo_qua_vi_cbo
 
-        if dung_trang_thai and dung_ngan_sach and dung_ten:
+        if dung_trang_thai and dung_ten and (ngan_sach is None or (not bo_qua_vi_cbo and dung_ngan_sach)):
             return True, "thanh cong (doc lai thay dung trang thai va ngan sach)", chi_tiet
+
+        if dung_trang_thai and dung_ten and bo_qua_vi_cbo:
+            return True, ("da tat nhom + doi ten. NHUNG KHONG ha duoc ngan sach vi "
+                          "nhom thuoc chien dich Advantage+ (ngan sach cap chien dich) "
+                          "— Meta khong cho dat ngan sach cap nhom. Muon giam chi chung "
+                          "thi ha ngan sach cap chien dich thu cong."), chi_tiet
 
         if dung_trang_thai and dung_ten and not dung_ngan_sach:
             # TAT duoc la xong viec chinh. Noi ro phan con thieu, dung bao that bai.
