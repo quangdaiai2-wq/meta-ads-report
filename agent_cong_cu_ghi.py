@@ -60,6 +60,9 @@ CHO_KHI_BI_CHAN = (35, 35)
 # Ngân sách mặc định của chiến dịch CBO đang chạy (theo data thật).
 NGAN_SACH_CHIEN_DICH_MAC_DINH = 400000
 
+# Ngưỡng hạ xuống khi tắt toàn bộ chiến dịch Advantage+ (CBO).
+NGAN_SACH_TOI_THIEU_CHIEN_DICH = 27000
+
 
 def api_post(path, params, ngu_fn=None):
     """Goi POST len Meta. Tra ve (du_lieu, loi). Loi tam thoi thi thu lai."""
@@ -324,6 +327,106 @@ def tat_nhom_cbo(env, ma_nhom, ma_chien_dich, danh_sach_hau_to,
         return True, f"đã tắt nhóm + đổi tên + chuyển NS {NGAN_SACH_CHIEN_DICH_MAC_DINH:,}đ về nhóm sống", chi_tiet
 
     return True, f"đã tắt nhóm + đổi tên. KHÔNG CHUYỂN ĐƯỢC NS: {msg_ns}", chi_tiet
+
+
+# ====================================================================
+# TẤT CẢ NHÓM TRONG CHIẾN DỊCH (để kiểm TH2 — hết nhóm)
+# ====================================================================
+
+def kiem_so_nhom_song_trong_chien_dich(env, ma_chien_dich):
+    """Dem so nhom ACTIVE / PAUSED trong chien dich. Tra ve (active_count, paused_count, list_nhom).
+
+    Dung cho TH2: neu active_count == 0 => tat het thanh pham trong chién dich.
+    """
+    nhoms, loi = doc_tat_ca_nhom_trong_chien_dich(env, ma_chien_dich)
+    if loi:
+        return -1, -1, [], loi
+    active = [n for n in nhoms if str(n.get("effective_status")) == "ACTIVE"]
+    paused = [n for n in nhoms if str(n.get("effective_status")) == "PAUSED"]
+    return len(active), len(paused), active + paused, None
+
+
+# ====================================================================
+# TẮT CHIẾN DỊCH CBO (TH2 — hết tất cả nhóm)
+# ====================================================================
+
+def tat_chien_dich_cbo(env, ma_chien_dich, ngu_fn=None):
+    """TAT chien dich Advantage+ va HA NS cap chien dich ve 27.000d.
+
+    Goї SAU KHI tat het nhom thanh pham (adgroup, ad) truoc. Ham nay CHỈ set
+    trang thai PAUSED cho campaign + ha daily_budget (neu co).
+
+    Tra ve (thanh_cong: bool, ket_qua: str, chi_tiet: dict).
+    KHONG BAO GIO nem loi.
+    """
+    ngu = ngu_fn or time.sleep
+    chi_tiet = {"id": str(ma_chien_dich), "loai": "CBO_TH2"}
+    try:
+        tok = env.get("META_ADS_ACCESS_TOKEN", "") or ""
+        if not tok:
+            return False, "thieu META_ADS_ACCESS_TOKEN", chi_tiet
+
+        # ---- Bước 1: Hạ ngân sách chiến dịch về 27k ----
+        ngu(CHO_GIUA_HAI_LAN_GHI)
+        _, loi = api_post(str(ma_chien_dich), {
+            "access_token": tok,
+            "daily_budget": str(int(NGAN_SACH_TOI_THIEU_CHIEN_DICH)),
+        }, ngu)
+        chi_tiet["ha_ngan_sach"] = not bool(loi)
+        if loi:
+            chi_tiet["ngay_sach_error"] = loi.get("message") or loi
+
+        # ---- Bước 2: Tắt chiến dịch ----
+        ngu(CHO_GIUA_HAI_LAN_GHI)
+        _, loi2 = api_post(str(ma_chien_dich), {
+            "access_token": tok,
+            "status": "PAUSED",
+        }, ngu)
+        chi_tiet["tat_chien_dich"] = not bool(loi2)
+        if loi2:
+            chi_tiet["error"] = loi2.get("message") or loi2
+
+        ok = chi_tiet["ha_ngan_sach"] and chi_tiet["tat_chien_dich"]
+        msg = ("đã hạ NS xuống {}đ và tắt chiến dịch".format(NGAN_SACH_TOI_THIEU_CHIEN_DICH)) if ok else ("một số thao tác thất bại — xem chi_tiet")
+        return ok, msg, chi_tiet
+    except Exception as e:
+        return False, f"exception: {type(e).__name__}: {e}", chi_tiet
+
+
+# ====================================================================
+# HÀM CHÍNH: KIỂM TRA + TẮT CHIẾN DỊCH NẾU HẾT NHÓM (TH2 CBO)
+# ====================================================================
+
+def xu_ly_th2_cbo(env, ma_chien_dich, danh_sach_hau_to, ngu_fn=None):
+    """Kiểm xem sau khi tụt các nhóm thì còn bao nhiêu nhóm sống — nếu hết thì tắt chiến dịch.
+
+    Luồng logic:
+      1. Đọc lại trạng thái các nhóm trong chiến dịch
+      2. Nếu có >=1 nhóm ACTIVE → bỏ qua (TH1 xử lý ở hàm tat_nhom_cbo rồi)
+      3. Nếu 0 nhóm ACTIVE → gọi `tat_chien_dich_cbo()` để tắt campaign + hạ NS
+
+    Trả về (thành_công, kết_qua, chi_tiết). Không bao giờ ném lỗi.
+    """
+    ngu = ngu_fn or time.sleep
+    chi_tiet = {"campaign_id": str(ma_chien_dich)}
+
+    active_count, paused_count, all_nhoms, loi = kiem_so_nhom_song_trong_chien_dich(env, ma_chien_dich)
+    if loi:
+        return False, f"lỗi đọc nhóm: {loi.get('message')}", chi_tiet
+    chi_tiet["active"] = active_count
+    chi_tiet["paused"] = paused_count
+
+    if active_count > 0:
+        chi_tiet["skip"] = True
+        chi_tiet["ly_do"] = f"còn {active_count} nhóm đang chạy — không cần tắt chiến dịch"
+        return True, chi_tiet["ly_do"], chi_tiet
+
+    # Hết nhóm sống → tắt chiến dịch
+    ngu(CHO_KHI_BI_CHAN[0])  # chờ lâu vì ghi mạnh
+    ok, msg, ct = tat_chien_dich_cbo(env, ma_chien_dich, ngu)
+    chi_tiet.update(ct)
+    chi_tiet["tat_chien_dich"] = ok
+    return ok, msg, chi_tiet
 
 
 # ====================================================================

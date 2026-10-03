@@ -734,9 +734,19 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
             ma_chien_dich = doi_tuong.get("campaign_id", "")
             ten_nhom_truoc = truoc.get("name") or doi_tuong.get("ten", "")
             report.log(f"AGENT: phat hien CBO cho {ma} (camp={ma_chien_dich})")
+            # ---- Bước 1: Tắt nhóm + đổi tên + chuyển NS cho nhóm sống ----
             thanh_cong, ket_qua, chi_tiet = agent_cong_cu_ghi.tat_nhom_cbo(
                 env, ma, ma_chien_dich, [], ten_nhom_truoc,
                 ten_moi=ban_ghi.get("ten_moi"))
+            # ---- Bước 2: Kiểm tra TH2 — hết nhóm thì tắt chiến dịch ----
+            if thanh_cong:
+                ok_th2, msg_th2, ct_th2 = agent_cong_cu_ghi.xu_ly_th2_cbo(
+                    env, ma_chien_dich, [])
+                chi_tiet["th2_ket_qua"] = msg_th2
+                chi_tiet.update(ct_th2)
+                if not ok_th2:
+                    thanh_cong = False
+                    ket_qua = f"tát nhóm thành công nhưng lỗi tắt chiến dịch: {msg_th2}"
         else:
             # Thu tu (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
             # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
@@ -795,11 +805,12 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
     if ban_ghi.get("ten_moi"):
         dong.append(f"Tên mới: {ban_ghi.get('ten_moi')}")
     # Hiển thị thông tin ngân sách khác nhau theo loại
-    if cbo:
-        # CBO: kết quả đã bao gồm thông tin chuyển NS
-        # ket_qua = "đã tắt nhóm + đổi tên + chuyển NS 400,000đ về nhóm sống"
-        # hoặc "đã tắt nhóm + đổi tên. KHÔNG CHUYỂN ĐƯỢC NS: ..."
-        dong.append(chi_tiet.get("chuyen_ns_ket_qua", ""))
+    if cbo and chi_tiet.get("loai") == "CBO":
+        # CBO: hiển thị chuyển NS + (nếu có) TH2 tắt chiến dịch
+        if chi_tiet.get("chuyen_ns_ket_qua"):
+            dong.append(chi_tiet["chuyen_ns_ket_qua"])
+        if chi_tiet.get("th2_ket_qua"):
+            dong.append(chi_tiet["th2_ket_qua"])
     elif chi_tiet.get("cbo_khong_ha_ngan_sach"):
         dong.append("Ngân sách: KHÔNG hạ được — nhóm thuộc chiến dịch Advantage+ "
                     "(ngân sách cấp chiến dịch), Meta không cho hạ cấp nhóm. "
