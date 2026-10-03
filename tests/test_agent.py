@@ -4,6 +4,7 @@ KHONG goi mang, KHONG doc file that, KHONG goi AI.
 """
 import json
 import os
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta
@@ -605,6 +606,83 @@ class E_CauHinh(unittest.TestCase):
         import agent
         c = agent.doc_cau_hinh({"AGENT_NHIP_PHUT": "khong-phai-so"})
         self.assertEqual(c["AGENT_NHIP_PHUT"], 30)
+
+
+class E2_CongTacTamNgat(_KhongGhiLog, unittest.TestCase):
+    """Cong tac tam ngat phai chan agent NGAY TU DAU, truoc ca khi gianh khoa.
+
+    Boi canh 03/10/2026: Dai phat hien cach chan cu (tien trinh giu khoa) co lo
+    hong — tat may / dang xuat thi tien trinh giu khoa chet theo, lich AgentNac2
+    chay lai va agent TU KHOI DONG LAI nhu chua he bi tam ngat.
+    """
+
+    def setUp(self):
+        # PHAI goi super() TRUOC: `_KhongGhiLog.setUp()` moi la cai thay
+        # `report.log`. Neu goi sau, loi goi `_chay_main()` ben trong se ghi
+        # that vao logs/baocao.log.
+        super().setUp()
+        import agent_tam_ngat
+        self.at = agent_tam_ngat
+        self.goc_cong_tac = agent_tam_ngat.CONG_TAC
+        self.td = tempfile.TemporaryDirectory()
+        # Tro cong tac sang thu muc tam — KHONG dung file that cua Dai.
+        self.ct = Path(self.td.name) / "logs" / "TAM-NGAT-AGENT.txt"
+        agent_tam_ngat.CONG_TAC = self.ct
+
+    def tearDown(self):
+        import agent_tam_ngat
+        agent_tam_ngat.CONG_TAC = self.goc_cong_tac
+        self.td.cleanup()
+        super().tearDown()
+
+    def _chay_main(self, argv):
+        """Chay agent.main() voi argv cho truoc, tra ve ma thoat."""
+        import agent
+        cu = sys.argv
+        sys.argv = ["agent.py"] + argv
+        try:
+            return agent.main()
+        finally:
+            sys.argv = cu
+
+    def test_co_cong_tac_thi_khong_khoi_dong(self):
+        self.at.bat_tam_ngat("Dai chuyen sang thao tac thu cong", self.ct)
+        self.assertEqual(self._chay_main([]), 3)
+
+    def test_co_cong_tac_thi_chan_ca_che_do_chay_thu(self):
+        """--thu cung phai bi chan: chay thu van doc Meta, van ton quota."""
+        self.at.bat_tam_ngat("ly do", self.ct)
+        self.assertEqual(self._chay_main(["--thu"]), 3)
+
+    def test_co_cong_tac_thi_chan_ca_mot_lan(self):
+        self.at.bat_tam_ngat("ly do", self.ct)
+        self.assertEqual(self._chay_main(["--mot-lan"]), 3)
+
+    def test_cong_tac_thang_ca_khi_thieu_file_env(self):
+        """Cong tac phai duoc kiem TRUOC `doc_moi()`.
+
+        Dung thu 03/10/2026 bat duoc loi that: `doc_moi()` doc `.env`, gap file
+        thieu se nem FileNotFoundError. Neu cong tac duoc kiem SAU do thi agent
+        chet vi loi cau hinh va nhat ky khong ghi duoc ly do tam ngat.
+        """
+        # Trong thu muc dung thu khong co .env => doc_moi() se nem loi.
+        # Cong tac dang bat => phai tra 3, KHONG duoc nem loi.
+        self.at.bat_tam_ngat("ly do", self.ct)
+        self.assertEqual(self._chay_main([]), 3)
+
+    def test_khong_co_cong_tac_thi_khong_bi_chan_boi_cong_tac(self):
+        """Khi cong tac TAT, agent khong duoc tra ve 3.
+
+        Lan chay nay se di tiep vao phan doc .env. Trong thu muc dung thu co the
+        thieu .env => nem loi. Dieu DUY NHAT can kiem: khong phai bi chan boi
+        cong tac (khong tra 3).
+        """
+        self.assertFalse(self.at.dang_tam_ngat(self.ct))
+        try:
+            ma = self._chay_main(["--mot-lan"])
+        except FileNotFoundError:
+            return  # Thieu .env o thu muc dung thu — khong lien quan cong tac.
+        self.assertNotEqual(ma, 3)
 
 
 class F_ChuyenTiepLenh(unittest.TestCase):

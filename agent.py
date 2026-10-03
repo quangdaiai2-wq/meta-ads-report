@@ -27,6 +27,7 @@ import agent_ky_uc
 import agent_lich_su
 import agent_muc_tieu
 import agent_rao
+import agent_tam_ngat
 import agent_xin_phep
 
 GIO_VN = timezone(timedelta(hours=7))
@@ -987,6 +988,22 @@ def main():
     parser.add_argument("--mot-lan", action="store_true", help="chay mot vong roi thoat")
     parser.add_argument("--thu", action="store_true", help="chay thu, khong gui gi")
     args = parser.parse_args()
+
+    # --- CONG TAC TAM NGAT: kiem TRUOC TIEN, truoc CA viec doc .env ---
+    # Ngay 03/10/2026 Dai phat hien cach chan cu (tien trinh giu khoa) co lo
+    # hong: tat may / dang xuat => tien trinh giu khoa chet theo => lich
+    # AgentNac2 chay lai, khong con ai giu khoa, agent TU KHOI DONG LAI.
+    # Cong tac nay la mot FILE tren dia nen khong the chet theo tien trinh.
+    #
+    # VI SAO DAT TRUOC `doc_moi()`: neu dat sau, mot .env bi thieu/hong se nem
+    # loi TRUOC khi kip kiem cong tac — agent chet vi loi cau hinh chu khong
+    # phai vi tam ngat, va nhat ky se khong ghi duoc ly do that. Da bi dung
+    # thu bat duoc loi nay ngay 03/10/2026. Xem docstring agent_tam_ngat.py.
+    if agent_tam_ngat.dang_tam_ngat():
+        td = agent_tam_ngat.thong_diep_chan()
+        print(f"KHONG KHOI DONG: {td}")
+        report.log(f"AGENT: {td}")
+        return 3
 
     env, cau_hinh = doc_moi()
     nhip = max(1, cau_hinh["AGENT_NHIP_PHUT"])
