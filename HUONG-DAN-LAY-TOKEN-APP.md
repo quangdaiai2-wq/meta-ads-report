@@ -1,20 +1,27 @@
-# HƯỚNG DẪN LẤY TOKEN APP (TOKEN TÀI KHOẢN HỆ THỐNG)
+# HƯỚNG DẪN VỀ TOKEN APP (TOKEN TÀI KHOẢN HỆ THỐNG)
 
 Dành cho Đại — người không cần biết code.
 
-> 📌 **Tài liệu này để làm gì:**
-> Hiện tại hệ thống đang dùng **token cá nhân của Đại**. Vì thế mọi thao tác agent làm đều bị
-> Meta ghi là do **""** thực hiện — y như Đại tự tay làm.
+> 🔴 **ĐỌC MỤC NÀY TRƯỚC — TÀI LIỆU NÀY ĐÃ ĐƯỢC VIẾT LẠI.**
 >
-> Hậu quả thật đã xảy ra ngày 03/10/2026: agent tự tắt chiến dịch `120250389649450509`, nhưng
-> khi tra nhật ký Meta thì thấy tên Đại, nên **không thể phân biệt được ai làm** — tôi phải mất
-> rất nhiều bước mới chứng minh được là agent làm chứ không phải Đại.
+> Bản đầu tiên của tôi (cùng ngày 03/10/2026) hướng dẫn Đại cách **tự tạo token App**
+> trong Business Manager. **Hướng dẫn đó SAI** — vì nó giả định Đại là **Admin** của
+> tài khoản doanh nghiệp.
 >
-> Đổi sang **token App (tài khoản hệ thống)** thì Meta sẽ ghi rõ là do **ứng dụng hệ thống** làm,
-> tách bạch hẳn với Đại. Lần sau tra nhật ký là biết ngay.
-
-> ✅ **Tin tốt:** việc này **miễn phí**, làm mất khoảng **15 phút**, và **chỉ làm một lần**.
-> Token tài khoản hệ thống có thể đặt **không bao giờ hết hạn** — khỏi phải gia hạn mỗi 60 ngày.
+> Đại đã nói rõ: *"tôi không chủ của tài khoản doanh nghiệp của meta"* và
+> *"tôi không xin được"*. Tôi đã tra trực tiếp trên Meta để kiểm chứng:
+>
+> ```
+> Business: Langmaster Business ()
+>   → Người dùng "" — vai trò: EMPLOYEE   ← KHÔNG phải ADMIN
+>   → system_users: rỗng (0 mục)                   ← chưa có token App nào
+> ```
+>
+> **Vai trò `EMPLOYEE` KHÔNG đủ quyền tạo tài khoản hệ thống.** Nên Đại **không thể**
+> tự làm việc này, dù có làm theo hướng dẫn cũ cũng sẽ bị Meta chặn ở bước cuối.
+>
+> ✅ **Vậy nên: KHÔNG cần token App nữa.** Tôi đã làm **Đường 2** thay thế — xem Phần G
+> ở cuối tài liệu. Đường 2 chạy được ngay, không cần xin ai.
 
 ---
 
@@ -33,6 +40,7 @@ Tôi đã tra trực tiếp trên Meta bằng công cụ chính thức `debug_to
 | Quyền đang có | `ads_management`, `ads_read`, `business_management` |
 | Tài khoản quảng cáo |
 | Business |
+| **Vai trò của Đại** | **`EMPLOYEE`** — không phải Admin |
 
 ### Token App khác gì
 
@@ -52,7 +60,20 @@ không đăng nhập được, không ai dùng nó để chat.
 
 ---
 
-## Phần B — Chuẩn bị
+> ⛔ **CÁC PHẦN B, C, D, E, F DƯỚI ĐÂY KHÔNG DÙNG ĐƯỢC NỮA.**
+>
+> Chúng hướng dẫn Đại vào Business Manager tự tạo tài khoản hệ thống. Việc đó **đòi hỏi
+> vai trò Admin**, mà Đại là `EMPLOYEE`. Làm theo sẽ **bị Meta chặn ở bước cuối** (không
+> thấy mục "Người dùng hệ thống", hoặc bấm tạo mà không được).
+>
+> Tôi giữ lại để tham khảo — **nếu sau này Đại được cấp quyền Admin**, lúc đó làm theo là được.
+> Còn bây giờ xin **bỏ qua xuống thẳng Phần G**.
+>
+> Lý do tôi không xoá: nếu một ngày Admin đổi ý và cấp quyền, tài liệu này vẫn dùng được ngay.
+
+---
+
+## Phần B — Chuẩn bị (KHÔNG DÙNG — xem ghi chú trên)
 
 ### B1. Kiểm tra `.env` đã có đủ 3 dòng
 
@@ -246,8 +267,94 @@ rồi bấm `khoi-dong-lai-agent.bat`.
 
 ---
 
+## Phần G — ĐƯỜNG 2: CÁCH TÔI ĐÃ LÀM THAY (ĐỌC PHẦN NÀY)
+
+Đại không lấy được token App ⇒ tôi **bù lại bằng cách khác**, chạy được ngay, không cần xin ai.
+
+### G1. Ghi rõ NGUỒN GỐC trong sổ của agent
+
+Từ nay mỗi bản ghi trong `logs/nhat-ky-agent.json` có thêm trường `nguon_goc`:
+
+| Giá trị | Nghĩa |
+|---|---|
+| `agent_tu_hanh` | **Máy tự quyết**, không ai bấm nút (ví dụ: TH2 tự tắt chiến dịch) |
+| `dai_bam_nut` | Đại **bấm nút** trên Telegram |
+| `dai_go_tay` | Đại **gõ lệnh** bằng tay |
+| `cho_duyet` | Mới là đề xuất, chưa gửi gì lên Meta |
+
+⇒ Mở sổ ra là biết **việc nào máy làm, việc nào Đại làm** — **không cần mở Meta**.
+
+### G2. Sửa lỗi "bản ghi mồ côi" (lỗi thật, đã tồn tại trên sổ)
+
+Tôi đã dựng thử và đo được: **17 trong 40 bản ghi** bị **mồ côi** — tức là *đã gửi lệnh lên
+Meta* nhưng **thiếu kết quả**. Nguyên nhân: `cap_nhat_phan_hoi` chốt kết quả vào **nhầm bản ghi**.
+
+Hậu quả nặng nhất: **không bản ghi nào** vừa "đã gửi Meta" vừa "có kết quả", nên **không thể
+đối chiếu với Meta được** — công cụ ở G3 lọc ra rỗng.
+
+**Đã sửa.** Từ nay kết quả chốt đúng vào bản ghi đã gửi Meta.
+
+> 📌 17 bản ghi cũ vẫn còn dấu vết mồ côi — **không sửa được quá khứ**, nhưng công cụ G3
+> **nhận diện và bỏ qua** chúng, đồng thời liệt kê riêng để Đại thấy.
+
+### G3. Công cụ đối chiếu — việc mà token App lẽ ra làm được
+
+Bấm đúp vào **`doi-chieu-meta.bat`**. Nó in ra bảng:
+
+```
+Số sự kiện Meta đọc được : 1061
+Khớp hai nguồn            : 30
+Chỉ có trên Meta          : 1031
+Chỉ có trong sổ agent     : 9
+Bản ghi mồ côi (lỗi sổ)   : 17
+
+── KHỚP (cả sổ và Meta đều có) ───────────────────────────────────────
+  03/10 09:50:25  120250698465560509  [Đại bấm nút]  (3 sự kiện Meta)
+  02/10 11:45:08  120250204184200509  [Đại bấm nút]  (3 sự kiện Meta)
+  ...
+
+── CHỈ CÓ TRÊN META (ĐẠI TỰ LÀM TAY, không qua agent) ─────────────────
+  03/10 13:59:59  120250719073350509  update_ad_run_status  (Meta ghi tên: )
+  ...
+```
+
+**Đọc bảng này thế nào:**
+
+| Mục | Nghĩa |
+|---|---|
+| **KHỚP** | Việc có ở **cả** sổ agent **và** Meta → agent làm, đã kiểm chứng được |
+| **CHỈ CÓ TRÊN META** | Đại (hoặc người khác) **tự làm tay**, agent không biết |
+| **CHỈ CÓ TRONG SỔ** | Nghi vấn — agent ghi mà Meta không nhận. Nhờ AI xem |
+| **MỒ CÔI** | Dấu vết lỗi cũ. Nhờ AI xem |
+
+> ✅ **Công cụ này TUYỆT ĐỐI CHỈ ĐỌC.** Không tắt, không sửa, không tạo gì trên Meta.
+> Không gửi Telegram. Không sửa file sổ. **Bấm bao nhiêu lần cũng được.**
+
+**Bằng chứng nó chạy thật** — tôi đã đối chiếu đúng việc Đại hỏi hôm 03/10:
+
+| Nguồn | Ghi gì |
+|---|---|
+| Sổ agent | tắt chiến dịch `120250389649450509` |
+| Meta | `03:59:10 UTC` = **10:59:10 giờ VN** — `update_campaign_run_status` |
+
+⇒ **Khớp.** Và Meta ghi tên người thực hiện là **""** — đúng như tôi đã nói:
+token cá nhân nên Meta không phân biệt được người và máy. **Đó chính là lý do phải có công cụ này.**
+
+### G4. Còn token App thì sao?
+
+**Để sau.** Khi nào Đại được cấp quyền Admin (hoặc xin được), làm theo Phần B–F ở trên —
+không cần sửa code, chỉ dán token mới vào `.env` rồi bấm `khoi-dong-lai-agent.bat`.
+
+Còn hiện tại, Đường 2 đã đủ để trả lời câu **"việc này ai làm"**.
+
+---
+
 ## Tóm tắt một câu
 
-Đại vào **Business Manager → Người dùng → Người dùng hệ thống → tạo `Agent Ads` → gán tài khoản
-quảng cáo với quyền "Quản lý chiến dịch" → tạo token (không bao giờ hết hạn, tick 3 quyền) →
-dán vào `.env` → bấm `kiem-tra-token-app.bat` → bấm `khoi-dong-lai-agent.bat`. Xong.
+**Hiện tại (Đường 2 — đang dùng):** token cá nhân vẫn giữ, nhưng sổ agent nay ghi rõ nguồn gốc,
+và bấm **`doi-chieu-meta.bat`** là biết ngay việc nào máy làm, việc nào Đại làm tay.
+
+**Sau này (nếu được cấp Admin):** vào **Business Manager → Người dùng → Người dùng hệ thống →
+tạo `Agent Ads` → gán tài khoản quảng cáo quyền "Quản lý chiến dịch" → tạo token (không bao giờ
+hết hạn, tick 3 quyền) → dán vào `.env` → bấm `kiem-tra-token-app.bat` → bấm
+`khoi-dong-lai-agent.bat`.

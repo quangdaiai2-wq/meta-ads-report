@@ -85,11 +85,18 @@ def _thoi_diem():
     return datetime.now(GIO_VN)
 
 
-def _soan_ban_ghi(de_xuat, che_do, rao_an_toan, da_gui=False, tin_nhan_id=None):
+def _soan_ban_ghi(de_xuat, che_do, rao_an_toan, da_gui=False, tin_nhan_id=None,
+                  nguon_goc="cho_duyet"):
     """Ban ghi so theo dung dinh dang hai ban ghi cu (30/09/2026).
 
     `tin_nhan_id`: ma tin nhan Telegram chua 2 nut bam — de sau khi Dai bam
     thi SUA chinh tin do thanh ket qua.
+
+    `nguon_goc` (Dai chot 03/10/2026): ghi ro viec nay do AI LAM hay DAI LAM.
+    Vi sao can: Dai khong phai chu tai khoan doanh nghiep Meta (vai tro EMPLOYEE)
+    nen khong tao duoc System User. Moi thao tac gui len Meta deu mang ten chu
+    token ca nhan ("Nam Duc Pham") => nhat ky Meta KHONG phan biet duoc nguoi va
+    may. Phai ghi vao so cua minh.
     """
     dt = de_xuat.get("doi_tuong") or {}
     return {
@@ -116,6 +123,8 @@ def _soan_ban_ghi(de_xuat, che_do, rao_an_toan, da_gui=False, tin_nhan_id=None):
         "dai_phan_hoi": None,
         "ket_qua": None,
         "ket_qua_sau_24h": None,
+        # Nguon goc: de tra loi "viec nay ai lam" ma khong can mo Meta.
+        "nguon_goc": nguon_goc,
     }
 
 
@@ -388,9 +397,12 @@ def _lam_theo_lenh(env, cau_hinh, bay_gio, thong_bao, noi_dung, tin_nhan_id):
     # ⚠️ PHAI truyen `ket_qua` xuong: `_lam_theo_dong_y` dua vao do de biet Dai
     # chon "tat nhom" hay "tat + ha ngan sach". Thieu no thi nut "tat + ha ngan
     # sach" se im lang khong ha ngan sach.
+    # 🔴 03/10/2026: truyen `nguon_goc` de so ghi ro DAI BAM NUT hay DAI GO TAY.
+    # `tin_nhan_id` khac None nghia la di duong NUT BAM (Telegram gui kem ma tin).
+    nguon = "dai_bam_nut" if tin_nhan_id is not None else "dai_go_tay"
     return _lam_theo_dong_y(env, cau_hinh, ban_ghi,
                             {"noi_dung": noi_dung, "ket_qua": ket_qua},
-                            bay_gio, thong_bao)
+                            bay_gio, thong_bao, nguon_goc=nguon)
 
 
 def _la_yeu_cau_bao_cao(text):
@@ -653,8 +665,14 @@ def _xu_ly_mot_tin(env, cau_hinh, bay_gio, thong_bao, tt_tg, tin):
         report.log("AGENT: da tra loi mot tin nhan")
 
 
-def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
-    """Dai da dong y. Kiem lai rao, ghi so TRUOC, roi moi gui len Meta."""
+def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao,
+                     nguon_goc="dai_bam_nut"):
+    """Dai da dong y. Kiem lai rao, ghi so TRUOC, roi moi gui len Meta.
+
+    `nguon_goc` (03/10/2026): "dai_bam_nut" khi Dai bam nut Telegram,
+    "dai_go_tay" khi Dai go lenh bang tay. Mac dinh "dai_bam_nut" de cac
+    kiem thu cu khong phai sua.
+    """
     doi_tuong = ban_ghi.get("doi_tuong") or {}
     # 🔴 VIEC B (Dai chot 02/10/2026): doi tuong co the la NHOM (cap="ad_set")
     # hoac QUANG CAO (cap="ad"). Rao an toan phan biet hai cap va ap bo rao
@@ -701,6 +719,9 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
         "luc": _thoi_diem().isoformat(timespec="seconds"),
         "dai_phan_hoi": kq["noi_dung"],
         "da_gui_len_meta": True,
+        # 🔴 03/10/2026: ghi ro AI LAM hay DAI LAM — tham so `nguon_goc` cua
+        # `_lam_theo_dong_y` ("dai_bam_nut" hoac "dai_go_tay").
+        "nguon_goc": nguon_goc,
     })
     agent_ky_uc.ghi(ban_ghi_moi)
 

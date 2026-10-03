@@ -269,29 +269,138 @@ def cap_nhat_phan_hoi(ma_nhom, tra_loi, ket_qua=None, duong_dan=None,
     `ghi_meta_that_bai=True`: buoc GUI LEN META da that bai. Danh dau de
     `nhom_da_tra_loi` BO QUA ban ghi nay — Dai da bam nut nhung viec chua xong,
     nen khong duoc khoa nhom 24 gio. Xem chu thich o `nhom_da_tra_loi`.
+
+    🔴 SUA 03/10/2026 — LOI "BAN GHI MO COI" (Dai chot, da do bang so that).
+    Vi sao: mot viec sinh HAI ban ghi —
+        ban ghi 1: luc HOI Dai        (che_do="xin_phep", da_gui_len_meta=False)
+        ban ghi 2: GHI TRUOC KHI GUI META (da_gui_len_meta=True)  <-- quy dinh bat buoc
+    Ban cu tim nguoc tu duoi len va dung o dieu kien "chua co dai_phan_hoi". Ban ghi 2
+    duoc `_lam_theo_dong_y` gan `dai_phan_hoi` trong BO NHO roi ghi ra file TRUOC khi
+    goi ham nay, nen luc khop no DA co `dai_phan_hoi` => bi bo qua. Ket qua bi ghi vao
+    ban ghi 1, con ban ghi 2 (ban ghi THUC SU da gui len Meta) mai mai trong ket qua.
+
+    Hau qua that (do tren logs/nhat-ky-agent.json ngay 03/10/2026):
+      - 17/40 ban ghi bi mo coi.
+      - 0 ban ghi nao vua `da_gui_len_meta=True` vua co `ket_qua` => cong cu doi
+        chieu voi Meta KHONG THE khop duoc gi.
+      - Nhin vao so thay nhu "tat 2 lan", va khong biet viec nao da xong that.
+
+    Nay: UU TIEN ban ghi `da_gui_len_meta is True` va chua co ket qua. Neu khong co
+    (so cu chi 1 ban ghi) thi lui ve hanh vi cu — khong pha du lieu da co.
     """
     p = Path(duong_dan) if duong_dan else DUONG_DAN
     try:
         ds = doc(p)
-        for rec in reversed(ds):
-            if not isinstance(rec, dict):
-                continue
-            if str((rec.get("doi_tuong") or {}).get("id") or "") != str(ma_nhom):
-                continue
-            if rec.get("dai_phan_hoi"):
-                continue
-            rec["dai_phan_hoi"] = tra_loi
-            if ket_qua is not None:
-                rec["ket_qua"] = ket_qua
-            if ghi_meta_that_bai:
-                rec["ghi_meta_that_bai"] = True
-            tam = p.with_suffix(".json.tmp")
-            tam.write_text(json.dumps(ds, ensure_ascii=False, indent=2), encoding="utf-8")
-            os.replace(tam, p)
-            return True
-        return False
+        dich = _chon_ban_ghi_de_chot(ds, ma_nhom)
+        if dich is None:
+            return False
+        dich["dai_phan_hoi"] = tra_loi
+        if ket_qua is not None:
+            dich["ket_qua"] = ket_qua
+        if ghi_meta_that_bai:
+            dich["ghi_meta_that_bai"] = True
+        tam = p.with_suffix(".json.tmp")
+        tam.write_text(json.dumps(ds, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tam, p)
+        return True
     except OSError:
         return False
+
+
+def _chon_ban_ghi_de_chot(ds, ma_nhom):
+    """Chon DUNG ban ghi de ghi ket qua. Tra ve dict hoac None.
+
+    Thu tu uu tien (Dai chot 03/10/2026):
+      1. Ban ghi DA GUI LEN META (`da_gui_len_meta is True`) va CHUA co ket qua.
+         Day la ban ghi that su mang hanh dong — ket qua phai nam o day.
+      2. Ban ghi chua co `dai_phan_hoi` (hanh vi CU, giu de tuong thich so 1 ban ghi).
+    """
+    ung_vien = [r for r in ds
+                if isinstance(r, dict)
+                and str((r.get("doi_tuong") or {}).get("id") or "") == str(ma_nhom)
+                and r.get("da_gui_len_meta") is True
+                and r.get("ket_qua") is None]
+    if ung_vien:
+        # Moi nhat truoc — neu vi pham quy uoc, ghi vao lan gui gan nhat.
+        def _khoa(r):
+            return _gio(r.get("luc")) or datetime.min.replace(tzinfo=GIO_VN)
+        return max(ung_vien, key=_khoa)
+
+    # Duong lui: hanh vi cu (ban ghi dang cho chua co cau tra loi).
+    for rec in reversed(ds):
+        if not isinstance(rec, dict):
+            continue
+        if str((rec.get("doi_tuong") or {}).get("id") or "") != str(ma_nhom):
+            continue
+        if rec.get("dai_phan_hoi"):
+            continue
+        return rec
+    return None
+
+
+def tim_ban_ghi_mo_coi(duong_dan=None):
+    """Danh sach ban ghi DA GUI LEN META nhung KHONG co ket qua.
+
+    VI SAO CAN (Dai chot 03/10/2026): truoc khi sua `cap_nhat_phan_hoi`, moi lan tat
+    deu de lai mot ban ghi mo coi. Ham nay de NHIN THAY chung — khong the sua cai
+    minh khong do duoc.
+    """
+    ra = []
+    for rec in doc(duong_dan):
+        if not isinstance(rec, dict):
+            continue
+        if rec.get("da_gui_len_meta") is not True:
+            continue
+        if rec.get("ket_qua"):
+            continue
+        ra.append(rec)
+    return ra
+
+
+# Nhan nguon goc — de biet viec do MAY lam hay DAI lam, khong can mo Meta.
+# Ly do (Dai chot 03/10/2026): Dai khong phai chu tai khoan doanh nghiep, vai tro
+# EMPLOYEE nen khong tao duoc System User. Moi thao tac gui len Meta deu mang ten
+# chu token ca nhan ("Nam Duc Pham") => nhat ky Meta KHONG phan biet duoc nguoi va may.
+NGUON_GOC_HOP_LE = ("agent_tu_hanh", "dai_bam_nut", "dai_go_tay", "cho_duyet")
+
+
+def nguon_goc_cua(ban_ghi):
+    """Tra ve nguon goc cua mot ban ghi. Ban ghi CU (chua co truong) thi SUY RA.
+
+    Gia tri:
+      agent_tu_hanh : may tu quyet, khong ai bam nut (TH2 tat chien dich, chuyen NS)
+      dai_bam_nut   : Dai bam nut tren Telegram
+      dai_go_tay    : Dai go lenh bang tay
+      cho_duyet     : moi la de xuat, chua gui gi len Meta (khong phai hanh dong)
+      ""            : ban ghi rac, khong doc duoc
+    """
+    if not isinstance(ban_ghi, dict):
+        return ""
+    gt = ban_ghi.get("nguon_goc")
+    if isinstance(gt, str) and gt in NGUON_GOC_HOP_LE:
+        return gt
+
+    # --- Ban ghi CU: suy tu cac truong da co ---
+    if ban_ghi.get("da_gui_len_meta") is True and ban_ghi.get("dai_phan_hoi"):
+        # Da gui len Meta VA co cau tra loi cua Dai => Dai da bam nut (hoac go tay).
+        return "dai_bam_nut"
+    if ban_ghi.get("da_gui_len_meta") is True:
+        # Da gui len Meta ma khong co cau tra loi cua Dai => may tu lam.
+        return "agent_tu_hanh"
+    # 🔴 Ban ghi CU BI LECH (hau qua cua loi "ban ghi mo coi"): `da_gui=False`
+    # NHUNG da co `ket_qua` thanh cong. Thuc chat viec DA duoc gui len Meta, chi
+    # la ket qua bi ghi nham cho. Xem `doi_chieu_meta._la_ban_ghi_cu_bi_lech`.
+    if ban_ghi.get("che_do") == "xin_phep" and ban_ghi.get("ket_qua"):
+        return "dai_bam_nut"
+    if ban_ghi.get("che_do") == "xin_phep":
+        # Chua gui len Meta, chua co ket qua => con dang cho Dai tra loi.
+        return "cho_duyet"
+    # HAI BAN GHI GOC 30/09/2026: dinh dang CU, KHONG co `che_do` lan
+    # `da_gui_len_meta`, nhung CO `ket_qua` thanh cong => la hanh dong that
+    # (Dai bam nut HOAN TAC). Xem `_la_hanh_dong_that` — cung suy nhu vay.
+    if ban_ghi.get("hanh_dong") in ("tam_dung", "bat_lai") and ban_ghi.get("ket_qua"):
+        return "dai_bam_nut"
+    return ""
 
 
 # ---------------------------------------------------------------------------
