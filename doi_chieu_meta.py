@@ -56,14 +56,45 @@ def _gio(t):
 
 def doc_so_agent(duong_dan=None):
     """Doc so agent. Tra ve list ban ghi dict. Loi -> [] (khong nem)."""
+    return doc_so_agent_co_canh_bao(duong_dan)[0]
+
+
+def doc_so_agent_co_canh_bao(duong_dan=None):
+    """Doc so agent, tra ve (danh_sach_ban_ghi, ly_do).
+
+    VI SAO CAN BAN CO CANH BAO (loi that phat hien 03/10/2026):
+      Ban cu LOC BO im lang moi phan tu khong phai dict, va tra [] cho moi loi
+      (file khong ton tai, JSON hong, so khong phai list). Ba tinh huong RAT KHAC
+      nhau do deu cho ra cung ket qua "so rong":
+        - so that su chua gi           -> binh thuong
+        - tro sai duong dan            -> DAI GO SAI, khong phai he thong hong
+        - so bi hong / co phan tu la   -> MAT DU LIEU AM THAM, nguy hiem nhat
+      Nhin bang ket qua khong the phan biet, nen Dai de hieu nham la "Meta khong
+      ghi nhan" hoac "agent hong". Phai noi RO tung truong hop.
+
+    Tra ve:
+      (danh_sach, "")            — doc duoc, khong co gi bat thuong
+      (danh_sach, "ly do ...")   — doc duoc NHUNG co phan tu hong bi bo qua,
+                                   hoac khong doc duoc file
+    """
     p = Path(duong_dan) if duong_dan else SO_AGENT
+    if not p.exists():
+        return [], f"khong tim thay file so agent: {p}"
     try:
-        ds = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
-    if not isinstance(ds, list):
-        return []
-    return [r for r in ds if isinstance(r, dict)]
+        tho = json.loads(p.read_text(encoding="utf-8"))
+    except OSError as e:
+        return [], f"khong doc duoc file so agent ({p}): {e}"
+    except ValueError as e:
+        return [], f"file so agent hong dinh dang JSON ({p}): {e}"
+    if not isinstance(tho, list):
+        return [], (f"file so agent khong phai danh sach "
+                    f"({type(tho).__name__}) — co the bi ghi de sai")
+    ra = [r for r in tho if isinstance(r, dict)]
+    so_hong = len(tho) - len(ra)
+    if so_hong:
+        return ra, (f"so agent co {so_hong} phan tu hong da bi bo qua "
+                    f"(khong phai ban ghi) — kiem tra lai file")
+    return ra, ""
 
 
 def _la_mo_coi(rec):
@@ -310,8 +341,15 @@ NHAN_NGUON = {
 }
 
 
-def in_bang(kq, ds_meta, ly_do=""):
-    """In bang doi chieu ra man hinh. Tra ve chuoi de kiem thu doc lai."""
+def in_bang(kq, ds_meta, ly_do="", ly_do_so=""):
+    """In bang doi chieu ra man hinh. Tra ve chuoi de kiem thu doc lai.
+
+    `ly_do_so`: ly do khong doc duoc SO AGENT. Dung de phan biet ro ba tinh huong
+    rat khac nhau nhung truoc day deu hien giong nhau (xem `doc_so_agent_co_canh_bao`):
+      - so that su chua gi
+      - tro sai duong dan (Dai go sai)
+      - so bi hong / co phan tu hong (MAT DU LIEU AM THAM)
+    """
     ds_meta = ds_meta if isinstance(ds_meta, list) else []
     dong = []
     them = dong.append
@@ -319,6 +357,10 @@ def in_bang(kq, ds_meta, ly_do=""):
     them("=" * 78)
     them("ĐỐI CHIẾU SỔ AGENT VỚI NHẬT KÝ META")
     them("=" * 78)
+    if ly_do_so:
+        them(f"🔴 KHÔNG ĐỌC ĐƯỢC SỔ AGENT: {ly_do_so}")
+        them("    → Mọi con số dưới đây là VÔ NGHĨA. Sửa đường dẫn file sổ rồi chạy lại.")
+        them("")
     if ly_do:
         them(f"⚠️  Không đọc được nhật ký Meta: {ly_do}")
         them("    (Phần đối chiếu chỉ còn một nguồn — xem mục 'chỉ có trong sổ'.)")
@@ -383,18 +425,20 @@ def in_bang(kq, ds_meta, ly_do=""):
 
 def chay(duong_dan_so=None, env=None, so_ngay=7, bay_gio=None):
     """Chay tron ven: doc -> doi chieu -> in. Tra ve chuoi ket qua."""
-    ds_agent = doc_so_agent(duong_dan_so)
+    ds_agent, ly_do_so = doc_so_agent_co_canh_bao(duong_dan_so)
     ds_meta, ly_do = doc_nhat_ky_meta(env, so_ngay, bay_gio)
     kq = doi_chieu(ds_agent, ds_meta)
-    return in_bang(kq, ds_meta, ly_do)
+    return in_bang(kq, ds_meta, ly_do, ly_do_so)
 
 
 def main():
     import argparse
     p = argparse.ArgumentParser(
         description="Đối chiếu sổ agent với nhật ký Meta (CHỈ ĐỌC).")
-    p.add_argument("--so", default=None,
-                   help="Đường dẫn file sổ agent (mặc định logs/nhat-ky-agent.json)")
+    p.add_argument("--so", default=None, metavar="DUONG_DAN",
+                   help="Đường dẫn FILE SỔ agent (mặc định logs/nhat-ky-agent.json). "
+                        "⚠️ Đây là ĐƯỜNG DẪN, không phải số. Muốn đổi số ngày thì "
+                        "dùng --ngay.")
     p.add_argument("--ngay", type=int, default=7,
                    help="Số ngày gần đây đọc từ Meta (mặc định 7)")
     p.add_argument("--khong-goi-meta", action="store_true",
@@ -402,9 +446,10 @@ def main():
     a = p.parse_args()
 
     if a.khong_goi_meta:
-        ds_agent = doc_so_agent(a.so)
+        ds_agent, ly_do_so = doc_so_agent_co_canh_bao(a.so)
         kq = doi_chieu(ds_agent, [])
-        print(in_bang(kq, [], "đã tắt gọi Meta theo yêu cầu (--khong-goi-meta)"))
+        print(in_bang(kq, [], "đã tắt gọi Meta theo yêu cầu (--khong-goi-meta)",
+                      ly_do_so))
         return 0
 
     print(chay(a.so, None, a.ngay))

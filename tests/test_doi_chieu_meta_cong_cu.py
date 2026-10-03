@@ -294,5 +294,66 @@ class TestDocMetaKhongSap(unittest.TestCase):
             self.assertIn("ĐỐI CHIẾU", chuoi)
 
 
+class TestCanhBaoKhiKhongDocDuocSo(unittest.TestCase):
+    """LOI THAT phat hien 03/10/2026 — ban cu NUOT IM LANG moi truong hop loi.
+
+    Ban cu tra `[]` cho CA BA tinh huong rat khac nhau, nen nhin bang ket qua
+    khong the phan biet:
+      - so that su chua gi        -> binh thuong
+      - tro sai duong dan         -> DAI GO SAI (chinh toi da go nham `--so 1`)
+      - so bi hong / co phan tu la -> MAT DU LIEU AM THAM
+
+    Nguy hiem: Dai nhin "Khớp 0 / Mồ côi 0" se tuong Meta khong ghi nhan hoac
+    agent hong. Phai noi RO.
+    """
+
+    def test_so_co_phan_tu_hong_thi_bao_ro(self):
+        """So co phan tu khong phai ban ghi => phai BAO, khong duoc nuot."""
+        import json
+        with tempfile.TemporaryDirectory() as t:
+            p = os.path.join(t, "so.json")
+            ds = [_bg(MA, "2026-10-02T11:46:55+07:00"), "ban ghi hong", 123]
+            Path(p).write_text(json.dumps(ds, ensure_ascii=False), encoding="utf-8")
+            ra, ly_do = dc.doc_so_agent_co_canh_bao(p)
+        self.assertEqual(len(ra), 1, "chi 1 ban ghi doc duoc")
+        self.assertTrue(ly_do, "phai bao ro co phan tu hong — khong duoc nuot im")
+        self.assertIn("2", ly_do, "phai noi ro SO LUONG phan tu hong")
+
+    def test_file_so_rong_that_thi_khong_bao_loi(self):
+        """File TON TAI nhung rong => khong phai loi, khong duoc bao dong gia."""
+        import json
+        with tempfile.TemporaryDirectory() as t:
+            p = os.path.join(t, "so-rong.json")
+            Path(p).write_text(json.dumps([]), encoding="utf-8")
+            ra, ly_do = dc.doc_so_agent_co_canh_bao(p)
+        self.assertEqual(ra, [])
+        self.assertEqual(ly_do, "", "file rong that KHONG phai loi")
+
+    def test_tro_sai_duong_dan_thi_bao_ro(self):
+        """Tro sai duong dan => phai noi ro 'khong tim thay', khong tra [] im lang."""
+        ra, ly_do = dc.doc_so_agent_co_canh_bao("D:/khong-he-ton-tai/xyz.json")
+        self.assertEqual(ra, [])
+        self.assertTrue(ly_do, "tro sai duong dan ma khong bao gi")
+        self.assertIn("khong tim thay", ly_do)
+
+    def test_bang_phai_hien_dong_canh_bao_do(self):
+        """Bang ket qua PHAI hien dong 🔴 khi khong doc duoc so."""
+        ra, ly_do = dc.doc_so_agent_co_canh_bao("D:/khong-he-ton-tai/x.json")
+        kq = dc.doi_chieu(ra, [])
+        chu = dc.in_bang(kq, [], "", ly_do)
+        self.assertIn("KHÔNG ĐỌC ĐƯỢC SỔ", chu,
+                      "so khong doc duoc ma bang khong bao => Dai hieu nham")
+
+    def test_so_json_hong_thi_bao_ro(self):
+        """File so hong dinh dang JSON => phai noi ro, khong tra [] im lang."""
+        with tempfile.TemporaryDirectory() as t:
+            p = os.path.join(t, "so-hong.json")
+            Path(p).write_text("{day khong phai json", encoding="utf-8")
+            ra, ly_do = dc.doc_so_agent_co_canh_bao(p)
+        self.assertEqual(ra, [])
+        self.assertTrue(ly_do, "JSON hong ma khong bao gi")
+        self.assertIn("JSON", ly_do)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
