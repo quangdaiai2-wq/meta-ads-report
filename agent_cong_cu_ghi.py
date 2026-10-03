@@ -109,6 +109,21 @@ def doc_lai_nhom(env, ma_nhom):
         {"access_token": tok, "fields": "id,name,status,effective_status,daily_budget"})
 
 
+def doc_lai_chien_dich(env, ma_chien_dich):
+    """Doc ten + trang thai + ngan sach hien tai cua CHIEN DICH. Tra ve (dict, loi).
+
+    Them 03/10/2026 de tin bao "agent tu hanh" hien duoc TEN chien dich —
+    Dai doc ten de nhan ra hon la chi co ma so.
+    """
+    tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()
+    if not tok:
+        return None, {"message": "thieu META_ADS_ACCESS_TOKEN trong .env"}
+    return report.api_get(
+        ma_chien_dich,
+        {"access_token": tok,
+         "fields": "id,name,status,effective_status,daily_budget"})
+
+
 def doc_quang_cao(env, ma_nhom):
     """Danh sach QUANG CAO (ad) ben trong nhom. Tra ve (list, loi)."""
     tok = (env or {}).get("META_ADS_ACCESS_TOKEN", "").strip()

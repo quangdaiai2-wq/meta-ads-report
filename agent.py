@@ -172,6 +172,9 @@ def _xet_de_xuat(nhom, hom_nay, thang, loai_ten, cau_hinh, bay_gio,
     lich_su = agent_ky_uc.dem_hanh_dong(bay_gio)
     lich_su["nhom_da_tra_loi"] = agent_ky_uc.nhom_da_tra_loi(bay_gio)
     lich_su["nhom_dang_bo_qua"] = agent_ky_uc.nhom_dang_bo_qua(bay_gio)
+    # 🔴 MOI 03/10/2026: cho Rao 8 biet nhom nao da duoc BAT LAI sau khi Dai tra
+    # loi — cau tra loi cu het gia tri thi phai cho hoi lai. Xem agent_rao.py.
+    lich_su["nhom_bat_lai_gan_nhat"] = agent_ky_uc.nhom_bat_lai_gan_nhat(bay_gio)
     da_cho = set(agent_ky_uc.ma_dang_cho(bay_gio))
     nhom_da_hoi_hom_nay = _dem_nhom_da_hoi_hom_nay(agent_ky_uc.doc(), bay_gio)
     dem_de_xuat_hom_nay = nhom_da_hoi_hom_nay
@@ -747,6 +750,14 @@ def _lam_theo_dong_y(env, cau_hinh, ban_ghi, kq, bay_gio, thong_bao):
                 if not ok_th2:
                     thanh_cong = False
                     ket_qua = f"tát nhóm thành công nhưng lỗi tắt chiến dịch: {msg_th2}"
+                else:
+                    # 🔴 MOI 03/10/2026: TH2 TU tat chien dich — Dai KHONG bam nut
+                    # nen phai bao rieng. Thieu buoc nay thi Dai tuong bot chet
+                    # (dung su co 03/10 voi chien dich 120250389649450509).
+                    if ct_th2.get("tat_chien_dich"):
+                        chi_tiet["ten_chien_dich"] = _ten_chien_dich(
+                            env, ma_chien_dich)
+                        _bao_tu_hanh(env, thong_bao, chi_tiet, bay_gio)
         else:
             # Thu tu (Dai doi 02/10/2026): TAT NHOM TRUOC, roi moi tat QUANG CAO.
             # Ban cu lam nguoc: tat quang cao truoc. Neu buoc tat nhom bi Meta tu choi
@@ -836,6 +847,40 @@ def _tao_thong_bao(env, che_do_thu):
             return
         nguoi_truc.gui_tin_nhan(env, text)
     return thong_bao
+
+
+def _ten_chien_dich(env, ma_chien_dich):
+    """Doc TEN chien dich tu Meta. Khong doc duoc -> chuoi rong (khong nem loi).
+
+    Dung cho tin bao agent tu hanh: co ten thi Dai de nhan ra hon la chi co ma.
+    """
+    try:
+        import agent_cong_cu_ghi
+        du, loi = agent_cong_cu_ghi.doc_lai_chien_dich(env, ma_chien_dich)
+        if loi or not du:
+            return ""
+        return str(du.get("name") or "")
+    except Exception:
+        return ""
+
+
+def _bao_tu_hanh(env, thong_bao, chi_tiet, bay_gio):
+    """Bao Dai biet agent vua TU LAM gi (khong do Dai bam nut).
+
+    🔴 VI SAO CAN (Dai chot 03/10/2026): ngay 03/10 agent tu tat chien dich
+    120250389649450509 theo luong TH2 CBO nhung im lang. Dai tuong bot chet
+    nen phai tu vao Meta tat tay. Day la kenh MOT CHIEU agent -> Dai.
+    Khong bao gio nem loi: bao tin hong khong duoc lam sap agent.
+    """
+    try:
+        tin = agent_xin_phep.soan_tin_tu_hanh(chi_tiet, bay_gio)
+        if not tin:
+            return
+        thong_bao(tin)
+        report.log(f"AGENT: da bao Dai viec tu hanh "
+                   f"({chi_tiet.get('campaign_id') or ''})")
+    except Exception as e:
+        report.log(f"AGENT: loi khi bao viec tu hanh: {type(e).__name__}: {e}")
 
 
 def _quet_va_de_xuat(env, cau_hinh, bay_gio, thong_bao, che_do_thu=False):

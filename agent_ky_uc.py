@@ -148,6 +148,45 @@ def nhom_da_tra_loi(bay_gio=None, duong_dan=None):
     return ra
 
 
+def nhom_bat_lai_gan_nhat(bay_gio=None, duong_dan=None):
+    """{id_nhom: thoi_diem_bat_lai_gan_nhat} — lan BAT LAI thanh cong moi nhat.
+
+    VI SAO CAN (Dai chot 03/10/2026): Rao 8 trong `agent_rao.py` chan hoi lai
+    nhom da co cau tra loi trong 24 gio. Nhung neu nhom da duoc BAT LAI roi chay
+    lai phat sinh chi tieu thi cau tra loi cu KHONG con gia tri — phai hoi lai.
+
+    Truong hop that 03/10/2026: Dai tra loi nhom X luc 02/10 11:45, nhom duoc
+    bat lai va chay lai, nhung agent im lang suot 24 gio. Dai tuong bot chet.
+
+    ⚠️ Chi tinh lan bat lai THANH CONG:
+      - Ban ghi MOI: co `da_gui_len_meta` — chi nhan khi co dung `True`.
+      - Ban ghi CU (truoc 03/10/2026) khong co co do => suy tu `ket_qua`
+        chua "thanh cong" (giong `_la_hanh_dong_that`).
+      - Du co co `True`, neu `ket_qua` bao loi/that bai/tu choi thi VAN KHONG
+        tinh. LOI NAY da bi dung thu bat duoc: bo qua no thi Rao 8 mo oan cho
+        nhom CHUA he duoc bat lai — dung loai loi nguy hiem nhat.
+    """
+    ra = {}
+    for rec in doc(duong_dan):
+        if not isinstance(rec, dict) or rec.get("hanh_dong") != "bat_lai":
+            continue
+        kq = str(rec.get("ket_qua") or "").lower()
+        if "da_gui_len_meta" in rec:
+            if rec.get("da_gui_len_meta") is not True:
+                continue
+        elif "thanh cong" not in kq:
+            continue
+        if "loi" in kq or "that bai" in kq or "tu choi" in kq:
+            continue
+        ma = str((rec.get("doi_tuong") or {}).get("id") or "")
+        t = _gio(rec.get("luc"))
+        if ma and t is not None:
+            cu = ra.get(ma)
+            if cu is None or t > cu:
+                ra[ma] = t
+    return ra
+
+
 def _doc_dict(p):
     """Doc file JSON dang DICT. Chua co / hong / la dang khac -> dict rong."""
     try:

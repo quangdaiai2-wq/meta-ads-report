@@ -10,13 +10,14 @@ Nguyen tac an toan quan trong nhat: IM LANG LA MAC DINH AN TOAN. Dai khong tra
 loi, hoac tra loi khac cu phap, hoac tra loi sai ma nhom => KHONG LAM GI.
 """
 import json
+from datetime import datetime
 
 import nguoi_truc
 from lenh_telegram import bo_dau, doc_tra_loi, la_lenh   # noqa: F401 (dung lai)
 
 __all__ = ["bo_dau", "doc_tra_loi", "la_lenh", "soan_tin", "nut_bam",
            "gui_xin_phep", "sua_ket_qua", "quet_tra_loi", "dong_doi_tuong",
-           "nut_loi", "soan_tin_loi", "gui_tin_loi"]
+           "nut_loi", "soan_tin_loi", "gui_tin_loi", "soan_tin_tu_hanh"]
 
 
 def nut_bam(ma, cap="ad_set"):
@@ -257,3 +258,68 @@ def quet_tra_loi(ds_tin, dang_cho, chat_id_dai):
         ket_qua, ma = doc_tra_loi(noi_dung, dang_cho)
         ra.append({"ket_qua": ket_qua, "ma": ma, "noi_dung": noi_dung})
     return ra
+
+
+# ======================================================================
+# THONG BAO KHI AGENT TU HANH (Dai chot 03/10/2026)
+# ======================================================================
+def soan_tin_tu_hanh(chi_tiet, bay_gio=None):
+    """Soan tin bao Dai biet agent vua TU LAM gi — khong do Dai bam nut.
+
+    VI SAO CAN: ngay 03/10/2026 agent tu tat chien dich 120250389649450509
+    (luong TH2 CBO) nhung im lang hoan toan. Dai tuong bot chet nen phai tu
+    vao Meta tat tay. Moi tin hien co deu la "xin phep" (can bam nut), khong
+    co tin nao bao "toi vua lam X". Ham nay lap khoang trong do.
+
+    HAM THUAN: khong goi mang, khong doc file — nen kiem thu duoc va khong the
+    bi loi mang lam hong.
+
+    Tra ve chuoi RONG khi khong co gi dang bao (vi du: chi la luong Dai bam nut,
+    hoac du lieu hong). Noi goi phai kiem chuoi rong truoc khi gui.
+    """
+    try:
+        if not isinstance(chi_tiet, dict):
+            return ""
+        # Chi bao khi THAT SU tat chien dich. Luong Dai bam nut da co tin
+        # "DA TAT NHOM" rieng — bao them o day se thanh spam.
+        if not chi_tiet.get("tat_chien_dich"):
+            return ""
+
+        dong = ["\U0001f916 AGENT TỰ LÀM (không cần Đại bấm)", ""]
+
+        ten_cd = str(chi_tiet.get("ten_chien_dich") or "").strip()
+        ma_cd = str(chi_tiet.get("campaign_id")
+                    or chi_tiet.get("id") or "").strip()
+        if ten_cd:
+            dong.append(f"Vừa tắt CHIẾN DỊCH: {ten_cd[:60]}")
+        else:
+            dong.append("Vừa tắt CHIẾN DỊCH")
+        if ma_cd:
+            dong.append(f"Mã: {ma_cd}")
+
+        ly = str(chi_tiet.get("ly_do") or "").strip()
+        dong.append("Lý do: "
+                    + (ly or "nhóm cuối cùng trong chiến dịch đã bị tắt"))
+
+        # Chi hien dong ngan sach khi THUC SU ha duoc. Hien "ha ve 27.000d"
+        # trong khi Meta tu choi la noi sai su that.
+        if chi_tiet.get("ha_ngan_sach"):
+            dong.append("Ngân sách chiến dịch: hạ về 27.000đ")
+
+        chuyen = str(chi_tiet.get("chuyen_ns_ket_qua") or "").strip()
+        if chuyen:
+            dong.append(f"Ngân sách chuyển sang nhóm sống: {chuyen[:80]}")
+
+        t = bay_gio
+        if isinstance(t, str):
+            try:
+                t = datetime.fromisoformat(t)
+            except ValueError:
+                t = None
+        if isinstance(t, datetime):
+            dong.append(f"Lúc: {t.strftime('%H:%M ngày %d/%m/%Y')}")
+
+        return "\n".join(dong)
+    except Exception:
+        # Khong bao gio de viec soan tin lam sap agent.
+        return ""

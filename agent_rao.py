@@ -281,7 +281,25 @@ def kiem(de_xuat, lich_su=None, bay_gio=None):
         if isinstance(da_tra_loi, dict):
             t_cu = _gio(da_tra_loi.get(ma))
             if t_cu is not None and (goc - t_cu) < timedelta(minutes=HAN_HOI_LAI_PHUT):
-                return False, "Nhóm này Đại đã trả lời trong 24 giờ qua"
+                # ⚠️ NGOAI LE (Dai chot 03/10/2026): cau tra loi cu KHONG con gia
+                # tri neu nhom da duoc BAT LAI SAU do roi chay lai phat sinh chi
+                # tieu. Truong hop that 03/10: Dai tra loi nhom 120250389649480509
+                # luc 02/10 11:45; nhom duoc bat lai, chay lai; nhom cham nguong
+                # lan nua nhung agent im lang suot 24 gio => Dai tuong bot chet
+                # va tu vao Meta tat tay.
+                # Xem docs/superpowers/plans/2026-10-03-thong-bao-khi-tu-hanh-va-va-rao-8.md
+                #
+                # Khoanh vung HEP co chu dich: chi mo dung truong hop nay. Moi
+                # truong hop khac (chua bat lai / bat lai truoc khi tra loi /
+                # bat lai dung bang thoi diem tra loi) VAN CHAN nhu cu.
+                t_bat_lai = None
+                ban_lai = ls.get("nhom_bat_lai_gan_nhat")
+                if isinstance(ban_lai, dict):
+                    t_bat_lai = _gio(ban_lai.get(ma))
+                # `<=` chu KHONG phai `<`: bat lai dung bang thoi diem tra loi
+                # thi khong tinh la tinh huong moi — uu tien AN TOAN.
+                if t_bat_lai is None or t_bat_lai <= t_cu:
+                    return False, "Nhóm này Đại đã trả lời trong 24 giờ qua"
 
         # --- Rao: Dai da bam "Bo qua 24h" tren tin bao loi (02/10/2026) ---
         dang_bo_qua = ls.get("nhom_dang_bo_qua")
