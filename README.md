@@ -2,6 +2,16 @@
 
 Hướng dẫn dành cho Đại (người không cần biết code).
 
+## Thông tin định danh
+
+Meta User ID:
+Meta App ID:
+Business ID:
+Ad Account ID:
+Thời hạn ghi trong tài liệu:
+Tên tài khoản báo cáo:
+
+
 ---
 
 ## 🚀 Mới sang máy khác? Đọc file này trước
